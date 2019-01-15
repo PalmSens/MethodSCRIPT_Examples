@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmStatConsoleExample", "EmStatConsoleExample\EmStatConsoleExample.csproj", "{672B90E2-2022-4D07-8CBB-C08FF82160EE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmStatPicoConsoleExample", "EmStatPicoConsoleExample\EmStatPicoConsoleExample.csproj", "{672B90E2-2022-4D07-8CBB-C08FF82160EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
