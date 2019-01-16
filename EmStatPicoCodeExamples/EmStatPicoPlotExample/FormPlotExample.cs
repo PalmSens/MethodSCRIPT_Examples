@@ -1,17 +1,25 @@
-﻿using System;
+﻿using OxyPlot;
+using OxyPlot.Series;
+using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
 using System.IO;
 using System.IO.Ports;
+using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
-namespace EmStatConsoleExample
+namespace EmStatPicoPlotExample
 {
-    class Program
+    public partial class frmPlotExample : Form
     {
         const int PACKAGE_PARAM_VALUE_LENGTH = 9;
-        static SerialPort SerialPortEsP;
+        private SerialPort SerialPortEsP;
         static string ScriptFileName = "LSV_test_script.txt";
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         //static string ScriptFileName = "200k_500_15mV_cr5m.mscr";
@@ -21,36 +29,39 @@ namespace EmStatConsoleExample
 
         const string POTENTIAL_READING = "aa";
         const string CURRENT_READING = "ba";
-        static List<double> CurrentReadings = new List<double>();
-        static List<double> VoltageReadings = new List<double>();
-        static string RawData;
-        static int NDataPointsReceived = 0;
+
+        private ObservableCollection<double> CurrentReadings = new ObservableCollection<double>();
+        private ObservableCollection<double> VoltageReadings = new ObservableCollection<double>();
+        private string RawData;
+        private int NDataPointsReceived = 0;
+        private PlotModel plotModel = new PlotModel();
+        private LineSeries plotData;
 
         readonly static Dictionary<string, double> Prefix_Factor = new Dictionary<string, double> { { "a", 1e-18 }, { "f", 1e-15 }, { "p", 1e-12 }, { "n", 1e-9 }, { "u", 1e-6 }, { "m", 1e-3 },
                                                                                                       { " ", 1 }, { "K", 1e3 }, { "M", 1e6 }, { "G", 1e9 }, { "T", 1e12 }, { "P", 1e15 }, { "E", 1e18 }};
 
         readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string> { { "aa", "E (V)" }, { "ba", "I (A)" }, { "dc", "Frequency" }, { "cc", "Z'" }, { "cd", "Z''" } };
 
-        static void Main(string[] args)
+        public frmPlotExample()
         {
-            SerialPortEsP = OpenSerialPort();        // Open and identify the port connected to EsPico
-            if (SerialPortEsP != null && SerialPortEsP.IsOpen)
+            InitializeComponent();
+            samplePlotView.Model = plotModel;
+            plotData = new LineSeries()
             {
-                Console.WriteLine("\nConnected to EmStat Pico.\n");
-                SendScriptFile();                    //Send the script file to EmStatPico
-                ProcessReceivedPackets();            //Parse the received response packets
-                //DisplayRawData();        
-                SerialPortEsP.Close();                  //Close the serial port
-            }
-            else
-            {
-                Console.WriteLine($"Could not connect. \n");
-            }
-
-            Console.WriteLine("");
-            Console.WriteLine("Press any key to exit.");
-            Console.ReadKey();
-            
+                Color = OxyColors.Green,
+                MarkerType = MarkerType.Circle,
+                MarkerSize = 6,
+                MarkerStroke = OxyColors.White,
+                MarkerFill = OxyColors.Green,
+                MarkerStrokeThickness = 1.5,
+            };
+            //CurrentReadings.CollectionChanged += NewDataAdded;
+            //VoltageReadings.CollectionChanged += NewDataAdded;
+        }
+        
+        private void NewDataAdded(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            UpdatePlot();
         }
 
         /// <summary>
@@ -58,7 +69,7 @@ namespace EmStatConsoleExample
         /// </summary>
         /// <returns> The serial port connected to EsPico</returns>
         /// 
-        private static SerialPort OpenSerialPort()
+        private SerialPort OpenSerialPort()
         {
             SerialPort serialPort = null;
             string[] ports = SerialPort.GetPortNames();
@@ -95,7 +106,7 @@ namespace EmStatConsoleExample
         /// <summary>
         /// Sends the script file to EsPico
         /// </summary>
-        private static void SendScriptFile()
+        private void SendScriptFile()
         {
             using (StreamReader stream = new StreamReader(ScriptFilePath))
             {
@@ -110,17 +121,74 @@ namespace EmStatConsoleExample
                         SerialPortEsP.Write(line);
                     }
                 }
-                Console.Write("Measurement started.\n");
+                lbConsole.Items.Add("Measurement started.");
             }
+        }
+        /// <summary>
+        /// Connects to the EmStatPico if available .
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnConnect_Click(object sender, EventArgs e)
+        {
+            SerialPortEsP = OpenSerialPort();        // Open and identify the port connected to EsPico
+            if (SerialPortEsP != null && SerialPortEsP.IsOpen)
+            {
+                lbConsole.Items.Add($"Connected to EmStat Pico");
+                EnableButtons(true);
+            }
+            else
+            {
+                lbConsole.Items.Add($"Could not connect. \n");
+            }
+        }
+
+        /// <summary>
+        /// Disconnects the EmStatPico.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnDisconnect_Click(object sender, EventArgs e)
+        {
+            SerialPortEsP.Close();
+            lbConsole.Items.Add($"Disconnected from EmStat Pico");
+            EnableButtons(false);
+        }
+
+        /// <summary>
+        /// Enable/Disable buttons upon connecting and disconnecting.
+        /// </summary>
+        /// <param name="isConnected"></param>
+        private void EnableButtons(bool isConnected)
+        {
+            btnConnect.Enabled = !isConnected;
+            btnDisconnect.Enabled = isConnected;
+            btnMeasure.Enabled = isConnected;
+        }
+
+        /// <summary>
+        /// Sends a script file, parses the response and updates the plot.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnMeasure_Click(object sender, EventArgs e)
+        {
+            btnMeasure.Enabled = false;
+            ClearPlot();
+            plotModel.Series.Add(plotData);
+            SendScriptFile();
+            ProcessReceivedPackets();            //Parse the received response packets
+            //UpdatePlot();
+            btnMeasure.Enabled = true;
         }
 
         /// <summary>
         /// Processes the response packets from the EsPico and store the response in RawData.
         /// </summary>
-        private static void ProcessReceivedPackets()
+        private void ProcessReceivedPackets()
         {
             string readLine = "";
-            Console.WriteLine("\nMeasurement response received:");
+            lbConsole.Items.Add("Measurement response received:");
             while (true)
             {
                 readLine = ReadResponseLine();
@@ -129,16 +197,17 @@ namespace EmStatConsoleExample
                     break;
                 NDataPointsReceived++;
                 ParsePackageLine(readLine);
+                UpdatePlot();
             }
-            Console.WriteLine("");
-            Console.WriteLine($"\nMeasurement completed, {NDataPointsReceived} data points received.");
+            lbConsole.Items.Add($"Measurement completed.");
+            lbConsole.Items.Add($"{NDataPointsReceived} data points received.");
         }
 
         /// <summary>
         /// Reads a line from the data received
         /// </summary>
         /// <returns></returns>
-        private static string ReadResponseLine()
+        private string ReadResponseLine()
         {
             string readLine = "";
             int readChar;
@@ -160,20 +229,20 @@ namespace EmStatConsoleExample
         /// Parses a single line of the package and adds the values of the measurement parameters to the corresponding arrays
         /// </summary>
         /// <param name="responsePackageLine">The line from response package to be parsed</param>
-        private static void ParsePackageLine(string responsePackageLine)
+        private void ParsePackageLine(string responsePackageLine)
         {
             string paramIdentifier;
             string paramValue;
             int startingIndex = responsePackageLine.IndexOf('P');
             int currentIndex = startingIndex + 1;
-            Console.Write($"\nindex = {NDataPointsReceived}, ");
+            //lbConsole.Items.Add($"\nindex = {NDataPointsReceived}, ");
             while (!(responsePackageLine.Substring(currentIndex) == "\n"))
             {
                 paramIdentifier = responsePackageLine.Substring(currentIndex, 2);
                 paramValue = responsePackageLine.Substring(currentIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);
                 double paramValueWithPrefix = ParseParamValues(paramValue);
-                Console.Write(MeasurementParameters[paramIdentifier] + " : " + string.Format("{0:0.###E+00}", paramValueWithPrefix).ToString()+ " ");
-                switch(paramIdentifier)
+                //lbConsole.Items.Add(MeasurementParameters[paramIdentifier] + " : " + string.Format("{0:0.###E+00}", paramValueWithPrefix).ToString() + " ");
+                switch (paramIdentifier)
                 {
                     case POTENTIAL_READING:
                         VoltageReadings.Add(paramValueWithPrefix);      //If potential reading add the value to the VoltageReadings array
@@ -191,7 +260,7 @@ namespace EmStatConsoleExample
         /// </summary>
         /// <param name="paramValueString"></param>
         /// <returns>The parameter value after appending the unit prefix</returns>
-        private static double ParseParamValues(string paramValueString)
+        private double ParseParamValues(string paramValueString)
         {
             char strUnitPrefix = paramValueString[7];
             string strvalue = paramValueString.Remove(7);
@@ -201,19 +270,21 @@ namespace EmStatConsoleExample
         }
 
         /// <summary>
-        /// Display the raw data on the console
+        /// Update the plot with the measurement response values.
         /// </summary>
-        private static void DisplayRawData()
+        private void UpdatePlot()
         {
-            Console.WriteLine("Raw data:");
-            using (StringReader reader = new StringReader(RawData))
-            {
-                string responseLine;
-                while ((responseLine = reader.ReadLine()) != null)
-                {
-                    Console.WriteLine(responseLine);
-                }
-            }
+            plotData.Points.Add(new DataPoint(VoltageReadings.Last(), CurrentReadings.Last()));
+            plotData.XAxis.Title = "Potential/V";
+            plotData.YAxis.Title = "Current/A";
+            plotModel.InvalidatePlot(true);
+        }
+
+        private void ClearPlot()
+        {
+            plotModel.Series.Clear();
+            plotData.Points.Clear();
+            plotModel.InvalidatePlot(true);
         }
     }
 }
