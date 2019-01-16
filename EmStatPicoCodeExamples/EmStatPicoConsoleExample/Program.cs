@@ -24,28 +24,32 @@ namespace EmStatConsoleExample
         static List<double> CurrentReadings = new List<double>();
         static List<double> VoltageReadings = new List<double>();
         static string RawData;
+        static int NDataPointsReceived = 0;
 
         readonly static Dictionary<string, double> Prefix_Factor = new Dictionary<string, double> { { "a", 1e-18 }, { "f", 1e-15 }, { "p", 1e-12 }, { "n", 1e-9 }, { "u", 1e-6 }, { "m", 1e-3 },
                                                                                                       { " ", 1 }, { "K", 1e3 }, { "M", 1e6 }, { "G", 1e9 }, { "T", 1e12 }, { "P", 1e15 }, { "E", 1e18 }};
 
-        readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string> { { "aa", "E" }, { "ba", "I" }, { "dc", "Frequency" }, { "cc", "Z'" }, { "cd", "Z''" } };
+        readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string> { { "aa", "E (V)" }, { "ba", "I (A)" }, { "dc", "Frequency" }, { "cc", "Z'" }, { "cd", "Z''" } };
 
         static void Main(string[] args)
         {
             SerialPortEsP = OpenSerialPort();        // Open and identify the port connected to EsPico
             if (SerialPortEsP != null && SerialPortEsP.IsOpen)
             {
-                Console.WriteLine("Connected");
+                Console.WriteLine("\nConnected to EmStat Pico.\n");
                 SendScriptFile();                    //Send the script file to EmStatPico
-                Console.WriteLine("Measurement Parameters Received:\n");
                 ProcessReceivedPackets();            //Parse the received the response packets
-                DisplayRawData();
-                SerialPortEsP.Close();               //Close the serial port
+                //DisplayRawData();        
             }
             else
             {
-                Console.WriteLine("Not connected");
+                Console.WriteLine($"Could not connect. \n");
             }
+
+            Console.WriteLine("");
+            Console.WriteLine("Press any key to exit.");
+            Console.ReadKey();
+            SerialPortEsP.Close();                  //Close the serial port
         }
 
         /// <summary>
@@ -100,11 +104,12 @@ namespace EmStatConsoleExample
                     line = stream.ReadLine();
                     if (!(line == null))
                     {
-                        Console.WriteLine(line);
+                        //Console.WriteLine(line);
                         line += "\n";
                         SerialPortEsP.Write(line);
                     }
                 }
+                Console.Write("Measurement started.\n");
             }
         }
 
@@ -114,14 +119,18 @@ namespace EmStatConsoleExample
         private static void ProcessReceivedPackets()
         {
             string readLine = "";
+            Console.WriteLine("\nMeasurement Parameters Received:");
             while (true)
             {
                 readLine = ReadResponseLine();
                 RawData += readLine;
                 if (readLine == "\n")
                     break;
+                NDataPointsReceived++;
                 ParsePackageLine(readLine);
             }
+            Console.WriteLine("");
+            Console.WriteLine($"\nMeasurement completed, {NDataPointsReceived} data points received.");
         }
 
         /// <summary>
@@ -156,28 +165,28 @@ namespace EmStatConsoleExample
             string paramValue;
             int startingIndex = responsePackageLine.IndexOf('P');
             int currentIndex = startingIndex + 1;
+            Console.Write($"\nindex = {NDataPointsReceived}, ");
             while (!(responsePackageLine.Substring(currentIndex) == "\n"))
             {
                 paramIdentifier = responsePackageLine.Substring(currentIndex, 2);
                 paramValue = responsePackageLine.Substring(currentIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);
                 double paramValueWithPrefix = ParseParamValues(paramValue);
-                Console.Write(MeasurementParameters[paramIdentifier] + " : " + paramValueWithPrefix.ToString() + " ");
+                Console.Write(MeasurementParameters[paramIdentifier] + " : " + string.Format("{0:0.###E+00}", paramValueWithPrefix).ToString()+ " ");
                 switch(paramIdentifier)
                 {
                     case POTENTIAL_READING:
-                        VoltageReadings.Add(paramValueWithPrefix);
+                        VoltageReadings.Add(paramValueWithPrefix);      //If potential reading add the value to the VoltageReadings array
                         break;
                     case CURRENT_READING:
-                        CurrentReadings.Add(paramValueWithPrefix);
+                        CurrentReadings.Add(paramValueWithPrefix);      //If current reading add the value to the CurrentReadings array
                         break;
                 }
                 currentIndex = currentIndex + 11;
             }
-            Console.Write("\n");
         }
 
         /// <summary>
-        /// Parses the measurement parameter values and adds the respective prefixes
+        /// Parses the measurement parameter values and appends the respective prefixes
         /// </summary>
         /// <param name="paramValueString"></param>
         /// <returns>The parameter value after appending the unit prefix</returns>
@@ -195,13 +204,13 @@ namespace EmStatConsoleExample
         /// </summary>
         private static void DisplayRawData()
         {
-            Console.Write("Raw Data: \n");
+            Console.WriteLine("Raw Data:");
             using (StringReader reader = new StringReader(RawData))
             {
                 string responseLine;
                 while ((responseLine = reader.ReadLine()) != null)
                 {
-                    Console.Write(responseLine + "\n");
+                    Console.WriteLine(responseLine);
                 }
             }
         }
