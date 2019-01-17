@@ -1,4 +1,5 @@
 ﻿using OxyPlot;
+using OxyPlot.Axes;
 using OxyPlot.Series;
 using System;
 using System.Collections.Generic;
@@ -18,34 +19,57 @@ namespace EmStatPicoPlotExample
 {
     public partial class frmPlotExample : Form
     {
-        const int PACKAGE_PARAM_VALUE_LENGTH = 9;
-        private SerialPort SerialPortEsP;
-        static string ScriptFileName = "LSV_test_script.txt";
+        static string ScriptFileName = "LSV_test_script.txt";               
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
-        //static string ScriptFileName = "200k_500_15mV_cr5m.mscr";
-        static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";
+        static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";        // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
-        const int OFFSET_VALUE = 0x8000000; // Offset value to receive positive values
 
-        const string POTENTIAL_READING = "aa";
-        const string CURRENT_READING = "ba";
+        const int PACKAGE_PARAM_VALUE_LENGTH = 9;                                                   // Length of the parameter value in a package
+        const int OFFSET_VALUE = 0x8000000;                                                         // Offset value to receive positive values
 
-        private ObservableCollection<double> CurrentReadings = new ObservableCollection<double>();
-        private ObservableCollection<double> VoltageReadings = new ObservableCollection<double>();
-        private string RawData;
-        private int NDataPointsReceived = 0;
+        private SerialPort SerialPortEsP;
+        private ObservableCollection<double> CurrentReadings = new ObservableCollection<double>();  // Collection of current readings
+        private ObservableCollection<double> VoltageReadings = new ObservableCollection<double>();  // Collection of potential readings
+        private string RawData;                                                                     
+        private int NDataPointsReceived = 0;                                                        // The number of data points from received the measurement
         private PlotModel plotModel = new PlotModel();
         private LineSeries plotData;
 
-        readonly static Dictionary<string, double> Prefix_Factor = new Dictionary<string, double> { { "a", 1e-18 }, { "f", 1e-15 }, { "p", 1e-12 }, { "n", 1e-9 }, { "u", 1e-6 }, { "m", 1e-3 },
-                                                                                                      { " ", 1 }, { "K", 1e3 }, { "M", 1e6 }, { "G", 1e9 }, { "T", 1e12 }, { "P", 1e15 }, { "E", 1e18 }};
+        readonly static Dictionary<string, double> SI_Prefix_Factor = new Dictionary<string, double> // The SI unit if the prefixes and their corresponding factors
+                                                                   { { "a", 1e-18 },
+                                                                     { "f", 1e-15 },
+                                                                     { "p", 1e-12 },
+                                                                     { "n", 1e-9 },
+                                                                     { "u", 1e-6 },
+                                                                     { "m", 1e-3 },
+                                                                     { " ", 1 },
+                                                                     { "K", 1e3 },
+                                                                     { "M", 1e6 },
+                                                                     { "G", 1e9 },
+                                                                     { "T", 1e12 },
+                                                                     { "P", 1e15 },
+                                                                     { "E", 1e18 }};
 
-        readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string> { { "aa", "E (V)" }, { "ba", "I (A)" }, { "dc", "Frequency" }, { "cc", "Z'" }, { "cd", "Z''" } };
+        readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string>  // Measurement parameter identifiers and their corresponding labels
+                                                                            { { "aa", "E (V)" },
+                                                                              { "ba", "I (A)" },
+                                                                              { "dc", "Frequency" },
+                                                                              { "cc", "Z'" },
+                                                                              { "cd", "Z''" } };
 
         public frmPlotExample()
         {
             InitializeComponent();
+            InitPlot();
+        }
+
+        /// <summary>
+        /// Initializes the plot with plot title, plot data (Line Series) and sets the axes 
+        /// </summary>
+        private void InitPlot()
+        {
             samplePlotView.Model = plotModel;
+            plotModel.Title = "LSV: I vs E";
             plotData = new LineSeries()
             {
                 Color = OxyColors.Green,
@@ -55,77 +79,34 @@ namespace EmStatPicoPlotExample
                 MarkerFill = OxyColors.Green,
                 MarkerStrokeThickness = 1.5,
             };
-            //CurrentReadings.CollectionChanged += NewDataAdded;
-            //VoltageReadings.CollectionChanged += NewDataAdded;
-        }
-        
-        private void NewDataAdded(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            UpdatePlot();
+            SetAxes();                                 // Set the plot axes
+            plotModel.Series.Add(plotData);            // Add the data series to the plot model
         }
 
         /// <summary>
-        /// Opens the serial ports and identifies the port connected to EsPico 
+        /// Sets the x-axis and y-axis for the plot with corresponding titles 
         /// </summary>
-        /// <returns> The serial port connected to EsPico</returns>
-        /// 
-        private SerialPort OpenSerialPort()
+        private void SetAxes()
         {
-            SerialPort serialPort = null;
-            string[] ports = SerialPort.GetPortNames();
-            for (int i = 0; i < ports.Length; i++)
+            var xAxis = new LinearAxis()
             {
-                serialPort = new SerialPort(ports[i]);
-                serialPort.DataBits = 8;
-                serialPort.Parity = Parity.None;
-                serialPort.StopBits = StopBits.One;
-                serialPort.BaudRate = 230400;
-                serialPort.ReadTimeout = 7000;
-                serialPort.WriteTimeout = 2;
-                try
-                {
-                    serialPort.Open();               //Open serial port 
-                    if (serialPort.IsOpen)
-                    {
-                        serialPort.Write("t\n");
-                        string response = serialPort.ReadLine();
-                        if (response.Contains("esp")) //Identify the port connected to EmStatPico
-                        {
-                            return serialPort;
-                        }
-                    }
-                }
-                catch (Exception exception)
-                {
-                    Console.WriteLine(exception);
-                }
-            }
-            return serialPort;
+                Position = OxyPlot.Axes.AxisPosition.Bottom,
+                Title = "Potential (V)"
+            };
+            var yAxis = new OxyPlot.Axes.LinearAxis()
+            {
+                Position = OxyPlot.Axes.AxisPosition.Left,
+                Title = "Current (uA)"
+            };
+            //Set the x-axis and y-axis for the plot model
+            plotModel.Axes.Add(xAxis);                 
+            plotModel.Axes.Add(yAxis);
         }
 
+        #region Events
+
         /// <summary>
-        /// Sends the script file to EsPico
-        /// </summary>
-        private void SendScriptFile()
-        {
-            using (StreamReader stream = new StreamReader(ScriptFilePath))
-            {
-                string line;
-                while (!stream.EndOfStream)
-                {
-                    line = stream.ReadLine();
-                    if (!(line == null))
-                    {
-                        //Console.WriteLine(line);
-                        line += "\n";
-                        SerialPortEsP.Write(line);
-                    }
-                }
-                lbConsole.Items.Add("Measurement started.");
-            }
-        }
-        /// <summary>
-        /// Connects to the EmStatPico if available .
+        /// Connects to the EmStatPico if available.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -144,7 +125,7 @@ namespace EmStatPicoPlotExample
         }
 
         /// <summary>
-        /// Disconnects the EmStatPico.
+        /// Disconnects the serial port connected to EsPico.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -153,6 +134,56 @@ namespace EmStatPicoPlotExample
             SerialPortEsP.Close();
             lbConsole.Items.Add($"Disconnected from EmStat Pico");
             EnableButtons(false);
+        }
+
+        /// <summary>
+        /// Opens the serial ports and identifies the port connected to EsPico 
+        /// </summary>
+        /// <returns> The serial port connected to EsPico</returns>
+        /// 
+        private SerialPort OpenSerialPort()
+        {
+            SerialPort serialPort = null;
+            string[] ports = SerialPort.GetPortNames();
+            for (int i = 0; i < ports.Length; i++)
+            {
+                serialPort = GetSerialPort(ports[i]);    // Fetch a new instance of the serial port with the port name
+                try
+                {
+                    serialPort.Open();                   // Open serial port 
+                    if (serialPort.IsOpen)
+                    {
+                        serialPort.Write("t\n");
+                        string response = serialPort.ReadLine();
+                        if (response.Contains("esp"))   // Identify the port connected to EmStatPico using "esp" in the version string
+                        {
+                            return serialPort;
+                        }
+                    }
+                }
+                catch (Exception exception)
+                {
+                    Console.WriteLine(exception);
+                }
+            }
+            return serialPort;
+        }
+
+        /// <summary>
+        /// Fetches a new instance of the serial port with the port name passed to it
+        /// </summary>
+        /// <param name="port"></param>
+        /// <returns></returns>
+        private SerialPort GetSerialPort(string port)
+        {
+            SerialPort serialPort = new SerialPort(port);
+            serialPort.DataBits = 8;
+            serialPort.Parity = Parity.None;
+            serialPort.StopBits = StopBits.One;
+            serialPort.BaudRate = 230400;
+            serialPort.ReadTimeout = 7000;
+            serialPort.WriteTimeout = 2;
+            return serialPort;
         }
 
         /// <summary>
@@ -174,16 +205,42 @@ namespace EmStatPicoPlotExample
         private void btnMeasure_Click(object sender, EventArgs e)
         {
             btnMeasure.Enabled = false;
-            ClearPlot();
-            plotModel.Series.Add(plotData);
-            SendScriptFile();
-            ProcessReceivedPackets();            //Parse the received response packets
-            //UpdatePlot();
+            ClearPlot();                                    // Clear the plot to begin a new measurement
+            NDataPointsReceived = 0;
+            bool IsMeasurementStarted = SendScriptFile();  // Send the script file for LSV measurement
+            if (IsMeasurementStarted)
+                ProcessReceivedPackets();                  // Parse the received response packets
+            else
+                lbConsole.Items.Add("Invalid script file");
             btnMeasure.Enabled = true;
         }
 
         /// <summary>
+        /// Sends the script file to EsPico
+        /// </summary>
+        private bool SendScriptFile()
+        {
+            string line = "";
+            using (StreamReader stream = new StreamReader(ScriptFilePath))
+            {
+                while (!stream.EndOfStream)
+                {
+                    line = stream.ReadLine();               // Read a line from the script file
+                    line += "\n";                           // Append a new line character to the line read
+                    SerialPortEsP.Write(line);              // Send the read line to EsPico
+                }
+                if (line != "")
+                {
+                    lbConsole.Items.Add("Measurement started."); 
+                    return true;                            // Return true if the script file is not empty and measurement has started
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Processes the response packets from the EsPico and store the response in RawData.
+        /// Possibilities of time out exception in case the script file was empty 
         /// </summary>
         private void ProcessReceivedPackets()
         {
@@ -191,35 +248,35 @@ namespace EmStatPicoPlotExample
             lbConsole.Items.Add("Measurement response received:");
             while (true)
             {
-                readLine = ReadResponseLine();
-                RawData += readLine;
-                if (readLine == "\n")
+                readLine = ReadResponseLine();              // Read a line from the response
+                RawData += readLine;                        // Add the response to raw data
+                if (readLine == "\n")                       
                     break;
-                NDataPointsReceived++;
-                ParsePackageLine(readLine);
-                UpdatePlot();
+                NDataPointsReceived++;                      // Increment the number of data points if the read line is not empty
+                ParsePackageLine(readLine);                 // Parse the line read 
+                UpdatePlot();                               // Update the plot with the new data point added after parsing a line
             }
             lbConsole.Items.Add($"Measurement completed.");
             lbConsole.Items.Add($"{NDataPointsReceived} data points received.");
         }
 
         /// <summary>
-        /// Reads a line from the data received
+        /// Reads characters and forms a line from the data received
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A line of response</returns>
         private string ReadResponseLine()
         {
             string readLine = "";
             int readChar;
             while (true)
             {
-                readChar = SerialPortEsP.ReadChar();
-                if (readChar > 0)
+                readChar = SerialPortEsP.ReadChar();        // Read a character from the serial port input buffer
+                if (readChar > 0)                           // Possibility of time out exception if the operation doesn't complete within the read time out
                 {
-                    readLine += (char)readChar;
+                    readLine += (char)readChar;             // Append the read character to readLine to form a response line
                     if ((char)readChar == '\n')
                     {
-                        return readLine;
+                        return readLine;                    // Return the readLine when a new line character is encountered
                     }
                 }
             }
@@ -235,20 +292,18 @@ namespace EmStatPicoPlotExample
             string paramValue;
             int startingIndex = responsePackageLine.IndexOf('P');
             int currentIndex = startingIndex + 1;
-            //lbConsole.Items.Add($"\nindex = {NDataPointsReceived}, ");
             while (!(responsePackageLine.Substring(currentIndex) == "\n"))
             {
-                paramIdentifier = responsePackageLine.Substring(currentIndex, 2);
-                paramValue = responsePackageLine.Substring(currentIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);
-                double paramValueWithPrefix = ParseParamValues(paramValue);
-                //lbConsole.Items.Add(MeasurementParameters[paramIdentifier] + " : " + string.Format("{0:0.###E+00}", paramValueWithPrefix).ToString() + " ");
+                paramIdentifier = responsePackageLine.Substring(currentIndex, 2);                           // The string that identifies the measurement parameter
+                paramValue = responsePackageLine.Substring(currentIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);   // The value of the measurement parameter
+                double paramValueWithPrefix = ParseParamValues(paramValue);                                 // Append the SI prefix to the value
                 switch (paramIdentifier)
                 {
-                    case POTENTIAL_READING:
-                        VoltageReadings.Add(paramValueWithPrefix);      //If potential reading add the value to the VoltageReadings array
+                    case "aa":                                                 //Potential reading
+                        VoltageReadings.Add(paramValueWithPrefix);             //If potential reading add the value to the VoltageReadings array
                         break;
-                    case CURRENT_READING:
-                        CurrentReadings.Add(paramValueWithPrefix);      //If current reading add the value to the CurrentReadings array
+                    case "ba":                                                 //Current reading
+                        CurrentReadings.Add(paramValueWithPrefix * 1e6);       //If current reading add the value to the CurrentReadings array
                         break;
                 }
                 currentIndex = currentIndex + 11;
@@ -262,11 +317,11 @@ namespace EmStatPicoPlotExample
         /// <returns>The parameter value after appending the unit prefix</returns>
         private double ParseParamValues(string paramValueString)
         {
-            char strUnitPrefix = paramValueString[7];
-            string strvalue = paramValueString.Remove(7);
-            int value = Convert.ToInt32(strvalue, 16);         // Convert hex value to int
+            char strUnitPrefix = paramValueString[7];           //Identify the SI unit prefix from the package at position 8
+            string strvalue = paramValueString.Remove(7);       //Strip the value of the measured parameter from the package
+            int value = Convert.ToInt32(strvalue, 16);         // Convert the hex value to int
             double paramValue = value - OFFSET_VALUE;          //Values offset to receive only positive values
-            return (paramValue * Prefix_Factor[strUnitPrefix.ToString()]);
+            return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]); //Return the value of the parameter after appending the SI unit prefix
         }
 
         /// <summary>
@@ -274,17 +329,19 @@ namespace EmStatPicoPlotExample
         /// </summary>
         private void UpdatePlot()
         {
-            plotData.Points.Add(new DataPoint(VoltageReadings.Last(), CurrentReadings.Last()));
-            plotData.XAxis.Title = "Potential/V";
-            plotData.YAxis.Title = "Current/A";
+            plotData.Points.Add(new DataPoint(VoltageReadings.Last(), CurrentReadings.Last())); // Add the last added measurement values as new data points and update the plot
             plotModel.InvalidatePlot(true);
         }
 
+        /// <summary>
+        /// Clears the plot before every measurement
+        /// </summary>
         private void ClearPlot()
         {
-            plotModel.Series.Clear();
             plotData.Points.Clear();
             plotModel.InvalidatePlot(true);
         }
+
+        #endregion
     }
 }

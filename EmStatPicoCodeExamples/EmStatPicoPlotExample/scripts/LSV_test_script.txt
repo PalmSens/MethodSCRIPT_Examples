@@ -3,7 +3,7 @@ var c
 var p
 set_pgstat_mode 3
 set_max_bandwidth 200
-set_cr 500n
+set_cr 500u
 set_e -500m
 cell_on
 wait 1
