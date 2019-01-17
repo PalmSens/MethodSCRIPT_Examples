@@ -112,7 +112,7 @@ namespace EmStatPicoPlotExample
         /// <param name="e"></param>
         private void btnConnect_Click(object sender, EventArgs e)
         {
-            SerialPortEsP = OpenSerialPort();        // Open and identify the port connected to EsPico
+            SerialPortEsP = OpenSerialPort();        // Open and identify the port connected to ESPico
             if (SerialPortEsP != null && SerialPortEsP.IsOpen)
             {
                 lbConsole.Items.Add($"Connected to EmStat Pico");
@@ -137,9 +137,9 @@ namespace EmStatPicoPlotExample
         }
 
         /// <summary>
-        /// Opens the serial ports and identifies the port connected to EsPico 
+        /// Opens the serial ports and identifies the port connected to ESPico 
         /// </summary>
-        /// <returns> The serial port connected to EsPico</returns>
+        /// <returns> The serial port connected to ESPico</returns>
         /// 
         private SerialPort OpenSerialPort()
         {
@@ -207,18 +207,15 @@ namespace EmStatPicoPlotExample
             btnMeasure.Enabled = false;
             ClearPlot();                                    // Clear the plot to begin a new measurement
             NDataPointsReceived = 0;
-            bool IsMeasurementStarted = SendScriptFile();  // Send the script file for LSV measurement
-            if (IsMeasurementStarted)
-                ProcessReceivedPackets();                  // Parse the received response packets
-            else
-                lbConsole.Items.Add("Invalid script file");
+            SendScriptFile();  // Send the script file for LSV measurement
+            ProcessReceivedPackets();                      // Parse the received response packets
             btnMeasure.Enabled = true;
         }
 
         /// <summary>
-        /// Sends the script file to EsPico
+        /// Sends the script file to ESPico
         /// </summary>
-        private bool SendScriptFile()
+        private void SendScriptFile()
         {
             string line = "";
             using (StreamReader stream = new StreamReader(ScriptFilePath))
@@ -227,25 +224,20 @@ namespace EmStatPicoPlotExample
                 {
                     line = stream.ReadLine();               // Read a line from the script file
                     line += "\n";                           // Append a new line character to the line read
-                    SerialPortEsP.Write(line);              // Send the read line to EsPico
+                    SerialPortEsP.Write(line);              // Send the read line to ESPico
                 }
-                if (line != "")
-                {
-                    lbConsole.Items.Add("Measurement started."); 
-                    return true;                            // Return true if the script file is not empty and measurement has started
-                }
+                lbConsole.Items.Add("Measurement started.");
             }
-            return false;
         }
 
         /// <summary>
-        /// Processes the response packets from the EsPico and store the response in RawData.
+        /// Processes the response packets from the ESPico and store the response in RawData.
         /// Possibilities of time out exception in case the script file was empty 
         /// </summary>
         private void ProcessReceivedPackets()
         {
             string readLine = "";
-            lbConsole.Items.Add("Measurement response received:");
+            lbConsole.Items.Add("Receiving measurement response:");
             while (true)
             {
                 readLine = ReadResponseLine();              // Read a line from the response
@@ -303,7 +295,7 @@ namespace EmStatPicoPlotExample
                         VoltageReadings.Add(paramValueWithPrefix);             //If potential reading add the value to the VoltageReadings array
                         break;
                     case "ba":                                                 //Current reading
-                        CurrentReadings.Add(paramValueWithPrefix * 1e6);       //If current reading add the value to the CurrentReadings array
+                        CurrentReadings.Add(paramValueWithPrefix * 1e6);       //If current reading add the value in uA to the CurrentReadings array
                         break;
                 }
                 currentIndex = currentIndex + 11;
