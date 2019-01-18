@@ -41,7 +41,7 @@ namespace EmStatConsoleExample
 
         readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string>  // Measurement parameter identifiers and their corresponding labels
                                                                             { { "aa", "E (V)" },
-                                                                              { "ba", "I (A)" },
+                                                                              { "ba", "i (A)" },
                                                                               { "dc", "Frequency (Hz)" },
                                                                               { "cc", "Z' (Ohm)" },
                                                                               { "cd", "Z'' (Ohm)" } };
@@ -129,7 +129,7 @@ namespace EmStatConsoleExample
                     line += "\n";                           // Append a new line character to the line read
                     SerialPortEsP.Write(line);              // Send the read line to ESPico
                 }
-                Console.Write("Measurement started.\n");
+                Console.WriteLine("Measurement started.");
             }
         }
 
@@ -191,7 +191,7 @@ namespace EmStatConsoleExample
                 paramIdentifier = responsePackageLine.Substring(currentIndex, 2);                           // The string that identifies the measurement parameter
                 paramValue = responsePackageLine.Substring(currentIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);   // The value of the measurement parameter
                 double paramValueWithPrefix = ParseParamValues(paramValue);                                 // Append the SI prefix to the value
-                Console.Write("{0,5} : {1,10} {2,4}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
+                Console.Write("{0,5} = {1,10} {2,4}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
                 switch(paramIdentifier)
                 {
                     case "aa":                                          // Potential reading
