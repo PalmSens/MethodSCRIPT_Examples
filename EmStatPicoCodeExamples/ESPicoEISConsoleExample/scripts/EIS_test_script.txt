@@ -4,7 +4,7 @@ var r
 var j
 set_pgstat_mode 3
 set_cr 10m
-meas_loop_eis f r j 15m 200k 500 11 0
+meas_loop_eis f r j 15m 1000k 1000 11 0
 pck_start
 pck_add f
 pck_add r

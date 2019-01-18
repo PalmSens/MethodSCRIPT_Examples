@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.IO.Ports;
+using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace EmStatConsoleExample
+namespace ESPicoEISConsoleExample
 {
     class Program
     {
-        static string ScriptFileName = "LSV_test_script.txt";                                        // Name of the script file
+        static string ScriptFileName = "EIS_test_script.txt";                                        // Name of the script file
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -19,8 +20,9 @@ namespace EmStatConsoleExample
         const int OFFSET_VALUE = 0x8000000;                                                          // Offset value to receive positive values
 
         static SerialPort SerialPortEsP;
-        static List<double> CurrentReadings = new List<double>();                                    // Collection of current readings
-        static List<double> VoltageReadings = new List<double>();                                    // Collection of potential readings
+        private static List<double> FrequencyValues = new List<double>();                            // Collection of Frequency values
+        private static List<double> RealImpedanceValues = new List<double>();                        // Collection of real Impedance values
+        private static List<double> ImgImpedanceValues = new List<double>();                         // Collection of imaginary Impedance values
         static string RawData;
         static int NDataPointsReceived = 0;                                                          // The number of data points received from the measurement
 
@@ -40,9 +42,7 @@ namespace EmStatConsoleExample
                                                                      { "E", 1e18 }};
 
         readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string>  // Measurement parameter identifiers and their corresponding labels
-                                                                            { { "aa", "E (V)" },
-                                                                              { "ba", "I (A)" },
-                                                                              { "dc", "Frequency (Hz)" },
+                                                                            { { "dc", "Frequency (Hz)" },
                                                                               { "cc", "Z' (Ohm)" },
                                                                               { "cd", "Z'' (Ohm)" } };
 
@@ -52,7 +52,7 @@ namespace EmStatConsoleExample
             if (SerialPortEsP != null && SerialPortEsP.IsOpen)
             {
                 Console.WriteLine("\nConnected to EmStat Pico.\n");
-                SendScriptFile();                               // Send the script file for LSV measurement
+                SendScriptFile();                               // Send the script file for EIS measurement
                 ProcessReceivedPackets();                       // Parse the received response packets
                 SerialPortEsP.Close();                          // Close the serial port
             }
@@ -78,12 +78,12 @@ namespace EmStatConsoleExample
                 serialPort = GetSerialPort(ports[i]);
                 try
                 {
-                    serialPort.Open();                  //Open serial port 
+                    serialPort.Open();                  // Open serial port 
                     if (serialPort.IsOpen)
                     {
                         serialPort.Write("t\n");
                         string response = serialPort.ReadLine();
-                        if (response.Contains("esp"))   //Identify the port connected to EmStatPico
+                        if (response.Contains("esp"))   // Identify the port connected to EmStatPico
                         {
                             serialPort.ReadTimeout = 7000;
                             return serialPort;
@@ -191,14 +191,19 @@ namespace EmStatConsoleExample
                 paramIdentifier = responsePackageLine.Substring(currentIndex, 2);                           // The string that identifies the measurement parameter
                 paramValue = responsePackageLine.Substring(currentIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);   // The value of the measurement parameter
                 double paramValueWithPrefix = ParseParamValues(paramValue);                                 // Append the SI prefix to the value
-                Console.Write("{0,5} : {1,10} {2,4}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
-                switch(paramIdentifier)
+                switch (paramIdentifier)
                 {
-                    case "aa":                                          // Potential reading
-                        VoltageReadings.Add(paramValueWithPrefix);      // If potential reading add the value to the VoltageReadings array
+                    case "dc":                                                 // Frequency reading
+                        Console.Write("{0,14} :{1,10} {2,4}", MeasurementParameters[paramIdentifier], string.Format("{0:0.00}", paramValueWithPrefix).ToString(), " ");
+                        FrequencyValues.Add(paramValueWithPrefix);             // If frequency reading add the value to the FrequencyReadings array
                         break;
-                    case "ba":                                          // Current reading
-                        CurrentReadings.Add(paramValueWithPrefix);      // If current reading add the value to the CurrentReadings array
+                    case "cc":                                                 // Real Impedance reading
+                        Console.Write("{0,8} :{1,10} {2,4}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
+                        RealImpedanceValues.Add(paramValueWithPrefix);         // If Z(Real) reading add the value to RealImpedanceReadings array
+                        break;
+                    case "cd":                                                 // Imaginary Impedance reading
+                        Console.Write("{0,8} :{1,10} {2,4}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
+                        ImgImpedanceValues.Add(paramValueWithPrefix);          // If Z(Img) reading add the value to ImgImpedanceReadings array
                         break;
                 }
                 currentIndex = currentIndex + 11;
@@ -212,11 +217,11 @@ namespace EmStatConsoleExample
         /// <returns>The parameter value after appending the unit prefix</returns>
         private static double ParseParamValues(string paramValueString)
         {
-            char strUnitPrefix = paramValueString[7];                         //Identify the SI unit prefix from the package at position 8
-            string strvalue = paramValueString.Remove(7);                     //Strip the value of the measured parameter from the package
+            char strUnitPrefix = paramValueString[7];                         // Identify the SI unit prefix from the package at position 8
+            string strvalue = paramValueString.Remove(7);                     // Strip the value of the measured parameter from the package
             int value = Convert.ToInt32(strvalue, 16);                        // Convert the hex value to int
-            double paramValue = value - OFFSET_VALUE;                         //Values offset to receive only positive values
-            return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]); //Return the value of the parameter after appending the SI unit prefix
+            double paramValue = value - OFFSET_VALUE;                         // Values offset to receive only positive values
+            return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]); // Return the value of the parameter after appending the SI unit prefix
         }
     }
 }
