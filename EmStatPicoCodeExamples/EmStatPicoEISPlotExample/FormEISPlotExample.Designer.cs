@@ -156,10 +156,10 @@
             // bodePlotView
             // 
             this.bodePlotView.BackColor = System.Drawing.Color.White;
-            this.bodePlotView.Location = new System.Drawing.Point(444, 3);
+            this.bodePlotView.Location = new System.Drawing.Point(445, 3);
             this.bodePlotView.Name = "bodePlotView";
             this.bodePlotView.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.bodePlotView.Size = new System.Drawing.Size(471, 420);
+            this.bodePlotView.Size = new System.Drawing.Size(470, 420);
             this.bodePlotView.TabIndex = 1;
             this.bodePlotView.Text = "plotView2";
             this.bodePlotView.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -174,7 +174,11 @@
             this.Controls.Add(this.grpConnection);
             this.Controls.Add(this.grpConsole);
             this.Controls.Add(this.grpMeasurement);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "frmEISPlotExample";
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "EIS Plot Example";
             this.grpConnection.ResumeLayout(false);
             this.grpConsole.ResumeLayout(false);

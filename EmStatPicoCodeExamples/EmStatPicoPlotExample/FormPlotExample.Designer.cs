@@ -124,6 +124,7 @@
             // 
             this.samplePlotView.BackColor = System.Drawing.Color.White;
             this.samplePlotView.Location = new System.Drawing.Point(7, 64);
+            this.samplePlotView.Margin = new System.Windows.Forms.Padding(5, 3, 5, 3);
             this.samplePlotView.Name = "samplePlotView";
             this.samplePlotView.PanCursor = System.Windows.Forms.Cursors.Hand;
             this.samplePlotView.Size = new System.Drawing.Size(483, 427);
@@ -141,6 +142,9 @@
             this.Controls.Add(this.grpMeasurement);
             this.Controls.Add(this.grpConsole);
             this.Controls.Add(this.grpConnection);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "frmPlotExample";
             this.Text = "Plot Example";
             this.grpConnection.ResumeLayout(false);

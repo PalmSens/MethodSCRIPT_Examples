@@ -10,7 +10,7 @@ namespace EmStatConsoleExample
 {
     class Program
     {
-        static string ScriptFileName = "LSV_test_script.txt";                                        // Name of the script file
+        static string ScriptFileName = "LSV_on_1KOhm.txt";                                        // Name of the script file
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -92,7 +92,6 @@ namespace EmStatConsoleExample
                 }
                 catch (Exception exception)
                 {
-                    Console.WriteLine(exception);
                 }
             }
             return serialPort;
@@ -191,7 +190,7 @@ namespace EmStatConsoleExample
                 paramIdentifier = responsePackageLine.Substring(currentIndex, 2);                           // The string that identifies the measurement parameter
                 paramValue = responsePackageLine.Substring(currentIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);   // The value of the measurement parameter
                 double paramValueWithPrefix = ParseParamValues(paramValue);                                 // Append the SI prefix to the value
-                Console.Write("{0,5} "=" {1,10} {2,4}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
+                Console.Write("{0,5} = {1,10} {2,4}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
                 switch(paramIdentifier)
                 {
                     case "aa":                                          // Potential reading

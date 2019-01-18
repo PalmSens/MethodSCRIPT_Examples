@@ -19,7 +19,7 @@ namespace EmStatPicoPlotExample
 {
     public partial class frmPlotExample : Form
     {
-        static string ScriptFileName = "LSV_test_script.txt";               
+        static string ScriptFileName = "LSV_on_1KOhm.txt";               
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";        // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -70,6 +70,7 @@ namespace EmStatPicoPlotExample
         {
             samplePlotView.Model = plotModel;
             plotModel.Title = "LSV: I vs E";
+            plotModel.TitleFontSize = 14;
             plotData = new LineSeries()
             {
                 Color = OxyColors.Green,
@@ -91,11 +92,13 @@ namespace EmStatPicoPlotExample
             var xAxis = new LinearAxis()
             {
                 Position = OxyPlot.Axes.AxisPosition.Bottom,
+                MajorGridlineStyle = LineStyle.Dash,
                 Title = "Potential (V)"
             };
             var yAxis = new OxyPlot.Axes.LinearAxis()
             {
                 Position = OxyPlot.Axes.AxisPosition.Left,
+                MajorGridlineStyle = LineStyle.Dash,
                 Title = "Current (uA)"
             };
             //Set the x-axis and y-axis for the plot model
@@ -163,7 +166,6 @@ namespace EmStatPicoPlotExample
                 }
                 catch (Exception exception)
                 {
-                    Console.WriteLine(exception);
                 }
             }
             return serialPort;

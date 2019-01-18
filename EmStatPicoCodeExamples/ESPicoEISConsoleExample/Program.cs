@@ -11,7 +11,7 @@ namespace ESPicoEISConsoleExample
 {
     class Program
     {
-        static string ScriptFileName = "EIS_test_script.txt";                                        // Name of the script file
+        static string ScriptFileName = "EIS_on_1KOhm.txt";                                        // Name of the script file
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -85,14 +85,13 @@ namespace ESPicoEISConsoleExample
                         string response = serialPort.ReadLine();
                         if (response.Contains("esp"))   // Identify the port connected to EmStatPico
                         {
-                            serialPort.ReadTimeout = 7000;
+                            serialPort.ReadTimeout = 70000;
                             return serialPort;
                         }
                     }
                 }
                 catch (Exception exception)
                 {
-                    Console.WriteLine(exception);
                 }
             }
             return serialPort;

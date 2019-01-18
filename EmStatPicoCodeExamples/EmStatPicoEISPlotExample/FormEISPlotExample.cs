@@ -15,7 +15,7 @@ namespace EmStatPicoEISPlotExample
 {
     public partial class frmEISPlotExample : Form
     {
-        static string ScriptFileName = "EIS_test_script.txt";
+        static string ScriptFileName = "EIS_on_1KOhm.txt";
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";        // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -136,14 +136,17 @@ namespace EmStatPicoEISPlotExample
             {
                 Position = OxyPlot.Axes.AxisPosition.Bottom,
                 MajorGridlineStyle = LineStyle.Dash,
+                IsZoomEnabled = true,
                 Title = "Z-Re (Ohm)"
             };
             var yAxisNyquistPlot = new LinearAxis()
             {
                 Position = OxyPlot.Axes.AxisPosition.Left,
                 MajorGridlineStyle = LineStyle.Dash,
+                IsZoomEnabled = true,
                 Title = "Z-Im (Ohm)"
             };
+            xAxisNyquistPlot.MinimumMajorStep = yAxisNyquistPlot.MinimumMajorStep;
             //Add the axes to the Nyquist plot model
             NyquistPlotModel.Axes.Add(xAxisNyquistPlot);
             NyquistPlotModel.Axes.Add(yAxisNyquistPlot);
@@ -159,6 +162,7 @@ namespace EmStatPicoEISPlotExample
                 MajorGridlineStyle = LineStyle.Dash,
                 Key = "Frequency",
                 Position = AxisPosition.Bottom,
+                IsZoomEnabled = true,
                 Title = "Frequency (HZ)",
             };
             var yAxisBodePlot = new LogarithmicAxis()
@@ -166,6 +170,7 @@ namespace EmStatPicoEISPlotExample
                 MajorGridlineStyle = LineStyle.Dash,
                 Key = "Z",
                 Position = AxisPosition.Left,
+                IsZoomEnabled = true,
                 Title = "Z (Ohm)",
                 TitleColor = OxyColors.Blue
             };
@@ -174,6 +179,7 @@ namespace EmStatPicoEISPlotExample
                 MajorGridlineStyle = LineStyle.Dash,
                 Key = "Phase",
                 Position = AxisPosition.Right,
+                IsZoomEnabled = true,
                 Title = "Phase (deg)",
                 TitleColor = OxyColors.Red
             };
@@ -237,13 +243,13 @@ namespace EmStatPicoEISPlotExample
                         string response = serialPort.ReadLine();
                         if (response.Contains("esp"))   // Identify the port connected to EmStatPico using "esp" in the version string
                         {
+                            serialPort.ReadTimeout = 70000;
                             return serialPort;
                         }
                     }
                 }
                 catch (Exception exception)
                 {
-                    Console.WriteLine(exception);
                 }
             }
             return serialPort;
@@ -261,7 +267,7 @@ namespace EmStatPicoEISPlotExample
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
             serialPort.BaudRate = 230400;
-            serialPort.ReadTimeout = 7000;
+            serialPort.ReadTimeout = 1000;
             serialPort.WriteTimeout = 2;
             return serialPort;
         }
