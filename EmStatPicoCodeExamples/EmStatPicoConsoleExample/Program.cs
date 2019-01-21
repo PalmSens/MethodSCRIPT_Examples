@@ -10,7 +10,7 @@ namespace EmStatConsoleExample
 {
     class Program
     {
-        static string ScriptFileName = "LSV_on_1KOhm.txt";                                        // Name of the script file
+        static string ScriptFileName = "LSV_on_1KOhm.txt";                                           // Name of the script file
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -78,12 +78,12 @@ namespace EmStatConsoleExample
                 serialPort = GetSerialPort(ports[i]);
                 try
                 {
-                    serialPort.Open();                  //Open serial port 
+                    serialPort.Open();                  // Open serial port 
                     if (serialPort.IsOpen)
                     {
                         serialPort.Write("t\n");
                         string response = serialPort.ReadLine();
-                        if (response.Contains("esp"))   //Identify the port connected to EmStatPico
+                        if (response.Contains("esp"))   // Identify the port connected to EmStatPico
                         {
                             serialPort.ReadTimeout = 7000;
                             return serialPort;
@@ -211,11 +211,11 @@ namespace EmStatConsoleExample
         /// <returns>The parameter value after appending the unit prefix</returns>
         private static double ParseParamValues(string paramValueString)
         {
-            char strUnitPrefix = paramValueString[7];                         //Identify the SI unit prefix from the package at position 8
-            string strvalue = paramValueString.Remove(7);                     //Strip the value of the measured parameter from the package
+            char strUnitPrefix = paramValueString[7];                         // Identify the SI unit prefix from the package at position 8
+            string strvalue = paramValueString.Remove(7);                     // Strip the value of the measured parameter from the package
             int value = Convert.ToInt32(strvalue, 16);                        // Convert the hex value to int
-            double paramValue = value - OFFSET_VALUE;                         //Values offset to receive only positive values
-            return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]); //Return the value of the parameter after appending the SI unit prefix
+            double paramValue = value - OFFSET_VALUE;                         // Values offset to receive only positive values
+            return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]); // Return the value of the parameter after appending the SI unit prefix
         }
     }
 }

@@ -11,7 +11,7 @@ namespace ESPicoEISConsoleExample
 {
     class Program
     {
-        static string ScriptFileName = "EIS_on_1KOhm.txt";                                        // Name of the script file
+        static string ScriptFileName = "EIS_on_1KOhm.txt";                                           // Name of the script file
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);

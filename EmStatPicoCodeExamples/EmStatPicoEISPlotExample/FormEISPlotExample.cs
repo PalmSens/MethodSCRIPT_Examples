@@ -74,7 +74,7 @@ namespace EmStatPicoEISPlotExample
             SetPlot(NyquistPlotModel, "Z(Re) vs Z(Im)");              // Set up the Nyquist plot
 
             BodePlotModel = new PlotModel();
-            SetPlot(BodePlotModel, "Log f vs Log Z/Phase");      // Set up the Bode plot
+            SetPlot(BodePlotModel, "Log f vs Log Z/Phase");          // Set up the Bode plot
 
             InitializePlotData();                                    // Initialize the plot data for Nyquist and Bode plots
 
@@ -338,7 +338,7 @@ namespace EmStatPicoEISPlotExample
             ClearPlots();                                    // Clear the plot to begin a new measurement
             NDataPointsReceived = 0;
             SendScriptFile();                               // Send the script file for EIS measurement
-            ProcessReceivedPackets();                      // Parse the received response packets
+            ProcessReceivedPackets();                       // Parse the received response packets
             btnMeasure.Enabled = true;
         }
 
@@ -422,13 +422,13 @@ namespace EmStatPicoEISPlotExample
                 double paramValueWithPrefix = ParseParamValues(paramValue);                                 // Append the SI prefix to the value
                 switch (paramIdentifier)
                 {
-                    case "dc":                                                 //Frequency reading
+                    case "dc":                                               //Frequency reading
                         FrequencyValues.Add(paramValueWithPrefix);           //If frequency reading add the value to the FrequencyReadings list
                         break;
-                    case "cc":                                                 //Real Impedance reading
+                    case "cc":                                               //Real Impedance reading
                         RealImpedanceValues.Add(paramValueWithPrefix);       //If Z(Real) reading add the value to RealImpedanceReadings list
                         break;
-                    case "cd":                                                 //Imaginary Impedance reading
+                    case "cd":                                               //Imaginary Impedance reading
                         ImgImpedanceValues.Add(paramValueWithPrefix);        //If Z(Img) reading add the value to ImgImpedanceReadings list
                         break;
                 }
