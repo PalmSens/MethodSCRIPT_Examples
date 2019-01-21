@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Windows.Forms;
 using System.Numerics;
 using System.Drawing;
+using OxyPlot.WindowsForms;
 
 namespace EmStatPicoEISPlotExample
 {
@@ -32,8 +33,8 @@ namespace EmStatPicoEISPlotExample
 
         private string RawData;
         private int NDataPointsReceived = 0;                                                        // The number of data points received from the measurement
-        private PlotModel NyquistPlotModel = new PlotModel();                                       
-        private PlotModel BodePlotModel = new PlotModel();
+        private PlotModel NyquistPlotModel;
+        private PlotModel BodePlotModel;
         private LineSeries NyquistPlotData;
         private LineSeries BodePlotDataMagnitude;
         private LineSeries BodePlotDataPhase;
@@ -54,9 +55,7 @@ namespace EmStatPicoEISPlotExample
                                                                      { "E", 1e18 }};
 
         readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string>  // Measurement parameter identifiers and their corresponding labels
-                                                                            { { "aa", "E (V)" },
-                                                                              { "ba", "I (A)" },
-                                                                              { "dc", "Frequency (Hz)" },
+                                                                            { { "dc", "Frequency (Hz)" },
                                                                               { "cc", "Z' (Ohm)" },
                                                                               { "cd", "Z'' (Ohm)" } };
 
@@ -71,18 +70,30 @@ namespace EmStatPicoEISPlotExample
         /// </summary>
         private void InitPlot()
         {
-            NyquistPlotModel.Title = "Z(Re) vs Z(Im)";
-            NyquistPlotModel.TitleFontSize = 14;
-            BodePlotModel.Title = "Frequency vs Log Z/Phase";
-            BodePlotModel.TitleFontSize = 14;
+            NyquistPlotModel = new PlotModel();
+            SetPlot(NyquistPlotModel, "Z(Re) vs Z(Im)");              // Set up the Nyquist plot
 
-            nyquistPlotView.Model = NyquistPlotModel;
-            bodePlotView.Model = BodePlotModel;
+            BodePlotModel = new PlotModel();
+            SetPlot(BodePlotModel, "Log f vs Log Z/Phase");      // Set up the Bode plot
 
-            SetAxes();                                               // Set the plot axes
             InitializePlotData();                                    // Initialize the plot data for Nyquist and Bode plots
-            NyquistPlotModel.IsLegendVisible = true;
-            BodePlotModel.IsLegendVisible = true;
+
+            nyquistPlotView.Model = NyquistPlotModel;                
+            bodePlotView.Model = BodePlotModel;
+        }
+
+        /// <summary>
+        /// Sets the plot type, title and axes
+        /// </summary>
+        /// <param name="plotModel"></param>
+        /// <param name="title"></param>
+        private void SetPlot(PlotModel plotModel, string title)
+        {
+            plotModel.PlotType = plotModel.Equals(NyquistPlotModel) ? PlotType.Cartesian : PlotType.XY;
+            plotModel.Title = title;
+            plotModel.IsLegendVisible = true;
+            plotModel.TitleFontSize = 14;
+            SetAxes(plotModel);                                     // Set the plot axes
         }
 
         /// <summary>
@@ -102,6 +113,13 @@ namespace EmStatPicoEISPlotExample
             BodePlotModel.Series.Add(BodePlotDataPhase);            // Add the data series to the plot model
         }
 
+        /// <summary>
+        /// Returns a new line series
+        /// </summary>
+        /// <param name="color"></param>
+        /// <param name="markerType"></param>
+        /// <param name="title"></param>
+        /// <returns> A new line series</returns>
         private LineSeries GetLineSeries(OxyColor color, MarkerType markerType, string title)
         {
             LineSeries lineSeries = new LineSeries()
@@ -119,12 +137,20 @@ namespace EmStatPicoEISPlotExample
         }
 
         /// <summary>
-        /// Sets the x-axis and y-axis for the plot with corresponding axis labels 
+        /// Sets the x-axis and y-axis for the plots with corresponding axis labels 
         /// </summary>
-        private void SetAxes()
+        private void SetAxes(PlotModel plotModel)
         {
-            SetAxesNyquistPlot();
-            SetAxesBodePlot();
+            if (plotModel.Equals(NyquistPlotModel))
+            {
+                SetAxesNyquistPlot();
+                ChangePanMouseButton(nyquistPlotView);
+            }
+            else if (plotModel.Equals(BodePlotModel))
+            {
+                SetAxesBodePlot();
+                ChangePanMouseButton(bodePlotView);
+            }
         }
 
         /// <summary>
@@ -132,61 +158,79 @@ namespace EmStatPicoEISPlotExample
         /// </summary>
         private void SetAxesNyquistPlot()
         {
-            var xAxisNyquistPlot = new LinearAxis()
-            {
-                Position = OxyPlot.Axes.AxisPosition.Bottom,
-                MajorGridlineStyle = LineStyle.Dash,
-                IsZoomEnabled = true,
-                Title = "Z-Re (Ohm)"
-            };
-            var yAxisNyquistPlot = new LinearAxis()
-            {
-                Position = OxyPlot.Axes.AxisPosition.Left,
-                MajorGridlineStyle = LineStyle.Dash,
-                IsZoomEnabled = true,
-                Title = "Z-Im (Ohm)"
-            };
-            xAxisNyquistPlot.MinimumMajorStep = yAxisNyquistPlot.MinimumMajorStep;
+            var xAxisNyquistPlot = GetLinearAxis("Z (Ohm)", AxisPosition.Bottom);
+            var yAxisNyquistPlot = GetLinearAxis("-Z'' (Ohm)", AxisPosition.Left);
+
             //Add the axes to the Nyquist plot model
             NyquistPlotModel.Axes.Add(xAxisNyquistPlot);
             NyquistPlotModel.Axes.Add(yAxisNyquistPlot);
         }
 
         /// <summary>
-        /// Sets the axes for Bode plot with grid lines and labels
+        /// Gets a new instance of linear axis at the specified position with given title
+        /// </summary>
+        /// <param name="title">The axis label</param>
+        /// <param name="position">The axis position</param>
+        /// <returns></returns>
+        private LinearAxis GetLinearAxis(string title, AxisPosition position)
+        {
+            var linearAxis = new LinearAxis()
+            {
+                Position = position,
+                MajorGridlineStyle = LineStyle.Dash,
+                IsZoomEnabled = true,
+                IsPanEnabled = true,
+                Title = title
+            };
+            return linearAxis;
+        }
+
+        /// <summary>
+        /// Sets the axes for Bode plot
         /// </summary>
         private void SetAxesBodePlot()
-        { 
-            var xAxisBodePlot = new LogarithmicAxis()
-            {
-                MajorGridlineStyle = LineStyle.Dash,
-                Key = "Frequency",
-                Position = AxisPosition.Bottom,
-                IsZoomEnabled = true,
-                Title = "Frequency (HZ)",
-            };
-            var yAxisBodePlot = new LogarithmicAxis()
-            {
-                MajorGridlineStyle = LineStyle.Dash,
-                Key = "Z",
-                Position = AxisPosition.Left,
-                IsZoomEnabled = true,
-                Title = "Z (Ohm)",
-                TitleColor = OxyColors.Blue
-            };
-            var yAxisBodePlotSecondary = new LogarithmicAxis()
-            {
-                MajorGridlineStyle = LineStyle.Dash,
-                Key = "Phase",
-                Position = AxisPosition.Right,
-                IsZoomEnabled = true,
-                Title = "Phase (deg)",
-                TitleColor = OxyColors.Red
-            };
+        {
+            var xAxisBodePlot = GetLogAxis("Frequency", "Frequency (HZ)", AxisPosition.Bottom, OxyColors.Black);
+            var yAxisBodePlot = GetLogAxis("Z", "Z (Ohm)", AxisPosition.Left, OxyColors.Blue);
+            var yAxisSecondaryBodePlot = GetLogAxis("Phase", "-Phase (deg)", AxisPosition.Right, OxyColors.Red);
+
             //Add the axes to the Bode plot model
             BodePlotModel.Axes.Add(xAxisBodePlot);
             BodePlotModel.Axes.Add(yAxisBodePlot);
-            BodePlotModel.Axes.Add(yAxisBodePlotSecondary);
+            BodePlotModel.Axes.Add(yAxisSecondaryBodePlot);
+        }
+
+        /// <summary>
+        /// Change the bind mouse button for panning from default right to left.
+        /// </summary>
+        /// <param name="plotView"></param>
+        private void ChangePanMouseButton(PlotView plotView)
+        {
+            plotView.Controller = new PlotController();
+            plotView.Controller.UnbindMouseDown(OxyMouseButton.Right);
+            plotView.Controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
+        }
+
+        /// <summary>
+        /// Gets a new instance of logarathmic axis at the given position with the given key and title
+        /// </summary>
+        /// <param name="key">The key to identify the axis</param>
+        /// <param name="title">The axis title/label </param>
+        /// <param name="position">The position of the axis</param>
+        /// <returns></returns>
+        private LogarithmicAxis GetLogAxis(string key, string title, AxisPosition position, OxyColor color)
+        {
+            var logAxis = new LogarithmicAxis()
+            {
+                MajorGridlineStyle = LineStyle.Dash,
+                Key = key,
+                Position = position,
+                IsZoomEnabled = true,
+                IsPanEnabled = true,
+                Title = title,
+                TitleColor = color
+            };
+            return logAxis;
         }
 
         #region Events
@@ -291,7 +335,7 @@ namespace EmStatPicoEISPlotExample
         private void btnMeasure_Click(object sender, EventArgs e)
         {
             btnMeasure.Enabled = false;
-            ClearPlot();                                    // Clear the plot to begin a new measurement
+            ClearPlots();                                    // Clear the plot to begin a new measurement
             NDataPointsReceived = 0;
             SendScriptFile();                               // Send the script file for EIS measurement
             ProcessReceivedPackets();                      // Parse the received response packets
@@ -410,6 +454,9 @@ namespace EmStatPicoEISPlotExample
             return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]);   //Return the value of the parameter after appending the SI unit prefix
         }
 
+        /// <summary>
+        /// Calculates the complex impedance, magnitude and phase of the impedance values 
+        /// </summary>
         private void CalcComplexImpedance()
         {
             Complex ZComplex = new Complex(RealImpedanceValues.Last(), ImgImpedanceValues.Last());
@@ -419,24 +466,24 @@ namespace EmStatPicoEISPlotExample
         }
 
         /// <summary>
-        /// Update the plot with the measurement response values.
+        /// Update the plots with the measurement values.
         /// </summary>
         private void UpdatePlots()
         {
             NyquistPlotData.Points.Add(new DataPoint(RealImpedanceValues.Last(), ImgImpedanceValues.Last()));    // Add the last added measurement values as new data points and update the plot
             NyquistPlotModel.InvalidatePlot(true);
+            NyquistPlotModel.ResetAllAxes();
 
             BodePlotDataMagnitude.Points.Add(new DataPoint(FrequencyValues.Last(), ImpedanceMagnitudeValues.Last()));
-            BodePlotModel.InvalidatePlot(true);
-
             BodePlotDataPhase.Points.Add(new DataPoint(FrequencyValues.Last(), PhaseValues.Last()));
             BodePlotModel.InvalidatePlot(true);
+            BodePlotModel.ResetAllAxes();
         }
 
         ///// <summary>
-        ///// Clears the plot before every measurement
+        ///// Clears the plots before every measurement
         ///// </summary>
-        private void ClearPlot()
+        private void ClearPlots()
         {
             NyquistPlotData.Points.Clear();
             NyquistPlotModel.InvalidatePlot(true);
