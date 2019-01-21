@@ -186,7 +186,7 @@ namespace EmStatPicoEISPlotExample
         }
 
         /// <summary>
-        /// Sets the axes for Bode plot
+        /// Sets the axes for Bode plot with grid lines and labels
         /// </summary>
         private void SetAxesBodePlot()
         {
@@ -415,7 +415,6 @@ namespace EmStatPicoEISPlotExample
             string paramValue;
             int startingIndex = responsePackageLine.IndexOf('P');
             int currentIndex = startingIndex + 1;
-            System.Diagnostics.Debug.Write($"\nindex = " + String.Format("{0,3} {1,5} ", NDataPointsReceived, " "));
             while (!(responsePackageLine.Substring(currentIndex) == "\n"))
             {
                 paramIdentifier = responsePackageLine.Substring(currentIndex, 2);                           // The string that identifies the measurement parameter
@@ -424,15 +423,12 @@ namespace EmStatPicoEISPlotExample
                 switch (paramIdentifier)
                 {
                     case "dc":                                                 //Frequency reading
-                        System.Diagnostics.Debug.Write(String.Format("{0,14} :{1,10} {2,4}", MeasurementParameters[paramIdentifier], string.Format("{0:0.00}", paramValueWithPrefix).ToString(), " "));
                         FrequencyValues.Add(paramValueWithPrefix);           //If frequency reading add the value to the FrequencyReadings list
                         break;
                     case "cc":                                                 //Real Impedance reading
-                        System.Diagnostics.Debug.Write(String.Format("{0,8} :{1,10} {2,4}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " "));
                         RealImpedanceValues.Add(paramValueWithPrefix);       //If Z(Real) reading add the value to RealImpedanceReadings list
                         break;
                     case "cd":                                                 //Imaginary Impedance reading
-                        System.Diagnostics.Debug.Write(String.Format("{0,8} :{1,10} {2,4}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " "));
                         ImgImpedanceValues.Add(paramValueWithPrefix);        //If Z(Img) reading add the value to ImgImpedanceReadings list
                         break;
                 }
