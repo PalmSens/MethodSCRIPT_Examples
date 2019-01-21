@@ -16,7 +16,7 @@ namespace EmStatPicoEISPlotExample
 {
     public partial class frmEISPlotExample : Form
     {
-        static string ScriptFileName = "EIS_on_1KOhm.txt";
+        static string ScriptFileName = "EIS_on_Randles_560Ohm_10kOhm_33nF.txt";
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";        // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
