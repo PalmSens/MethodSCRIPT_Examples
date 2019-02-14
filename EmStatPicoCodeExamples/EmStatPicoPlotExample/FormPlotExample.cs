@@ -24,7 +24,7 @@ namespace EmStatPicoPlotExample
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";        // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
 
-        const int PACKAGE_PARAM_VALUE_LENGTH = 9;                                                   // Length of the parameter value in a package
+        const int PACKAGE_PARAM_VALUE_LENGTH = 8;                                                   // Length of the parameter value in a package
         const int OFFSET_VALUE = 0x8000000;                                                         // Offset value to receive positive values
 
         private SerialPort SerialPortEsP;
@@ -51,7 +51,7 @@ namespace EmStatPicoPlotExample
                                                                      { "E", 1e18 }};
 
         readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string>  // Measurement parameter identifiers and their corresponding labels
-                                                                            { { "aa", "E (V)" },
+                                                                            { { "da", "E (V)" },
                                                                               { "ba", "I (A)" },
                                                                               { "dc", "Frequency" },
                                                                               { "cc", "Z'" },
@@ -244,11 +244,14 @@ namespace EmStatPicoPlotExample
             {
                 readLine = ReadResponseLine();              // Read a line from the response
                 RawData += readLine;                        // Add the response to raw data
-                if (readLine == "\n")                       
+                if (readLine == "\n")
                     break;
-                NDataPointsReceived++;                      // Increment the number of data points if the read line is not empty
-                ParsePackageLine(readLine);                 // Parse the line read 
-                UpdatePlot();                               // Update the plot with the new data point added after parsing a line
+                else if (readLine.Contains("P"))
+                {
+                    NDataPointsReceived++;                 // Increment the number of data points if the read line contains the header char 'P
+                    ParsePackageLine(readLine);            // Parse the line read 
+                    UpdatePlot();                          // Update the plot with the new data point added after parsing a line
+                }
             }
             lbConsole.Items.Add($"Measurement completed.");
             lbConsole.Items.Add($"{NDataPointsReceived} data points received.");
@@ -280,27 +283,30 @@ namespace EmStatPicoPlotExample
         /// Parses a single line of the package and adds the values of the measurement parameters to the corresponding arrays
         /// </summary>
         /// <param name="responsePackageLine">The line from response package to be parsed</param>
-        private void ParsePackageLine(string responsePackageLine)
+        private void ParsePackageLine(string packageLine)
         {
+            string[] parameters;
             string paramIdentifier;
             string paramValue;
-            int startingIndex = responsePackageLine.IndexOf('P');
-            int currentIndex = startingIndex + 1;
-            while (!(responsePackageLine.Substring(currentIndex) == "\n"))
+            int startingIndex = packageLine.IndexOf('P');
+
+            string responsePackageLine = packageLine.Remove(startingIndex, 1);
+            startingIndex = 0;
+            parameters = responsePackageLine.Split(';');
+            foreach (string parameter in parameters)
             {
-                paramIdentifier = responsePackageLine.Substring(currentIndex, 2);                           // The string that identifies the measurement parameter
-                paramValue = responsePackageLine.Substring(currentIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);   // The value of the measurement parameter
-                double paramValueWithPrefix = ParseParamValues(paramValue);                                 // Append the SI prefix to the value
+                paramIdentifier = parameter.Substring(startingIndex, 2);       // The string that identifies the measurement parameter
+                paramValue = responsePackageLine.Substring(startingIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);
+                double paramValueWithPrefix = ParseParamValues(paramValue);
                 switch (paramIdentifier)
                 {
-                    case "aa":                                                 // Potential reading
+                    case "da":                                                 // Potential reading
                         VoltageReadings.Add(paramValueWithPrefix);             // If potential reading add the value to the VoltageReadings array
                         break;
                     case "ba":                                                 // Current reading
                         CurrentReadings.Add(paramValueWithPrefix * 1e6);       // If current reading add the value in uA to the CurrentReadings array
                         break;
                 }
-                currentIndex = currentIndex + 11;
             }
         }
 
