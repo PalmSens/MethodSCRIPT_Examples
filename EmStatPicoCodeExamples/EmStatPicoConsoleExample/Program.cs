@@ -225,7 +225,6 @@ namespace EmStatConsoleExample
             string paramIdentifier;
             string paramValue;
             int startingIndex = packageLine.IndexOf('P');
-
             string responsePackageLine = packageLine.Remove(startingIndex, 1);
             startingIndex = 0;
             Console.Write($"\nindex = " + String.Format("{0,3} {1,2} ", NDataPointsReceived, " "));
