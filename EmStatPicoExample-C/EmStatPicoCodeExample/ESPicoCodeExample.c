@@ -154,21 +154,23 @@ int ReadScriptFile(char* fileName)
 
 RetCode ReadBufferLine(char* bufferLine)
 {
-	char TempChar; 							//Temporary character used for reading
-	DWORD NoBytesRead;
+	char tempChar; 							//Temporary character used for reading
+	DWORD noBytesRead;
 	int i = 0;
 
 	do {
 		ReadFile(hCom, 						//Handle of the Serial port
-				&TempChar, 					//Temporary character
-				sizeof(TempChar),			//Size of TempChar
-				&NoBytesRead, 				//Number of bytes read
+				&tempChar, 					//Temporary character
+				sizeof(tempChar),			//Size of TempChar
+				&noBytesRead, 				//Number of bytes read
 				NULL);
 
-		if(NoBytesRead > 0)
+		if(noBytesRead > 0)
 		{
-			bufferLine[i++] = TempChar;		// Store Tempchar into buffer
-			if(TempChar == '\n')
+			bufferLine[i++] = tempChar;		// Store Tempchar into buffer
+			if(tempChar == 'M')
+				return CODE_MEASURING;
+			if(tempChar == '\n')
 			{
 				bufferLine[i] = '\0';
 				if(strcmp(bufferLine, "*\n") == 0)
@@ -187,22 +189,27 @@ void ReadMeasurementResponse()
 	char bufferLine[100];
 	int nDataPoints = 0;
 	RetCode retCode = CODE_OK;
-	printf("\nReceiving measurement response:");
+
 	while(1)
 	{
-		memset(&(bufferLine[0]), 0, 100);								//Clears the buffer line
-		retCode = ReadBufferLine(bufferLine);							//Reads a line from the device response
-		if (bufferLine[0] == '\0' || retCode == CODE_MEASUREMENT_DONE)	//Exit if no line is read
-			break;
-		if(bufferLine[0] == 'P')										//Proceed to parse if the line begins with 'P'
+		memset(&(bufferLine[0]), 0, 100);												//Clears the buffer line
+		retCode = ReadBufferLine(bufferLine);											//Reads a line from the device response
+		if(retCode == CODE_MEASURING)
+			printf("\nMeasuring...");
+		else if (retCode == CODE_MEASUREMENT_DONE)
 		{
-			nDataPoints++;												//Counts the number of data points received
+			printf("\nMeasurement completed, %d data points received.", nDataPoints); 	//Exit if no line is read or measuring or measurement done
+			break;
+		}
+		if(bufferLine[0] == 'P')														//Proceed to parse if the line begins with 'P'
+		{
+			if(nDataPoints == 0)
+				printf("\nReceiving measurement response:");
+			nDataPoints++;																//Counts the number of data points received
 			printf("\n");
-			ParseResponse(bufferLine);									//Parses the line of response
+			ParseResponse(bufferLine);													//Parses the line of response
 		}
 	}
-	if(retCode == CODE_MEASUREMENT_DONE)
-		printf("\nMeasurement completed, %d data points received.", nDataPoints);
 }
 
 void ParseResponse(char *responsePackageLine)
@@ -263,14 +270,14 @@ void ParseParam(char* param)
 }
 
 float GetParameterValue(char* paramValue) {
-	char charUnitPrefix = paramValue[7];						 		// Identify the SI unit prefix from the package at position 8
+	char charUnitPrefix = paramValue[7];						 		//Identify the SI unit prefix from the package at position 8
 	char strValue[8];
 	strncpy(strValue, paramValue, 7);
 	strValue[7] = '\0';
 	char *ptr;
 	int value =	strtol(strValue, &ptr , 16);
-	float parameterValue = value - OFFSET_VAL; 							// Values offset to receive only positive values
-	return (parameterValue * GetUnitPrefixVal(charUnitPrefix));			//  Return the value of the parameter after appending the SI unit prefix
+	float parameterValue = value - OFFSET_VAL; 							//Values offset to receive only positive values
+	return (parameterValue * GetUnitPrefixVal(charUnitPrefix));			//Return the value of the parameter after appending the SI unit prefix
 }
 
 const double GetUnitPrefixVal(char charPrefix)
