@@ -53,6 +53,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "PSCommon.h"
 
 //////////////////////////////////////////////////////////////////////////////
@@ -60,8 +64,6 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #define VERSION_STR_LENGTH	28
-
-const int OFFSET_VALUE = 0x8000000;
 
 ///
 /// Whether the cell should be on or off.
@@ -104,10 +106,8 @@ typedef enum _Reply
 ///
 typedef struct _PSComm
 {
-	WriteCharFunc write_char_func;
-	ReadCharFunc read_char_func;
-	TimeMsFunc time_ms_func;
-	uint16_t read_timeout_ms;
+	WriteCharFunc writeCharFunc;
+	ReadCharFunc readCharFunc;
 } PSComm;
 
 ///
@@ -135,26 +135,23 @@ typedef struct _MeasureData
 ///
 /// Initialize the PSComm object.
 ///
-/// espComm:			The PSComm data struct.
-/// read_timeout_ms: 	Timeout for all reads performed by PSComm.
+/// psComm:			The PSComm data struct.
 /// write_char_func: 	Function pointer to the write function this PSComm should use.
 /// read_char_func: 	Function pointer to the read function this PSComm should use.
-/// time_ms_func:		Function pointer to a function that returns a time in ms.
 ///
 /// Returns: CODE_OK if successful, otherwise CODE_NULL.
 ///
-RetCode PSCommInit(PSComm* espComm, uint16_t read_timeout_ms,
-	WriteCharFunc write_char_func, ReadCharFunc read_char_func, TimeMsFunc time_ms_func);
+RetCode PSCommInit(PSComm* psComm,	WriteCharFunc write_char_func, ReadCharFunc read_char_func);
 
 ///
 /// Wait for a package and parse it.
 /// Currents are expressed in the Ampere, potentials are expressed in Volts.
 ///
-/// espComm:	The PSComm data struct.
+/// psComm:	The PSComm data struct.
 /// ret_data: 	The package received is parsed and put into this struct.
 ///
 /// Returns: CODE_OK if successful, CODE_MEASUREMENT_DONE if measurement is completed.
-RetCode ReceivePackage(PSComm* espComm, MeasureData* ret_data);
+RetCode ReceivePackage(PSComm* psComm, MeasureData* ret_data);
 
 ///
 /// Parses a line of response and further calls to parse meta data values.
@@ -211,22 +208,22 @@ const double GetUnitPrefixValue(char charPrefix);
 /// Reads a character buffer using the supplied read_char_func
 /// Returns: CODE_OK if successful, otherwise CODE_NULL.
 ///
-RetCode ReadBuf(PSComm* espComm, char* buf);
+RetCode ReadBuf(PSComm* psComm, char* buf);
 
 ///
 /// Reads a character using the supplied read_char_func
 /// Returns: CODE_OK if successful, otherwise CODE_TIMEOUT.
 ///
-RetCode ReadChar(PSComm* espComm, char* c);
+RetCode ReadChar(PSComm* psComm, char* c);
 
 ///
 /// Writes a character using the supplied write_char_func
 ///
-void WriteChar(PSComm* espComm, char c);
+void WriteChar(PSComm* psComm, char c);
 
 ///
 /// Writes a 0 terminated string using the supplied write_char_func
 ///
-void WriteStr(PSComm* espComm, const char* buf);
+void WriteStr(PSComm* psComm, const char* buf);
 
 #endif //PSComm_H

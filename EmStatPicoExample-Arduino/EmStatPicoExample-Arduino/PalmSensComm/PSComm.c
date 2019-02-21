@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         PalmSens EmStat SDK
+ *         PalmSens Method SCRIPT SDK
  * ----------------------------------------------------------------------------
  * Copyright (c) 2016, PalmSens BV
  *
@@ -29,53 +29,49 @@
 
 #include "PSComm.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+const int OFFSET_VALUE = 0x8000000;
 
-RetCode PSCommInit(PSComm* espComm, uint16_t read_timeout_ms,
-	WriteCharFunc write_char_func, ReadCharFunc read_char_func, TimeMsFunc time_ms_func)
+RetCode PSCommInit(PSComm* psComm,	WriteCharFunc writeCharFunc, ReadCharFunc readCharFunc)
 {
-	espComm->read_timeout_ms = read_timeout_ms;
-	espComm->write_char_func = write_char_func;
-	espComm->read_char_func = read_char_func;
-	espComm->time_ms_func = time_ms_func;
+	psComm->writeCharFunc = writeCharFunc;
+	psComm->readCharFunc = readCharFunc;
 
-	if(write_char_func == NULL || read_char_func == NULL || time_ms_func == NULL)
+	if(writeCharFunc == NULL || readCharFunc == NULL)
 	{
 		return CODE_NULL;
 	}
 	return CODE_OK;
 }
 
-void WriteStr(PSComm* espComm, const char* buf)
+void WriteStr(PSComm* psComm, const char* buf)
 {
 	while(*buf != 0)
 	{
-		WriteChar(espComm, *buf);
+		WriteChar(psComm, *buf);
 		buf++;
 	}
 }
 
-void WriteChar(PSComm* espComm, char c)
+void WriteChar(PSComm* psComm, char c)
 {
-	espComm->write_char_func(c);
+	psComm->writeCharFunc(c);
 }
 
-RetCode ReadBuf(PSComm* espComm, char* buf)
+RetCode ReadBuf(PSComm* psComm, char* buf)
 {
 	int tempChar; 							//Temporary character used for reading
 	int i = 0;
-
 	do {
-		tempChar = espComm->read_char_func();
+		tempChar = psComm->readCharFunc();
 		if(tempChar > 0)
 		{
 			buf[i++] = tempChar;			// Store tempchar into buffer
+			if(buf[0] == (int)'e')
+				return CODE_RESPONSE_BEGIN;
 			if(tempChar == '\n')
 			{
 				buf[i] = '\0';
-				if(buf[1] == REPLY_MEASURING)
+				if(buf[0] == REPLY_MEASURING)
 					return CODE_MEASURING;
 				else if(strcmp(buf, "*\n") == 0)
 					return CODE_MEASUREMENT_DONE;
@@ -92,10 +88,10 @@ RetCode ReadBuf(PSComm* espComm, char* buf)
 	return CODE_NULL;
 }
 
-RetCode ReceivePackage(PSComm* espComm, MeasureData* ret_data)
+RetCode ReceivePackage(PSComm* psComm, MeasureData* ret_data)
 {
 	char bufferLine[100];
-	RetCode ret = ReadBuf(espComm, bufferLine);
+	RetCode ret = ReadBuf(psComm, bufferLine);
 	if (ret != CODE_OK)
 		return ret;
     ParseResponse(bufferLine, ret_data);

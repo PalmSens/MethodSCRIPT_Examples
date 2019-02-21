@@ -63,6 +63,7 @@ typedef unsigned long (*TimeMsFunc)();
 ///
 typedef enum _RetCode
 {
+	CODE_RESPONSE_BEGIN 	= 4,
 	CODE_MEASURING			= 3,
 	CODE_MEASUREMENT_DONE	= 2,
 	CODE_RESPONSE_END		= 1,
