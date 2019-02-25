@@ -19,7 +19,7 @@ namespace EmStatPicoPlotExample
 {
     public partial class frmPlotExample : Form
     {
-        static string ScriptFileName = "LSV_on_1KOhm.txt";               
+        static string ScriptFileName = "LSV_on_1KOhm.txt";
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";        // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -30,7 +30,7 @@ namespace EmStatPicoPlotExample
         private SerialPort SerialPortEsP;
         private List<double> CurrentReadings = new List<double>();                                  // Collection of current readings
         private List<double> VoltageReadings = new List<double>();                                  // Collection of potential readings
-        private string RawData;                                                                     
+        private string RawData;
         private int NDataPointsReceived = 0;                                                        // The number of data points received from the measurement
         private PlotModel plotModel = new PlotModel();
         private LineSeries plotData;
@@ -102,7 +102,7 @@ namespace EmStatPicoPlotExample
                 Title = "Current (uA)"
             };
             //Set the x-axis and y-axis for the plot model
-            plotModel.Axes.Add(xAxis);                 
+            plotModel.Axes.Add(xAxis);
             plotModel.Axes.Add(yAxis);
         }
 
@@ -115,7 +115,7 @@ namespace EmStatPicoPlotExample
         /// <param name="e"></param>
         private void btnConnect_Click(object sender, EventArgs e)
         {
-            SerialPortEsP = OpenSerialPort();        // Open and identify the port connected to ESPico
+            SerialPortEsP = OpenSerialPort();        // Open and identify the port connected to EmStat Pico
             if (SerialPortEsP != null && SerialPortEsP.IsOpen)
             {
                 lbConsole.Items.Add($"Connected to EmStat Pico");
@@ -128,7 +128,7 @@ namespace EmStatPicoPlotExample
         }
 
         /// <summary>
-        /// Disconnects the serial port connected to EsPico.
+        /// Disconnects the serial port connected to EmStat Pico.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -140,9 +140,9 @@ namespace EmStatPicoPlotExample
         }
 
         /// <summary>
-        /// Opens the serial ports and identifies the port connected to ESPico 
+        /// Opens the serial ports and identifies the port connected to EmStat Pico 
         /// </summary>
-        /// <returns> The serial port connected to ESPico</returns>
+        /// <returns> The serial port connected to EmStat Pico</returns>
         /// 
         private SerialPort OpenSerialPort()
         {
@@ -166,6 +166,7 @@ namespace EmStatPicoPlotExample
                 }
                 catch (Exception exception)
                 {
+                    serialPort.Close();
                 }
             }
             return serialPort;
@@ -215,7 +216,7 @@ namespace EmStatPicoPlotExample
         }
 
         /// <summary>
-        /// Sends the script file to ESPico
+        /// Sends the script file to EmStat Pico
         /// </summary>
         private void SendScriptFile()
         {
@@ -226,14 +227,14 @@ namespace EmStatPicoPlotExample
                 {
                     line = stream.ReadLine();               // Read a line from the script file
                     line += "\n";                           // Append a new line character to the line read
-                    SerialPortEsP.Write(line);              // Send the read line to ESPico
+                    SerialPortEsP.Write(line);              // Send the read line to EmStat Pico
                 }
                 lbConsole.Items.Add("Measurement started.");
             }
         }
 
         /// <summary>
-        /// Processes the response packets from the ESPico and store the response in RawData.
+        /// Processes the response packets from the EmStat Pico and store the response in RawData.
         /// Possibilities of time out exception in case the script file was empty 
         /// </summary>
         private void ProcessReceivedPackets()
@@ -246,7 +247,7 @@ namespace EmStatPicoPlotExample
                 RawData += readLine;                        // Add the response to raw data
                 if (readLine == "\n")
                     break;
-                else if (readLine.Contains("P"))
+                else if (readLine[0] == 'P')
                 {
                     NDataPointsReceived++;                 // Increment the number of data points if the read line contains the header char 'P
                     ParsePackageLine(readLine);            // Parse the line read 

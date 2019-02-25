@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.106
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmStatPicoConsoleExample", "EmStatPicoConsoleExample\EmStatPicoConsoleExample.csproj", "{672B90E2-2022-4D07-8CBB-C08FF82160EE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSConsoleExample", "EmStatPicoConsoleExample\MSConsoleExample.csproj", "{672B90E2-2022-4D07-8CBB-C08FF82160EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmStatPicoPlotExample", "EmStatPicoPlotExample\EmStatPicoPlotExample.csproj", "{89B83A64-B43F-4639-9971-8BEF5BAB26B2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSPlotExample", "EmStatPicoPlotExample\MSPlotExample.csproj", "{89B83A64-B43F-4639-9971-8BEF5BAB26B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmStatPicoEISPlotExample", "EmStatPicoEISPlotExample\EmStatPicoEISPlotExample.csproj", "{6EB03DF3-F98D-47BC-BF83-BCCCF594E8EA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSEISPlotExample", "EmStatPicoEISPlotExample\MSEISPlotExample.csproj", "{6EB03DF3-F98D-47BC-BF83-BCCCF594E8EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESPicoEISConsoleExample", "ESPicoEISConsoleExample\ESPicoEISConsoleExample.csproj", "{5E233B08-F47D-4012-8797-C87775DAA5AA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSEISConsoleExample", "ESPicoEISConsoleExample\MSEISConsoleExample.csproj", "{5E233B08-F47D-4012-8797-C87775DAA5AA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

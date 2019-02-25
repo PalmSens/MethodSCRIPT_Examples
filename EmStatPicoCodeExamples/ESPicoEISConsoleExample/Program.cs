@@ -88,7 +88,7 @@ namespace ESPicoEISConsoleExample
 
         static void Main(string[] args)
         {
-            SerialPortEsP = OpenSerialPort();                   // Open and identify the port connected to ESPico
+            SerialPortEsP = OpenSerialPort();                   // Open and identify the port connected to EmStat Pico
             if (SerialPortEsP != null && SerialPortEsP.IsOpen)
             {
                 Console.WriteLine("\nConnected to EmStat Pico.\n");
@@ -106,9 +106,9 @@ namespace ESPicoEISConsoleExample
         }
 
         /// <summary>
-        /// Opens the serial ports and identifies the port connected to ESPico 
+        /// Opens the serial ports and identifies the port connected to EmStat Pico 
         /// </summary>
-        /// <returns> The serial port connected to ESPico</returns>
+        /// <returns> The serial port connected to EmStat Pico</returns>
         private static SerialPort OpenSerialPort()
         {
             SerialPort serialPort = null;
@@ -132,6 +132,7 @@ namespace ESPicoEISConsoleExample
                 }
                 catch (Exception exception)
                 {
+                    serialPort.Close();
                 }
             }
             return serialPort;
@@ -155,7 +156,7 @@ namespace ESPicoEISConsoleExample
         }
 
         /// <summary>
-        /// Sends the script file to ESPico
+        /// Sends the script file to EmStat Pico
         /// </summary>
         private static void SendScriptFile()
         {
@@ -166,14 +167,14 @@ namespace ESPicoEISConsoleExample
                 {
                     line = stream.ReadLine();               // Read a line from the script file
                     line += "\n";                           // Append a new line character to the line read
-                    SerialPortEsP.Write(line);              // Send the read line to ESPico
+                    SerialPortEsP.Write(line);              // Send the read line to EmStat Pico
                 }
                 Console.Write("Measurement started.\n");
             }
         }
 
         /// <summary>
-        /// Processes the response packets from the ESPico and store the response in RawData.
+        /// Processes the response packets from the EmStat Pico and store the response in RawData.
         /// </summary>
         private static void ProcessReceivedPackets()
         {
@@ -185,7 +186,7 @@ namespace ESPicoEISConsoleExample
                 RawData += readLine;                        // Add the response to raw data
                 if (readLine == "\n")
                     break;
-                else if (readLine.Contains("P"))
+                else if (readLine[0] == 'P')
                 {
                     NDataPointsReceived++;                      // Increment the number of data points if the read line contains the header char 'P
                     ParsePackageLine(readLine);                 // Parse the line read 

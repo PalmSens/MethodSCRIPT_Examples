@@ -78,7 +78,7 @@ namespace EmStatPicoEISPlotExample
 
             InitializePlotData();                                    // Initialize the plot data for Nyquist and Bode plots
 
-            nyquistPlotView.Model = NyquistPlotModel;                
+            nyquistPlotView.Model = NyquistPlotModel;
             bodePlotView.Model = BodePlotModel;
         }
 
@@ -190,7 +190,7 @@ namespace EmStatPicoEISPlotExample
         /// </summary>
         private void SetAxesBodePlot()
         {
-            var xAxisBodePlot = GetLogAxis("Frequency", "Frequency (HZ)", AxisPosition.Bottom, OxyColors.Black);
+            var xAxisBodePlot = GetLogAxis("Frequency", "Frequency (Hz)", AxisPosition.Bottom, OxyColors.Black);
             var yAxisBodePlot = GetLogAxis("Z", "Z (Ohm)", AxisPosition.Left, OxyColors.Blue);
             var yAxisSecondaryBodePlot = GetLogAxis("Phase", "-Phase (deg)", AxisPosition.Right, OxyColors.Red);
 
@@ -242,7 +242,7 @@ namespace EmStatPicoEISPlotExample
         /// <param name="e"></param>
         private void btnConnect_Click(object sender, EventArgs e)
         {
-            SerialPortEsP = OpenSerialPort();        // Open and identify the port connected to ESPico
+            SerialPortEsP = OpenSerialPort();        // Open and identify the port connected to EmStat Pico
             if (SerialPortEsP != null && SerialPortEsP.IsOpen)
             {
                 lbConsole.Items.Add($"Connected to EmStat Pico.");
@@ -255,7 +255,7 @@ namespace EmStatPicoEISPlotExample
         }
 
         /// <summary>
-        /// Disconnects the serial port connected to EsPico.
+        /// Disconnects the serial port connected to EmStat Pico.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -267,9 +267,9 @@ namespace EmStatPicoEISPlotExample
         }
 
         /// <summary>
-        /// Opens the serial ports and identifies the port connected to ESPico 
+        /// Opens the serial ports and identifies the port connected to EmStat Pico 
         /// </summary>
-        /// <returns> The serial port connected to ESPico</returns>
+        /// <returns> The serial port connected to EmStat Pico</returns>
         /// 
         private SerialPort OpenSerialPort()
         {
@@ -294,6 +294,7 @@ namespace EmStatPicoEISPlotExample
                 }
                 catch (Exception exception)
                 {
+                    serialPort.Close();
                 }
             }
             return serialPort;
@@ -343,7 +344,7 @@ namespace EmStatPicoEISPlotExample
         }
 
         /// <summary>
-        /// Sends the script file to ESPico
+        /// Sends the script file to EmStat Pico
         /// </summary>
         private void SendScriptFile()
         {
@@ -354,14 +355,14 @@ namespace EmStatPicoEISPlotExample
                 {
                     line = stream.ReadLine();               // Read a line from the script file
                     line += "\n";                           // Append a new line character to the line read
-                    SerialPortEsP.Write(line);              // Send the read line to ESPico
+                    SerialPortEsP.Write(line);              // Send the read line to EmStat Pico
                 }
                 lbConsole.Items.Add("Measurement started.");
             }
         }
 
         /// <summary>
-        /// Processes the response packets from the ESPico and store the response in RawData.
+        /// Processes the response packets from the EmStat Pico and store the response in RawData.
         /// Possibilities of time out exception in case the script file was empty 
         /// </summary>
         private void ProcessReceivedPackets()
@@ -374,7 +375,7 @@ namespace EmStatPicoEISPlotExample
                 RawData += readLine;                        // Add the response to raw data
                 if (readLine == "\n")
                     break;
-                else if (readLine.Contains("P"))
+                else if (readLine[0] == 'P')
                 {
                     NDataPointsReceived++;                 // Increment the number of data points if the read line contains the header char 'P
                     ParsePackageLine(readLine);            // Parse the line read 
@@ -441,13 +442,13 @@ namespace EmStatPicoEISPlotExample
                 }
             }
         }
-
-        /// <summary>
-        /// Parses the measurement parameter values and appends the respective prefixes
-        /// </summary>
-        /// <param name="paramValueString"></param>
-        /// <returns>The parameter value after appending the unit prefix</returns>
-        private double ParseParamValues(string paramValueString)
+ 
+    /// <summary>
+    /// Parses the measurement parameter values and appends the respective prefixes
+    /// </summary>
+    /// <param name="paramValueString"></param>
+    /// <returns>The parameter value after appending the unit prefix</returns>
+    private double ParseParamValues(string paramValueString)
         {
             char strUnitPrefix = paramValueString[7];                           //Identify the SI unit prefix from the package at position 8
             string strvalue = paramValueString.Remove(7);                       //Strip the value of the measured parameter from the package

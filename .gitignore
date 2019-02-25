@@ -244,3 +244,6 @@ ModelManifest.xml
 /EmStatPicoExample-Arduino/.metadata/.mylyn
 /EmStatPicoExample-Arduino/.metadata
 /EmStatPicoExample-Arduino/EmStatPicoExample-Arduino/.settings/org.eclipse.cdt.managedbuilder.core.prefs
+/EmStatPicoExample-C/.metadata
+/.metadata
+/EmStatPicoExample-C/EmStatPicoCodeExample/.settings/org.eclipse.cdt.managedbuilder.core.prefs

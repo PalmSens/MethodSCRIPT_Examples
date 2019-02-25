@@ -10,7 +10,7 @@ namespace EmStatConsoleExample
 {
     class Program
     {
-        static string ScriptFileName = "meas_swv_test.txt";//"LSV_on_1KOhm.txt";                                           // Name of the script file
+        static string ScriptFileName = "LSV_on_1KOhm.txt";//"meas_swv_test.txt";                     // Name of the script file
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -25,19 +25,19 @@ namespace EmStatConsoleExample
         static int NDataPointsReceived = 0;                                                          // The number of data points received from the measurement
 
         readonly static Dictionary<string, double> SI_Prefix_Factor = new Dictionary<string, double> // The SI unit of the prefixes and their corresponding factors
-                                                                   { { "a", 1e-18 },
-                                                                     { "f", 1e-15 },
-                                                                     { "p", 1e-12 },
-                                                                     { "n", 1e-9 },
-                                                                     { "u", 1e-6 },
-                                                                     { "m", 1e-3 },
-                                                                     { " ", 1 },
-                                                                     { "K", 1e3 },
-                                                                     { "M", 1e6 },
-                                                                     { "G", 1e9 },
-                                                                     { "T", 1e12 },
-                                                                     { "P", 1e15 },
-                                                                     { "E", 1e18 }};
+                                                        { { "a", 1e-18 },
+                                                            { "f", 1e-15 },
+                                                            { "p", 1e-12 },
+                                                            { "n", 1e-9 },
+                                                            { "u", 1e-6 },
+                                                            { "m", 1e-3 },
+                                                            { " ", 1 },
+                                                            { "K", 1e3 },
+                                                            { "M", 1e6 },
+                                                            { "G", 1e9 },
+                                                            { "T", 1e12 },
+                                                            { "P", 1e15 },
+                                                            { "E", 1e18 }};
 
         readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string>  // Measurement parameter identifiers and their corresponding labels
                                                                             { { "da", "E (V)" },
@@ -86,13 +86,17 @@ namespace EmStatConsoleExample
 
         static void Main(string[] args)
         {
-            SerialPortEsP = OpenSerialPort();                   // Open and identify the port connected to ESPico
+            SerialPortEsP = OpenSerialPort();                   // Open and identify the port connected to EmStat Pico
             if (SerialPortEsP != null && SerialPortEsP.IsOpen)
             {
                 Console.WriteLine("\nConnected to EmStat Pico.\n");
                 SendScriptFile();                               // Send the script file for LSV measurement
-                ProcessReceivedPackages();                       // Parse the received response packages
+                ProcessReceivedPackages();                      // Parse the received response packages
                 SerialPortEsP.Close();                          // Close the serial port
+                for(int i = 0; i < RawData.Length; i++)
+                {
+                    Console.Write(RawData[i]);
+                }
             }
             else
             {
@@ -104,9 +108,9 @@ namespace EmStatConsoleExample
         }
 
         /// <summary>
-        /// Opens the serial ports and identifies the port connected to ESPico 
+        /// Opens the serial ports and identifies the port connected to EmStat Pico 
         /// </summary>
-        /// <returns> The serial port connected to ESPico</returns>
+        /// <returns> The serial port connected to EmStat Pico</returns>
         private static SerialPort OpenSerialPort()
         {
             SerialPort serialPort = null;
@@ -121,7 +125,8 @@ namespace EmStatConsoleExample
                     {
                         serialPort.Write("t\n");
                         string response = serialPort.ReadLine();
-                        if (response.Contains("esp"))   // Identify the port connected to EmStatPico
+                        // Identify the port connected to EmStatPico
+                        if (response.Contains("esp"))
                         {
                             serialPort.ReadTimeout = 7000;
                             return serialPort;
@@ -130,6 +135,7 @@ namespace EmStatConsoleExample
                 }
                 catch (Exception exception)
                 {
+                    serialPort.Close();
                 }
             }
             return serialPort;
@@ -153,7 +159,7 @@ namespace EmStatConsoleExample
         }
 
         /// <summary>
-        /// Sends the script file to ESPico
+        /// Sends the script file to EmStat Pico
         /// </summary>
         private static void SendScriptFile()
         {
@@ -164,14 +170,14 @@ namespace EmStatConsoleExample
                 {
                     line = stream.ReadLine();               // Read a line from the script file
                     line += "\n";                           // Append a new line character to the line read
-                    SerialPortEsP.Write(line);              // Send the read line to ESPico
+                    SerialPortEsP.Write(line);              // Send the read line to EmStat Pico
                 }
                 Console.WriteLine("Measurement started.");
             }
         }
 
         /// <summary>
-        /// Processes the response packets from the ESPico and store the response in RawData.
+        /// Processes the response packets from the EmStat Pico and store the response in RawData.
         /// </summary>
         private static void ProcessReceivedPackages()
         {
@@ -183,7 +189,7 @@ namespace EmStatConsoleExample
                 RawData += readLine;                         // Add the response to raw data
                 if (readLine == "\n")
                     break;
-                else if (readLine.Contains("P"))
+                else if (readLine[0] == 'P')
                 {
                     NDataPointsReceived++;                  // Increment the number of data points if the read line contains the header char 'P
                     ParsePackageLine(readLine);             // Parse the line read 
@@ -216,37 +222,37 @@ namespace EmStatConsoleExample
         }
 
         /// <summary>
-        /// Parses a single line of the package and adds the values of the measurement parameters to the corresponding arrays
-        /// </summary>
-        /// <param name="responsePackageLine">The line from response package to be parsed</param>
-        private static void ParsePackageLine(string packageLine)
+/// Parses a single line of the package and adds the values of the measurement parameters to the corresponding arrays
+/// </summary>
+/// <param name="responsePackageLine">The line from response package to be parsed</param>
+private static void ParsePackageLine(string packageLine)
+{
+    string[] parameters;
+    string paramIdentifier;
+    string paramValue;
+    int startingIndex = packageLine.IndexOf('P');
+    string responsePackageLine = packageLine.Remove(startingIndex, 1);
+    startingIndex = 0;
+    Console.Write($"\nindex = " + String.Format("{0,3} {1,2} ", NDataPointsReceived, " "));
+    parameters = responsePackageLine.Split(';');
+    foreach (string parameter in parameters)
+    {
+        paramIdentifier = parameter.Substring(startingIndex, 2);   // The string that identifies the measurement parameter
+        paramValue = responsePackageLine.Substring(startingIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);
+        double paramValueWithPrefix = ParseParamValues(paramValue);
+        switch (paramIdentifier)
         {
-            string[] parameters;
-            string paramIdentifier;
-            string paramValue;
-            int startingIndex = packageLine.IndexOf('P');
-            string responsePackageLine = packageLine.Remove(startingIndex, 1);
-            startingIndex = 0;
-            Console.Write($"\nindex = " + String.Format("{0,3} {1,2} ", NDataPointsReceived, " "));
-            parameters = responsePackageLine.Split(';');
-            foreach (string parameter in parameters)
-            {
-                paramIdentifier = parameter.Substring(startingIndex, 2);   // The string that identifies the measurement parameter
-                paramValue = responsePackageLine.Substring(startingIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);
-                double paramValueWithPrefix = ParseParamValues(paramValue);
-                switch (paramIdentifier)
-                {
-                    case "da":                                            // Potential reading
-                        VoltageReadings.Add(paramValueWithPrefix);        // If potential reading add the value to the VoltageReadings array
-                        break;
-                    case "ba":                                            // Current reading
-                        CurrentReadings.Add(paramValueWithPrefix);        // If current reading add the value to the CurrentReadings array
-                        break;
-                }
-                Console.Write("{0,4} = {1,10} {2,2}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
-                ParseMetaDataValues(parameter.Substring(10));
-            }
+            case "da":                                            // Potential reading
+                VoltageReadings.Add(paramValueWithPrefix);        // If potential reading add the value to the VoltageReadings array
+                break;
+            case "ba":                                            // Current reading
+                CurrentReadings.Add(paramValueWithPrefix);        // If current reading add the value to the CurrentReadings array
+                break;
         }
+        Console.Write("{0,4} = {1,10} {2,2}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
+        ParseMetaDataValues(parameter.Substring(10));
+    }
+}
 
         /// <summary>
         /// Parses the meta data values of the variables, if any.
@@ -308,72 +314,72 @@ namespace EmStatConsoleExample
             {
                 switch (crByte)
                 {
-                    case (byte)CurrentRanges.cr100nA:
-                        currentRangeStr = "100nA";
-                        break;
-                    case (byte)CurrentRanges.cr2uA:
-                        currentRangeStr = "2uA";
-                        break;
-                    case (byte)CurrentRanges.cr4uA:
-                        currentRangeStr = "4uA";
-                        break;
-                    case (byte)CurrentRanges.cr8uA:
-                        currentRangeStr = "8uA";
-                        break;
-                    case (byte)CurrentRanges.cr16uA:
-                        currentRangeStr = "16uA";
-                        break;
-                    case (byte)CurrentRanges.cr32uA:
-                        currentRangeStr = "32uA";
-                        break;
-                    case (byte)CurrentRanges.cr63uA:
-                        currentRangeStr = "63uA";
-                        break;
-                    case (byte)CurrentRanges.cr125uA:
-                        currentRangeStr = "125uA";
-                        break;
-                    case (byte)CurrentRanges.cr250uA:
-                        currentRangeStr = "250uA";
-                        break;
-                    case (byte)CurrentRanges.cr500uA:
-                        currentRangeStr = "500uA";
-                        break;
-                    case (byte)CurrentRanges.cr1mA:
-                        currentRangeStr = "1mA";
-                        break;
-                    case (byte)CurrentRanges.cr5mA:
-                        currentRangeStr = "15mA";
-                        break;
-                    case (byte)CurrentRanges.hscr100nA:
-                        currentRangeStr = "100nA (High speed)";
-                        break;
-                    case (byte)CurrentRanges.hscr1uA:
-                        currentRangeStr = "1uA (High speed)";
-                        break;
-                    case (byte)CurrentRanges.hscr6uA:
-                        currentRangeStr = "6uA (High speed)";
-                        break;
-                    case (byte)CurrentRanges.hscr13uA:
-                        currentRangeStr = "13uA (High speed)";
-                        break;
-                    case (byte)CurrentRanges.hscr25uA:
-                        currentRangeStr = "25uA (High speed)";
-                        break;
-                    case (byte)CurrentRanges.hscr50uA:
-                        currentRangeStr = "50uA (High speed)";
-                        break;
-                    case (byte)CurrentRanges.hscr100uA:
-                        currentRangeStr = "100uA (High speed)";
-                        break;
-                    case (byte)CurrentRanges.hscr200uA:
-                        currentRangeStr = "200uA (High speed)";
-                        break;
-                    case (byte)CurrentRanges.hscr1mA:
-                        currentRangeStr = "1mA (High speed)";
-                        break;
-                    case (byte)CurrentRanges.hscr5mA:
-                        currentRangeStr = "5mA (High speed)";
-                        break;
+    case (byte)CurrentRanges.cr100nA:
+        currentRangeStr = "100nA";
+        break;
+    case (byte)CurrentRanges.cr2uA:
+        currentRangeStr = "2uA";
+        break;
+    case (byte)CurrentRanges.cr4uA:
+        currentRangeStr = "4uA";
+        break;
+    case (byte)CurrentRanges.cr8uA:
+        currentRangeStr = "8uA";
+        break;
+    case (byte)CurrentRanges.cr16uA:
+        currentRangeStr = "16uA";
+        break;
+    case (byte)CurrentRanges.cr32uA:
+        currentRangeStr = "32uA";
+        break;
+    case (byte)CurrentRanges.cr63uA:
+        currentRangeStr = "63uA";
+        break;
+    case (byte)CurrentRanges.cr125uA:
+        currentRangeStr = "125uA";
+        break;
+    case (byte)CurrentRanges.cr250uA:
+        currentRangeStr = "250uA";
+        break;
+    case (byte)CurrentRanges.cr500uA:
+        currentRangeStr = "500uA";
+        break;
+    case (byte)CurrentRanges.cr1mA:
+        currentRangeStr = "1mA";
+        break;
+    case (byte)CurrentRanges.cr5mA:
+        currentRangeStr = "15mA";
+        break;
+    case (byte)CurrentRanges.hscr100nA:
+        currentRangeStr = "100nA (High speed)";
+        break;
+    case (byte)CurrentRanges.hscr1uA:
+        currentRangeStr = "1uA (High speed)";
+        break;
+    case (byte)CurrentRanges.hscr6uA:
+        currentRangeStr = "6uA (High speed)";
+        break;
+    case (byte)CurrentRanges.hscr13uA:
+        currentRangeStr = "13uA (High speed)";
+        break;
+    case (byte)CurrentRanges.hscr25uA:
+        currentRangeStr = "25uA (High speed)";
+        break;
+    case (byte)CurrentRanges.hscr50uA:
+        currentRangeStr = "50uA (High speed)";
+        break;
+    case (byte)CurrentRanges.hscr100uA:
+        currentRangeStr = "100uA (High speed)";
+        break;
+    case (byte)CurrentRanges.hscr200uA:
+        currentRangeStr = "200uA (High speed)";
+        break;
+    case (byte)CurrentRanges.hscr1mA:
+        currentRangeStr = "1mA (High speed)";
+        break;
+    case (byte)CurrentRanges.hscr5mA:
+        currentRangeStr = "5mA (High speed)";
+        break;
                 }
                 Console.Write(String.Format("CR : {0,-5} {1,2}", currentRangeStr, " "));
             }
