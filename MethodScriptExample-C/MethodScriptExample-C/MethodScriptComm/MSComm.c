@@ -27,14 +27,14 @@
  * ----------------------------------------------------------------------------
  */
 
-#include "PSComm.h"
+#include "MSComm.h"
 
 const int OFFSET_VALUE = 0x8000000;
 
-RetCode PSCommInit(PSComm* psComm,	WriteCharFunc writeCharFunc, ReadCharFunc readCharFunc)
+RetCode MSCommInit(MSComm* msComm,	WriteCharFunc writeCharFunc, ReadCharFunc readCharFunc)
 {
-	psComm->writeCharFunc = writeCharFunc;
-	psComm->readCharFunc = readCharFunc;
+	msComm->writeCharFunc = writeCharFunc;
+	msComm->readCharFunc = readCharFunc;
 
 	if(writeCharFunc == NULL || readCharFunc == NULL)
 	{
@@ -43,26 +43,26 @@ RetCode PSCommInit(PSComm* psComm,	WriteCharFunc writeCharFunc, ReadCharFunc rea
 	return CODE_OK;
 }
 
-void WriteStr(PSComm* psComm, const char* buf)
+void WriteStr(MSComm* msComm, const char* buf)
 {
 	while(*buf != 0)
 	{
-		WriteChar(psComm, *buf);
+		WriteChar(msComm, *buf);
 		buf++;
 	}
 }
 
-void WriteChar(PSComm* psComm, char c)
+void WriteChar(MSComm* msComm, char c)
 {
-	psComm->writeCharFunc(c);
+	msComm->writeCharFunc(c);
 }
 
-RetCode ReadBuf(PSComm* psComm, char* buf)
+RetCode ReadBuf(MSComm* msComm, char* buf)
 {
 	int tempChar; 							//Temporary character used for reading
 	int i = 0;
 	do {
-		tempChar = psComm->readCharFunc();
+		tempChar = msComm->readCharFunc();
 		if(tempChar > 0)
 		{
 			buf[i++] = tempChar;			// Store tempchar into buffer
@@ -88,10 +88,10 @@ RetCode ReadBuf(PSComm* psComm, char* buf)
 	return CODE_NULL;
 }
 
-RetCode ReceivePackage(PSComm* psComm, MeasureData* ret_data)
+RetCode ReceivePackage(MSComm* msComm, MeasureData* ret_data)
 {
 	char bufferLine[100];
-	RetCode ret = ReadBuf(psComm, bufferLine);
+	RetCode ret = ReadBuf(msComm, bufferLine);
 	if (ret != CODE_OK)
 		return ret;
     ParseResponse(bufferLine, ret_data);

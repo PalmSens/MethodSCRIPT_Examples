@@ -93,10 +93,6 @@ namespace EmStatConsoleExample
                 SendScriptFile();                               // Send the script file for LSV measurement
                 ProcessReceivedPackages();                      // Parse the received response packages
                 SerialPortEsP.Close();                          // Close the serial port
-                for(int i = 0; i < RawData.Length; i++)
-                {
-                    Console.Write(RawData[i]);
-                }
             }
             else
             {

@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         PalmSens Method SCRIPT SDK
+ *         PalmSens Method SCRIPT Example
  * ----------------------------------------------------------------------------
  * Copyright (c) 2016, PalmSens BV
  *
@@ -32,13 +32,13 @@
  * The example allows the user to start measurements on the EmStat Pico from the PC connected to the Arduino through USB.
  * 
  * Environment setup:
- * To run this example, you must include the Method SCRIPT SDK as a library first.
+ * To run this example, you must include the Method SCRIPT C libraries first.
  * To do this, follow the menu "Sketch -> Include Library -> Add .ZIP Library..." and select the PalmSensComm folder.
  * You should now be able to compile the example.
  * 
  * Hardware setup:
- * To run this example, connect your Arduino "Serial1" port Rx, Tx and GND to the EmStat Pico Serial Tx, Rx and GND respectively.
- * Note:  This example assumes that "Serial" is your PC connection (probably USB) and the EmStat Pico is connected on "Serial1".
+ * To run this example, connect your Arduino MKRZERO "Serial1" port Rx, Tx and GND to the EmStat Pico Serial Tx, Rx and GND respectively.
+ * Note:  Make sure the UART switch block SW4 on the EmStat dev board has the switches for MKR 3 and 4 turned on.
  * The Arduino board should be connected normally to a PC. If not powering the EmStat by other means, the EmStat Pico should 
  * be connected to the PC through USB for power.
  * 
@@ -48,9 +48,9 @@
  * You should see messages being printed containing measured data from the EmStat Pico. 
  */
 
-//Because PSComm is a C library and Arduino uses a C++ compiler, we must use the "extern "C"" wrapper.
+//Because MSComm is a C library and Arduino uses a C++ compiler, we must use the "extern "C"" wrapper.
 extern "C" {
-  #include <PSComm.h>
+  #include <MSComm.h>
   #include <MathHelpers.C>
 };
 #include <Arduino.h>
@@ -64,8 +64,10 @@ char _versionString[29];
 
 bool _printSent = false;
 bool _printReceived = false;
-const char* _cmdVersionString = "t\n";
-const char* _lsvMethodScript = "e\n" 
+const char* CMD_VERSION_STRING = "t\n";
+
+//LSV measurement configuration parameters
+const char* LSV_METHOD_SCRIPT = "e\n" 
                                "var c\n"
                                "var p\n"
                                "set_pgstat_mode 3\n"
@@ -82,7 +84,8 @@ const char* _lsvMethodScript = "e\n"
                                "endloop\n"
                                "cell_off\n\n";
                                
-const char* _swvMethodScript = "e\n" 
+//SWV measurement configuration parameters                   
+const char* SWV_METHOD_SCRIPT = "e\n" 
                                "var p\n"
                                "var c\n"
                                "var f\n"
@@ -103,9 +106,9 @@ const char* _swvMethodScript = "e\n"
 
 
 //The Method SCRIPT communication object.
-PSComm _espComm;
+MSComm _espComm;
 
-//We have to give PSComm some functions to communicate with the EmStat Pico (in PSCommInit).
+//We have to give MSComm some functions to communicate with the EmStat Pico (in MSCommInit).
 //However, because the C compiler doesn't understand C++ classes,
 //we must wrap the write/read functions from the Serial class in a normal function, first.
 //We are using Serial and Serial1 here, but you can use any serial port.
@@ -117,7 +120,6 @@ int write_wrapper(char c)
     Serial.write(c);
   }
   return Serial1.write(c);
-  return 0;
 }
 
 int read_wrapper()
@@ -142,7 +144,7 @@ void SERCOM5_Handler()
 int VerifyESPico()
 {
   int i = 0;
-  SendScriptToDevice(Cmd_versionString);
+  SendScriptToDevice(CMD_VERSION_STRING);
   while (!Serial1.available());
   while (Serial1.available())
   {
@@ -163,8 +165,13 @@ int VerifyESPico()
   else if(strstr(_versionString, "esp"))
   {
     Serial.println("Connected to EmStat Pico.");
+    return 1;
   }
-  return 1;
+  else 
+  {
+    Serial.println("Could not connect to EmStat Pico");
+  }
+  return 0;
 }
 
 //The method script is written on the device through the Serial1 port 
@@ -189,15 +196,15 @@ void setup()
   pinPeripheral(13, PIO_SERCOM_ALT);			//Assign SDA function to pin 13
   pinPeripheral(14, PIO_SERCOM_ALT); 			//Assign SCL function to pin 14
 
-  //Init PSComm struct (one for every EmStat Pico).
-  RetCode code = PSCommInit(&_espComm, &write_wrapper, &read_wrapper);
+  //Init MSComm struct (one for every EmStat Pico).
+  RetCode code = MSCommInit(&_espComm, &write_wrapper, &read_wrapper);
   if( code == CODE_OK)
   {
     if(VerifyESPico())
     {
       //Send the script to the device with input parameters
-      SendScriptToDevice(_lsvMethodScript);
-      //SendScriptToDevice(_swvMethodScript);
+      SendScriptToDevice(LSV_METHOD_SCRIPT);
+      //SendScriptToDevice(SWV_METHOD_SCRIPT);
     }
   }
 }

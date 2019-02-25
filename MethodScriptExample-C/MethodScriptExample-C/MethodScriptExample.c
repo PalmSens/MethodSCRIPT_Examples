@@ -29,17 +29,18 @@
 /**
  *  Implementation of Method SCRIPT. See header file for more information.
  */
-#include "ESPicoExample.h"
+#include "MethodScriptExample.h"
 
 HANDLE hCom;
 DWORD dwBytesWritten = 0;
 DWORD dwBytesRead;
-PSComm psComm;
+MSComm msComm;
 MeasureData data;
+int nDataPoints;
 
 int main(int argc, char *argv[])
 {
-	RetCode code = PSCommInit(&psComm, &WriteToDevice, &ReadFromDevice);
+	RetCode code = MSCommInit(&msComm, &WriteToDevice, &ReadFromDevice);
 	int continueParsing;
 	if (code == CODE_OK)
 	{
@@ -48,14 +49,15 @@ int main(int argc, char *argv[])
 		{
 			char buff[PATH_MAX];
 			char *currentDirectory = getcwd(buff, PATH_MAX);
-			char* filePath = "\\EsPicoScriptFiles\\meas_swv_test.txt"; //"LSV_test_script.txt";
+			char* filePath = "\\ScriptFiles\\meas_swv_test.txt"; //"LSV_test_script.txt";
 			char* combinedFilePath = strcat(currentDirectory, filePath);
 			if(ReadScriptFile(combinedFilePath))
 			{
 				printf("\nScript file sent to EmStat Pico.\n");
+				nDataPoints = 0;
 				do
 				{
-					code = ReceivePackage(&psComm, &data);
+					code = ReceivePackage(&msComm, &data);
 					continueParsing = DisplayResults(code);
 				}while(continueParsing == 1);
 			}
@@ -132,9 +134,9 @@ BOOL VerifyEmStatPico()
 	char versionString[30];
 	RetCode code;
 	BOOL isConnected = 0;
-	WriteStr(&psComm, CMD_VERSION_STRING);
+	WriteStr(&msComm, CMD_VERSION_STRING);
 	do{
-		code = ReadBuf(&psComm, versionString);
+		code = ReadBuf(&msComm, versionString);
 		if(strstr(versionString, "*\n") != NULL && strstr(versionString, "esp") != NULL)
 			isConnected = 1;
 		if(code == CODE_RESPONSE_END)
@@ -177,7 +179,7 @@ int ReadScriptFile(char* fileName)
 	}
 	while (fgets(str, 100, fp) != NULL)		//Reads a single line from the script file and writes it on the device.
 	{
-		WriteStr(&psComm, str);
+		WriteStr(&msComm, str);
 	}
 	fclose(fp);
 	return 1;
@@ -186,7 +188,6 @@ int ReadScriptFile(char* fileName)
 int DisplayResults(RetCode code)
 {
 	int continueParsing = 1;
-	int nDataPoints = 0;
 	if(code == CODE_RESPONSE_BEGIN)
 	{
 	  //do nothing

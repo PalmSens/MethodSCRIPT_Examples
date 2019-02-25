@@ -33,7 +33,7 @@
  *  Author(s): Hielke Veringa (hielke@palmsens.com)
  */
  
-#include "PSCommon.h"
+#include "MSCommon.h"
 
 static const char HexTable[] = "0123456789ABCDEF";
 

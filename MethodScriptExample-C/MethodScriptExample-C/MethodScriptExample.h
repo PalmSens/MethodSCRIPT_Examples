@@ -39,7 +39,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
-#include "PalmSenscomm/PSComm.h"
+#include "MethodScriptComm/MSComm.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // Constants

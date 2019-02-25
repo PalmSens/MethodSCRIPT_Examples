@@ -1,6 +1,6 @@
 /*
  ============================================================================
- Name        : PSComm.h
+ Name        : MSComm.h
  Author      : 
  Version     :
  Copyright   :
@@ -31,21 +31,21 @@
  * ----------------------------------------------------------------------------
  Description :
  * ----------------------------------------------------------------------------
- *  PSComm handles the communication with the EmStat pico.
+ *  MSComm handles the communication with the EmStat pico.
  *	Only this file needs to be included in your software.
- *	To communicate with an EmStat, create a PSComm struct and call PSCommInit() on it.
- *	If communication with multiple EmStats is required, create a separate PSComm with different
+ *	To communicate with an EmStat, create a MSComm struct and call MSCommInit() on it.
+ *	If communication with multiple EmStats is required, create a separate MSComm with different
  * 	communication ports (defined by the write_char_func and read_char_func) for each EmStat.
  *
- *	Once a PSComm struct has been successfully created, send the parameters for measurement
+ *	Once a MSComm struct has been successfully created, send the parameters for measurement
  *	by reading a script string/script file for a specific measurement type.
  *
  *	To receive data from the EmStat, call ReceivePackage() periodically.
  ============================================================================
  */
 
-#ifndef PSComm_H
-#define PSComm_H
+#ifndef MSComm_H
+#define MSComm_H
 
 //////////////////////////////////////////////////////////////////////////////
 // Includes
@@ -57,7 +57,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "PSCommon.h"
+#include "MSCommon.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -101,14 +101,14 @@ typedef enum _Reply
 
 ///
 /// The communication object for one EmStat.
-/// You can instantiate multiple PSComms if you have multiple EmStat picos,
+/// You can instantiate multiple MSComms if you have multiple EmStat picos,
 /// but you will need write / read functions from separate (serial) ports to talk to them.
 ///
-typedef struct _PSComm
+typedef struct _MSComm
 {
 	WriteCharFunc writeCharFunc;
 	ReadCharFunc readCharFunc;
-} PSComm;
+} MSComm;
 
 ///
 /// Encapsulates the data packages received from the emstat pico,
@@ -133,25 +133,25 @@ typedef struct _MeasureData
 //////////////////////////////////////////////////////////////////////////////
 
 ///
-/// Initialize the PSComm object.
+/// Initialize the MSComm object.
 ///
-/// psComm:			The PSComm data struct.
-/// write_char_func: 	Function pointer to the write function this PSComm should use.
-/// read_char_func: 	Function pointer to the read function this PSComm should use.
+/// MSComm:			The MSComm data struct.
+/// write_char_func: 	Function pointer to the write function this MSComm should use.
+/// read_char_func: 	Function pointer to the read function this MSComm should use.
 ///
 /// Returns: CODE_OK if successful, otherwise CODE_NULL.
 ///
-RetCode PSCommInit(PSComm* psComm,	WriteCharFunc write_char_func, ReadCharFunc read_char_func);
+RetCode MSCommInit(MSComm* MSComm,	WriteCharFunc write_char_func, ReadCharFunc read_char_func);
 
 ///
 /// Wait for a package and parse it.
 /// Currents are expressed in the Ampere, potentials are expressed in Volts.
 ///
-/// psComm:	The PSComm data struct.
+/// MSComm:	The MSComm data struct.
 /// ret_data: 	The package received is parsed and put into this struct.
 ///
 /// Returns: CODE_OK if successful, CODE_MEASUREMENT_DONE if measurement is completed.
-RetCode ReceivePackage(PSComm* psComm, MeasureData* ret_data);
+RetCode ReceivePackage(MSComm* MSComm, MeasureData* ret_data);
 
 ///
 /// Parses a line of response and further calls to parse meta data values.
@@ -208,22 +208,22 @@ const double GetUnitPrefixValue(char charPrefix);
 /// Reads a character buffer using the supplied read_char_func
 /// Returns: CODE_OK if successful, otherwise CODE_NULL.
 ///
-RetCode ReadBuf(PSComm* psComm, char* buf);
+RetCode ReadBuf(MSComm* MSComm, char* buf);
 
 ///
 /// Reads a character using the supplied read_char_func
 /// Returns: CODE_OK if successful, otherwise CODE_TIMEOUT.
 ///
-RetCode ReadChar(PSComm* psComm, char* c);
+RetCode ReadChar(MSComm* MSComm, char* c);
 
 ///
 /// Writes a character using the supplied write_char_func
 ///
-void WriteChar(PSComm* psComm, char c);
+void WriteChar(MSComm* MSComm, char c);
 
 ///
 /// Writes a 0 terminated string using the supplied write_char_func
 ///
-void WriteStr(PSComm* psComm, const char* buf);
+void WriteStr(MSComm* MSComm, const char* buf);
 
-#endif //PSComm_H
+#endif //MSComm_H
