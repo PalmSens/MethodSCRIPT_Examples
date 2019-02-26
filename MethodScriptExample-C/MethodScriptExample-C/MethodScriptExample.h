@@ -35,7 +35,6 @@
 #define ESPICOCODEEXAMPLE_H
 
 #include <windows.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>

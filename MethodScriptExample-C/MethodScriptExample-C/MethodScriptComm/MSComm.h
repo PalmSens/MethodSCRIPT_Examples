@@ -148,15 +148,15 @@ RetCode MSCommInit(MSComm* MSComm,	WriteCharFunc write_char_func, ReadCharFunc r
 /// Currents are expressed in the Ampere, potentials are expressed in Volts.
 ///
 /// MSComm:	The MSComm data struct.
-/// ret_data: 	The package received is parsed and put into this struct.
+/// retData: 	The package received is parsed and put into this struct.
 ///
 /// Returns: CODE_OK if successful, CODE_MEASUREMENT_DONE if measurement is completed.
-RetCode ReceivePackage(MSComm* MSComm, MeasureData* ret_data);
+RetCode ReceivePackage(MSComm* MSComm, MeasureData* retData);
 
 ///
 /// Parses a line of response and further calls to parse meta data values.
 ///
-void ParseResponse(char *responseLine, MeasureData* ret_data);
+void ParseResponse(char *responseLine, MeasureData* retData);
 
 ///
 /// Splits the input string in to tokens based on the delimiters set (delim) and stores the pointer to the successive token in *stringp.
@@ -168,7 +168,7 @@ char* strtokenize(char** stringp, const char* delim);
 ///
 /// Parses a parameter and calls the function to parse meta data values if any.
 ///
-void ParseParam(char* param, MeasureData* ret_data);
+void ParseParam(char* param, MeasureData* retData);
 
 ///
 /// Retrieves the parameter value by parsing the input value and appending the SI uint prefix to it.
@@ -179,7 +179,7 @@ float GetParameterValue(char* paramValue);
 ///
 /// Parses the meta data values and calls the corresponding functions based on the meta data type (status, current range, noise)
 ///
-void ParseMetaDataValues(char *metaDataParams, MeasureData* ret_data);
+void ParseMetaDataValues(char *metaDataParams, MeasureData* retData);
 
 ///
 /// Parses the bytes corresponding to the status of the package(OK, Overload, Underload, Overload_warning)
