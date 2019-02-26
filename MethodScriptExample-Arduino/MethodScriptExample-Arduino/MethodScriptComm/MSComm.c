@@ -88,17 +88,17 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 	return CODE_NULL;
 }
 
-RetCode ReceivePackage(MSComm* msComm, MeasureData* ret_data)
+RetCode ReceivePackage(MSComm* msComm, MeasureData* retData)
 {
 	char bufferLine[100];
 	RetCode ret = ReadBuf(msComm, bufferLine);
 	if (ret != CODE_OK)
 		return ret;
-    ParseResponse(bufferLine, ret_data);
+    ParseResponse(bufferLine, retData);
 	return ret;
 }
 
-void ParseResponse(char *responsePackageLine, MeasureData* ret_data)
+void ParseResponse(char *responsePackageLine, MeasureData* retData)
 {
 	char *P = strchr(responsePackageLine, 'P');							//Identifies the beginning of the response package
 	char *packageLine = P+1;
@@ -107,7 +107,7 @@ void ParseResponse(char *responsePackageLine, MeasureData* ret_data)
 	char* param = strtokenize(&running, delimiters);					//Pulls out the parameters separated by the delimiters
 	do
 	{
-		ParseParam(param, ret_data);									//Parses the parameters further to get the meta data values if any
+		ParseParam(param, retData);									//Parses the parameters further to get the meta data values if any
 
 	}while ((param = strtokenize(&running, delimiters)) != NULL);		//Continues parsing the response line until end of line
 }
@@ -131,7 +131,7 @@ char* strtokenize(char** stringp, const char* delim)
   return start;															//Returns the current token found
 }
 
-void ParseParam(char* param, MeasureData* ret_data)
+void ParseParam(char* param, MeasureData* retData)
 {
 	char paramIdentifier[3];
 	char paramValue[10];
@@ -144,13 +144,13 @@ void ParseParam(char* param, MeasureData* ret_data)
 	parameterValue = (float)GetParameterValue(paramValue);				//Retrieves the actual parameter value
 	if(strcmp(paramIdentifier, "da") == 0)
 	{
-		ret_data->potential = parameterValue;
+		retData->potential = parameterValue;
 	}
 	else if (strcmp(paramIdentifier, "ba") == 0)
 	{
-		ret_data->current = parameterValue;
+		retData->current = parameterValue;
 	}
-	ParseMetaDataValues(param + 10, ret_data);							//Rest of the parameter is further parsed to get meta data values
+	ParseMetaDataValues(param + 10, retData);							//Rest of the parameter is further parsed to get meta data values
 }
 
 float GetParameterValue(char* paramValue)
@@ -199,7 +199,7 @@ const double GetUnitPrefixValue(char charPrefix)
 	return 0;
 }
 
-void ParseMetaDataValues(char *metaDataParams, MeasureData* ret_data)
+void ParseMetaDataValues(char *metaDataParams, MeasureData* retData)
 {
 	const char delimiters[] = ",\n";
 	char* running = metaDataParams;
@@ -209,10 +209,10 @@ void ParseMetaDataValues(char *metaDataParams, MeasureData* ret_data)
 		switch (metaData[0])
 		{
 			case '1':
-				ret_data->status = GetReadingStatusFromPackage(metaData); 	//Retrieves the reading status of the parameter
+				retData->status = GetReadingStatusFromPackage(metaData); 	//Retrieves the reading status of the parameter
 				break;
 			case '2':
-				ret_data->cr = GetCurrentRangeFromPackage(metaData);		//Retrieves the current range of the parameter
+				retData->cr = GetCurrentRangeFromPackage(metaData);		//Retrieves the current range of the parameter
 				break;
 			case '4':
 																			//Retrieves the corresponding noise
@@ -246,75 +246,75 @@ char* GetCurrentRangeFromPackage(char* metaDataCR)
 	strncpy(crBytePackage, metaDataCR+1, 2);							//Fetches the current range bits from the package
 	int crByte = strtol(crBytePackage, &ptr, 16);
 
-	switch (crByte)
-	{
-		case 0:
-			currentRangeStr = "100nA";
-			break;
-		case 1:
-			currentRangeStr = "2uA";
-			break;
-		case 2:
-			currentRangeStr = "4uA";
-			break;
-		case 3:
-			currentRangeStr = "8uA";
-			break;
-		case 4:
-			currentRangeStr = "16uA";
-			break;
-		case 5:
-			currentRangeStr = "32uA";
-			break;
-		case 6:
-			currentRangeStr = "63uA";
-			break;
-		case 7:
-			currentRangeStr = "125uA";
-			break;
-		case 8:
-			currentRangeStr = "250uA";
-			break;
-		case 9:
-			currentRangeStr = "500uA";
-			break;
-		case 10:
-			currentRangeStr = "1mA";
-			break;
-		case 11:
-			currentRangeStr = "15mA";
-			break;
-		case 128:
-			currentRangeStr = "100nA (High speed)";
-			break;
-		case 129:
-			currentRangeStr = "1uA (High speed)";
-			break;
-		case 130:
-			currentRangeStr = "6uA (High speed)";
-			break;
-		case 131:
-			currentRangeStr = "13uA (High speed)";
-			break;
-		case 132:
-			currentRangeStr = "25uA (High speed)";
-			break;
-		case 133:
-			currentRangeStr = "50uA (High speed)";
-			break;
-		case 134:
-			currentRangeStr = "100uA (High speed)";
-			break;
-		case 135:
-			currentRangeStr = "200uA (High speed)";
-			break;
-		case 136:
-			currentRangeStr = "1mA (High speed)";
-			break;
-		case 137:
-			currentRangeStr = "5mA (High speed)";
-			break;
-	}
+switch (crByte)
+{
+	case 0:
+		currentRangeStr = "100nA";
+		break;
+	case 1:
+		currentRangeStr = "2uA";
+		break;
+	case 2:
+		currentRangeStr = "4uA";
+		break;
+	case 3:
+		currentRangeStr = "8uA";
+		break;
+	case 4:
+		currentRangeStr = "16uA";
+		break;
+	case 5:
+		currentRangeStr = "32uA";
+		break;
+	case 6:
+		currentRangeStr = "63uA";
+		break;
+	case 7:
+		currentRangeStr = "125uA";
+		break;
+	case 8:
+		currentRangeStr = "250uA";
+		break;
+	case 9:
+		currentRangeStr = "500uA";
+		break;
+	case 10:
+		currentRangeStr = "1mA";
+		break;
+	case 11:
+		currentRangeStr = "15mA";
+		break;
+	case 128:
+		currentRangeStr = "100nA (High speed)";
+		break;
+	case 129:
+		currentRangeStr = "1uA (High speed)";
+		break;
+	case 130:
+		currentRangeStr = "6uA (High speed)";
+		break;
+	case 131:
+		currentRangeStr = "13uA (High speed)";
+		break;
+	case 132:
+		currentRangeStr = "25uA (High speed)";
+		break;
+	case 133:
+		currentRangeStr = "50uA (High speed)";
+		break;
+	case 134:
+		currentRangeStr = "100uA (High speed)";
+		break;
+	case 135:
+		currentRangeStr = "200uA (High speed)";
+		break;
+	case 136:
+		currentRangeStr = "1mA (High speed)";
+		break;
+	case 137:
+		currentRangeStr = "5mA (High speed)";
+		break;
+}
 	return currentRangeStr;
 }
 

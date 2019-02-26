@@ -106,7 +106,7 @@ const char* SWV_METHOD_SCRIPT = "e\n"
 
 
 //The Method SCRIPT communication object.
-MSComm _espComm;
+MSComm _msComm;
 
 //We have to give MSComm some functions to communicate with the EmStat Pico (in MSCommInit).
 //However, because the C compiler doesn't understand C++ classes,
@@ -197,7 +197,7 @@ void setup()
   pinPeripheral(14, PIO_SERCOM_ALT); 			//Assign SCL function to pin 14
 
   //Init MSComm struct (one for every EmStat Pico).
-  RetCode code = MSCommInit(&_espComm, &write_wrapper, &read_wrapper);
+  RetCode code = MSCommInit(&_msComm, &write_wrapper, &read_wrapper);
   if( code == CODE_OK)
   {
     if(VerifyESPico())
@@ -219,7 +219,7 @@ void loop()
   while (Serial1.available())
   {
     //Read from the device and try to identify and parse a package
-    RetCode code = ReceivePackage(&_espComm, &data);
+    RetCode code = ReceivePackage(&_msComm, &data);
     if(code == CODE_RESPONSE_BEGIN)
     {
       //do nothing
