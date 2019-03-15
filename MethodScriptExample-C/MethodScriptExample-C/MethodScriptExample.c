@@ -71,7 +71,7 @@ int OpenSerialPort()
 {
 	DCB dcb = { 0 };
 	BOOL fSuccess;
-	hCom = CreateFile("\\\\.\\COM37", GENERIC_READ | GENERIC_WRITE, 0,  // must be opened with exclusive-access
+	hCom = CreateFile("\\\\.\\COM39", GENERIC_READ | GENERIC_WRITE, 0,  // must be opened with exclusive-access
 									  NULL, 						    // no security attributes
 									  OPEN_EXISTING,					// must use OPEN_EXISTING
 									  0,								// not overlapped I/O
@@ -207,8 +207,8 @@ int DisplayResults(RetCode code)
 	  printf("i(A) : %11.3E \t", data.current);
 	  printf("Status: %-15s  ", data.status);
 	  printf("CR: %s ", data.cr);
-	  fflush(stdout);
-	}
+		  fflush(stdout);
+		}
 	else if(code == CODE_MEASUREMENT_DONE)
 	{
 	  printf("\nMeasurement completed. ");

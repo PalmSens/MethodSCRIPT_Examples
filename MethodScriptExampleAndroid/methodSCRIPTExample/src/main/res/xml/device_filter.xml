@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 0x0403 / 0x6015: FTDI FT231X -->
+    <usb-device vendor-id="1027" product-id="24597" />
+
+    <!-- 0x2341 / Arduino -->
+    <!-- <usb-device vendor-id="9025" /> -->
+
+</resources>
