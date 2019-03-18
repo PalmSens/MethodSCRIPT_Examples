@@ -49,9 +49,9 @@ int main(int argc, char *argv[])
 		{
 			char buff[PATH_MAX];
 			char *currentDirectory = getcwd(buff, PATH_MAX);
-			char* filePath = "\\ScriptFiles\\meas_swv_test.txt"; //"LSV_test_script.txt";
-			char* combinedFilePath = strcat(currentDirectory, filePath);
-			if(ReadScriptFile(combinedFilePath))
+			const char* filePath = "\\ScriptFiles\\meas_swv_test.txt"; //"LSV_test_script.txt";
+			char* combinedFilePath = strcat(currentDirectory, filePath); //TODO: file length not checked
+			if(SendScriptFile(combinedFilePath))
 			{
 				printf("\nScript file sent to EmStat Pico.\n");
 				nDataPoints = 0;
@@ -71,6 +71,7 @@ int OpenSerialPort()
 {
 	DCB dcb = { 0 };
 	BOOL fSuccess;
+    //TODO: externalize com port addr, so that it is clear that it must be changed before running the example
 	hCom = CreateFile("\\\\.\\COM39", GENERIC_READ | GENERIC_WRITE, 0,  // must be opened with exclusive-access
 									  NULL, 						    // no security attributes
 									  OPEN_EXISTING,					// must use OPEN_EXISTING
@@ -137,7 +138,7 @@ BOOL VerifyEmStatPico()
 	WriteStr(&msComm, CMD_VERSION_STRING);
 	do{
 		code = ReadBuf(&msComm, versionString);
-		if(strstr(versionString, "*\n") != NULL && strstr(versionString, "esp") != NULL)
+		if(strstr(versionString, "*\n") != NULL && strstr(versionString, "esp") != NULL) //TODO: new string is "espico"
 			isConnected = 1;
 		if(code == CODE_RESPONSE_END)
 			break;
@@ -167,7 +168,7 @@ int ReadFromDevice()
 	return (int)tempChar;
 }
 
-int ReadScriptFile(char* fileName)
+int SendScriptFile(char* fileName)
 {
 	FILE *fp;
 	char str[100];
@@ -188,6 +189,7 @@ int ReadScriptFile(char* fileName)
 int DisplayResults(RetCode code)
 {
 	int continueParsing = 1;
+    //TODO: long list of if statements -> switch case
 	if(code == CODE_RESPONSE_BEGIN)
 	{
 	  //do nothing

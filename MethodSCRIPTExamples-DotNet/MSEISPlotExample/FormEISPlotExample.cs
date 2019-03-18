@@ -71,10 +71,10 @@ namespace EmStatPicoEISPlotExample
         private void InitPlot()
         {
             NyquistPlotModel = new PlotModel();
-            SetPlot(NyquistPlotModel, "Z(Re) vs Z(Im)");              // Set up the Nyquist plot
+            SetPlot(NyquistPlotModel, "Z(Im) vs Z(Re)");              // Set up the Nyquist plot
 
             BodePlotModel = new PlotModel();
-            SetPlot(BodePlotModel, "Log f vs Log Z/Phase");          // Set up the Bode plot
+            SetPlot(BodePlotModel, "Log Z/Phase vs Log f");          // Set up the Bode plot
 
             InitializePlotData();                                    // Initialize the plot data for Nyquist and Bode plots
 
@@ -101,14 +101,14 @@ namespace EmStatPicoEISPlotExample
         /// </summary>
         private void InitializePlotData()
         {
-            NyquistPlotData = GetLineSeries(OxyColors.Green, MarkerType.Circle, "Z vs Z''");
+            NyquistPlotData = GetLineSeries(OxyColors.Green, MarkerType.Circle, "Z'' vs Z");
             NyquistPlotModel.Series.Add(NyquistPlotData);           // Add the data series to the plot model
 
-            BodePlotDataMagnitude = GetLineSeries(OxyColors.Blue, MarkerType.Circle, " Frequency vs Z");
+            BodePlotDataMagnitude = GetLineSeries(OxyColors.Blue, MarkerType.Circle, " Z vs Frequency");
             BodePlotDataMagnitude.YAxisKey = "Z";                   // Set the secondary Y axis to Impedance magnitude (Z)
             BodePlotModel.Series.Add(BodePlotDataMagnitude);        // Add the data series to the plot model 
 
-            BodePlotDataPhase = GetLineSeries(OxyColors.Red, MarkerType.Triangle, "Frequency vs Phase");
+            BodePlotDataPhase = GetLineSeries(OxyColors.Red, MarkerType.Triangle, "Phase vs Frequency");
             BodePlotDataPhase.YAxisKey = "Phase";                   // Set the secondary Y axis to Phase
             BodePlotModel.Series.Add(BodePlotDataPhase);            // Add the data series to the plot model
         }
@@ -379,7 +379,7 @@ namespace EmStatPicoEISPlotExample
                 {
                     NDataPointsReceived++;                 // Increment the number of data points if the read line contains the header char 'P
                     ParsePackageLine(readLine);            // Parse the line read 
-                    CalcúlateComplexImpedance();
+                    CalculateComplexImpedance();
                     UpdatePlots();                         // Update the plot with the new data point added after parsing a line
                 }
             }
@@ -421,12 +421,11 @@ namespace EmStatPicoEISPlotExample
             int startingIndex = packageLine.IndexOf('P');
 
             string responsePackageLine = packageLine.Remove(startingIndex, 1);
-            startingIndex = 0;
             parameters = responsePackageLine.Split(';');
             foreach (string parameter in parameters)
             {
-                paramIdentifier = parameter.Substring(startingIndex, 2);     // The string that identifies the measurement parameter
-                paramValue = responsePackageLine.Substring(startingIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);
+                paramIdentifier = parameter.Substring(0, 2);     // The string that identifies the measurement parameter
+                paramValue = parameter.Substring(2, PACKAGE_PARAM_VALUE_LENGTH);
                 double paramValueWithPrefix = ParseParamValues(paramValue);
                 switch (paramIdentifier)
                 {
@@ -437,7 +436,7 @@ namespace EmStatPicoEISPlotExample
                         RealImpedanceValues.Add(paramValueWithPrefix);       //If Z(Real) reading add the value to RealImpedanceReadings list
                         break;
                     case "cd":                                               //Imaginary Impedance reading
-                        ImgImpedanceValues.Add(paramValueWithPrefix);        //If Z(Img) reading add the value to ImgImpedanceReadings list
+                        ImgImpedanceValues.Add(paramValueWithPrefix);       //If Z(Img) reading add the value to ImgImpedanceReadings list
                         break;
                 }
             }
@@ -460,7 +459,7 @@ namespace EmStatPicoEISPlotExample
         /// <summary>
         /// Calculates the complex impedance, magnitude and phase of the impedance values 
         /// </summary>
-        private void CalcúlateComplexImpedance()
+        private void CalculateComplexImpedance()
         {
             Complex ZComplex = new Complex(RealImpedanceValues.Last(), ImgImpedanceValues.Last());
             ComplexImpedanceValues.Add(ZComplex);
@@ -473,12 +472,12 @@ namespace EmStatPicoEISPlotExample
         /// </summary>
         private void UpdatePlots()
         {
-            NyquistPlotData.Points.Add(new DataPoint(RealImpedanceValues.Last(), ImgImpedanceValues.Last()));    // Add the last added measurement values as new data points and update the plot
+            NyquistPlotData.Points.Add(new DataPoint(RealImpedanceValues.Last(), -ImgImpedanceValues.Last()));    // Add the last added measurement values as new data points and update the plot
             NyquistPlotModel.InvalidatePlot(true);
             NyquistPlotModel.ResetAllAxes();
 
             BodePlotDataMagnitude.Points.Add(new DataPoint(FrequencyValues.Last(), ImpedanceMagnitudeValues.Last()));
-            BodePlotDataPhase.Points.Add(new DataPoint(FrequencyValues.Last(), PhaseValues.Last()));
+            BodePlotDataPhase.Points.Add(new DataPoint(FrequencyValues.Last(), -PhaseValues.Last()));
             BodePlotModel.InvalidatePlot(true);
             BodePlotModel.ResetAllAxes();
         }

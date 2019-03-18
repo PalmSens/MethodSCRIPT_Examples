@@ -30,13 +30,13 @@
 /**
  *  Implementation of common functions.
  *
- *  Author(s): Hielke Veringa (hielke@palmsens.com)
+ *  Author(s): Hielke Veringa (hielke@palmsens.com)//TODO: update
  */
  
 #include "MSCommon.h"
 
 static const char HexTable[] = "0123456789ABCDEF";
-
+//TODO: remove these, they are legacy reversed hex functions for the es3 and ps3
 void ToHex(uint8_t in, char * buf)
 {
 	buf[0] = HexTable[(in>>4) & 0xF];

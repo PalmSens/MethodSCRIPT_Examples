@@ -83,7 +83,7 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 					return CODE_NOT_IMPLEMENTED;
 			}
 		}
-	} while (i < 99);
+	} while (i < 99); //TODO: it is not clear that this buffer is 100 long here, consider having a length param or a define for the buf length
 	buf[i] = '\0';
 	return CODE_NULL;
 }
@@ -223,10 +223,12 @@ void ParseMetaDataValues(char *metaDataParams, MeasureData* retData)
 
 char* GetReadingStatusFromPackage(char* metaDataStatus)
 {
+    //TODO: returning this status string pointer is a bit suspect, it will be OK in this case since it points to a string literal, but this would probably raise alarm bells for C programmers.
+    //It would be better to store an index to a string lookup table or return a const pointer to a global const char* containing the actual string (this makes it more obvious that the space for the string is always reserved).
 	char* status;
 	char *ptr;
-	long statusBits = strtol(&metaDataStatus[1], &ptr , 16);				//Fetches the status bit from the package
-	if ((statusBits & 0x0) == STATUS_OK)
+	long statusBits = strtol(&metaDataStatus[1], &ptr , 16);				//Fetches the status bit from the package //TODO: ptr can be NULL if not used
+	if ((statusBits & 0x0) == STATUS_OK) //TODO: This & does nothing (same as java)
 		status = "OK";
 	if ((statusBits & 0x2) == STATUS_OVERLOAD)
 		status = "Overload";
@@ -240,11 +242,13 @@ char* GetReadingStatusFromPackage(char* metaDataStatus)
 
 char* GetCurrentRangeFromPackage(char* metaDataCR)
 {
+    //TODO: see status ptr comment
 	char* currentRangeStr;
 	char  crBytePackage[3];
 	char* ptr;
 	strncpy(crBytePackage, metaDataCR+1, 2);							//Fetches the current range bits from the package
-	int crByte = strtol(crBytePackage, &ptr, 16);
+    //TODO: is this null terminated?
+	int crByte = strtol(crBytePackage, &ptr, 16); //TODO: ptr may be NULL if not used
 
 switch (crByte)
 {

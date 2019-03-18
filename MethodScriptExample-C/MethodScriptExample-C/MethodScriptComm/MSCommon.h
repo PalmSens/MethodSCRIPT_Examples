@@ -30,7 +30,7 @@
 /**
  *  Contains commonly used stuff.
  *
- *  Author(s): Hielke Veringa (hielke@palmsens.com)
+ *  Author(s): Hielke Veringa (hielke@palmsens.com)//TODO: update
  * 	Version: 1.23
  */
  

@@ -140,12 +140,16 @@ void SERCOM5_Handler()
  Serial1.IrqHandler();
 }
 
+//TODO: would it be nice to have a "GetVersionStr" in the library?
 //Verify if connected to EmStat Pico by checking the version string contains the "esp"
 int VerifyESPico()
 {
   int i = 0;
   SendScriptToDevice(CMD_VERSION_STRING);
   while (!Serial1.available());
+  //TODO: If this exits because Serial1.available() is false, the string is not null terminated
+  //TODO: The version command terminator is '*' followed by '\n' and can be multiple lines
+  //TODO: It would be nicer to have a "GetTerminatedPck" function that you can pass a terminating string / char. This would be useful in many places.
   while (Serial1.available())
   {
     char incomingByte_pico = Serial1.read(); 
@@ -162,7 +166,7 @@ int VerifyESPico()
     Serial.println("EmStat Pico is connected in boot loader mode.");
     return 0;
   }
-  else if(strstr(_versionString, "esp"))
+  else if(strstr(_versionString, "esp")) //TODO: has changed to "espico"
   {
     Serial.println("Connected to EmStat Pico.");
     return 1;
@@ -220,6 +224,7 @@ void loop()
   {
     //Read from the device and try to identify and parse a package
     RetCode code = ReceivePackage(&_msComm, &data);
+    //TODO: the switch case thing ;)
     if(code == CODE_RESPONSE_BEGIN)
     {
       //do nothing

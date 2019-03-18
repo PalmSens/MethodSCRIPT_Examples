@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         PalmSens SDK
+ *         PalmSens SDK //TODO: name inconsistent with .c file
  * ----------------------------------------------------------------------------
  * Copyright (c) 2016, PalmSens BV
  *
@@ -70,7 +70,7 @@ BOOL VerifyEmStatPico();
 /// Reads a line from the script file and writes it to the EmStat Pico
 ///
 /// Returns: 1 if data is read from file and written successfully to the device, 0 in case of failure.
-int ReadScriptFile(char* fileName);
+int SendScriptFile(char* fileName);
 
 ///
 /// Writes the input character to the device

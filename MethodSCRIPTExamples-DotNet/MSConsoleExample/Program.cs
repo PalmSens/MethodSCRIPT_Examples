@@ -10,7 +10,7 @@ namespace EmStatConsoleExample
 {
     class Program
     {
-        static string ScriptFileName = "LSV_on_1KOhm.txt";//"meas_swv_test.txt";                     // Name of the script file
+        static string ScriptFileName = "LSV_on_10KOhm.txt";//"meas_swv_test.txt";                     // Name of the script file
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -122,6 +122,8 @@ namespace EmStatConsoleExample
                         serialPort.Write("t\n");
                         string response = serialPort.ReadLine();
                         // Identify the port connected to EmStatPico
+                        //TODO: This can be multiple lines, so check for "espico" in first line, then read until it contains "*\n".
+                        //TODO: is now "espico"
                         if (response.Contains("esp"))
                         {
                             serialPort.ReadTimeout = 7000;
@@ -149,7 +151,7 @@ namespace EmStatConsoleExample
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
             serialPort.BaudRate = 230400;
-            serialPort.ReadTimeout = 1000;
+            serialPort.ReadTimeout = 1000; //TODO: make this a setting for measurements that have long intervals
             serialPort.WriteTimeout = 2;
             return serialPort;
         }
@@ -228,13 +230,12 @@ private static void ParsePackageLine(string packageLine)
     string paramValue;
     int startingIndex = packageLine.IndexOf('P');
     string responsePackageLine = packageLine.Remove(startingIndex, 1);
-    startingIndex = 0;
     Console.Write($"\nindex = " + String.Format("{0,3} {1,2} ", NDataPointsReceived, " "));
     parameters = responsePackageLine.Split(';');
     foreach (string parameter in parameters)
     {
-        paramIdentifier = parameter.Substring(startingIndex, 2);   // The string that identifies the measurement parameter
-        paramValue = responsePackageLine.Substring(startingIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);
+        paramIdentifier = parameter.Substring(0, 2);   // The string that identifies the measurement parameter
+        paramValue = parameter.Substring(2, PACKAGE_PARAM_VALUE_LENGTH);
         double paramValueWithPrefix = ParseParamValues(paramValue);
         switch (paramIdentifier)
         {
@@ -287,7 +288,7 @@ private static void ParsePackageLine(string packageLine)
         {
             string status = "";
             long statusBits = (Convert.ToInt32(metaDatastatus[1].ToString(), 16));
-            if ((statusBits & 0x0) == (long) ReadingStatus.OK)
+            if ((statusBits & 0x0) == (long) ReadingStatus.OK) //TODO:  & 0x0 does nothing
                 status = "OK";
             if ((statusBits & 0x2) == (long) ReadingStatus.Overload)
                 status = "Overload";
@@ -302,7 +303,7 @@ private static void ParsePackageLine(string packageLine)
         /// Parses the bytes corresponding to current range from the package and prints the current range value.
         /// </summary>
         /// <param name="metaDataCR"></param>
-        private static void GetCurrentRangeFromPackage(string metaDataCR)
+        private static void GetCurrentRangeFromPackage(string metaDataCR) //TODO: wouldn't it be nicer if this returned the CR string, or the byte value you can lookup the name for in a dictionary?
         {
             string currentRangeStr = "";
             byte crByte;

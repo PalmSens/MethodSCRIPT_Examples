@@ -12,7 +12,7 @@ namespace ESPicoEISConsoleExample
 {
     class Program
     {
-        static string ScriptFileName = "EIS_on_1KOhm.txt";                                           // Name of the script file
+        static string ScriptFileName = "EIS_on_10KOhm.txt";                                           // Name of the script file
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         // Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -230,13 +230,12 @@ namespace ESPicoEISConsoleExample
             int startingIndex = packageLine.IndexOf('P');
 
             string responsePackageLine = packageLine.Remove(startingIndex, 1);
-            startingIndex = 0;
             Console.Write($"\nindex = " + String.Format("{0,3} {1,2} ", NDataPointsReceived, " "));
             parameters = responsePackageLine.Split(';');
             foreach (string parameter in parameters)
             {
-                paramIdentifier = parameter.Substring(startingIndex, 2);       // The string that identifies the measurement parameter
-                paramValue = responsePackageLine.Substring(startingIndex + 2, PACKAGE_PARAM_VALUE_LENGTH);
+                paramIdentifier = parameter.Substring(0, 2);       // The string that identifies the measurement parameter
+                paramValue = parameter.Substring(2, PACKAGE_PARAM_VALUE_LENGTH);
                 double paramValueWithPrefix = ParseParamValues(paramValue);
                 switch (paramIdentifier)
                 {
