@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------------
- *         PalmSens SDK //TODO: name inconsistent with .c file
+ *         PalmSens MethodSCRIPT SDK //TODO: name inconsistent with .c file - DONE
  * ----------------------------------------------------------------------------
- * Copyright (c) 2016, PalmSens BV
+ * Copyright (c) 2019, PalmSens BV
  *
  * All rights reserved.
  *
@@ -45,7 +45,6 @@
 //////////////////////////////////////////////////////////////////////////////
 const char* CMD_VERSION_STRING = "t\n";
 
-
 //////////////////////////////////////////////////////////////////////////////
 // Normal Functions
 //
@@ -70,12 +69,14 @@ BOOL VerifyEmStatPico();
 /// Reads a line from the script file and writes it to the EmStat Pico
 ///
 /// Returns: 1 if data is read from file and written successfully to the device, 0 in case of failure.
+///
 int SendScriptFile(char* fileName);
 
 ///
 /// Writes the input character to the device
 ///
 /// Returns: 1 if data is written successfully, 0 in case of failure.
+///
 int WriteToDevice(char c);
 
 ///

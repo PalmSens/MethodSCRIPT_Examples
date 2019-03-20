@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------------
- *         PalmSens Method SCRIPT SDK
+ *         PalmSens MethodSCRIPT SDK Example
  * ----------------------------------------------------------------------------
- * Copyright (c) 2016, PalmSens BV
+ * Copyright (c) 2019, PalmSens BV
  *
  * All rights reserved.
  *
@@ -27,7 +27,7 @@
  * ----------------------------------------------------------------------------
  */
 /**
- *  Implementation of Method SCRIPT. See header file for more information.
+ *  Implementation of MethodSCRIPT. See header file and the "Getting started-MethodSCRIPT-Example-C.pdf" for more information.
  */
 #include "MethodScriptExample.h"
 
@@ -37,6 +37,9 @@ DWORD dwBytesRead;
 MSComm msComm;
 MeasureData data;
 int nDataPoints;
+
+const char* PORT_NAME = "\\\\.\\COM39";									   // The name of the port - to be changed, by looking up the device manager
+const DWORD BAUD_RATE = 230400;											   // The baud rate for EmStat Pico
 
 int main(int argc, char *argv[])
 {
@@ -48,18 +51,27 @@ int main(int argc, char *argv[])
 		if(isOpen)
 		{
 			char buff[PATH_MAX];
-			char *currentDirectory = getcwd(buff, PATH_MAX);
-			const char* filePath = "\\ScriptFiles\\meas_swv_test.txt"; //"LSV_test_script.txt";
-			char* combinedFilePath = strcat(currentDirectory, filePath); //TODO: file length not checked
-			if(SendScriptFile(combinedFilePath))
+			char *currentDirectory = getcwd(buff, PATH_MAX);		      // Fetches the current directory
+			const char* filePath = "\\ScriptFiles\\LSV_on_10KOhm.txt"; 	  // "SWV_on_10KOhm.txt";
+			int combinedFilePathSize = PATH_MAX + 1 + strlen(filePath);	  // Determines the max size of the combined file path
+			char combinedFilePath[combinedFilePathSize];				  // An array to hold the combined file path
+			if(currentDirectory != NULL)
 			{
-				printf("\nScript file sent to EmStat Pico.\n");
-				nDataPoints = 0;
-				do
+				char *combinedPath = strcat(currentDirectory, filePath);  // Concatenates the current directory and file path to generate the combined file path
+				strcpy(combinedFilePath, combinedPath);
+				if(SendScriptFile(combinedFilePath))
 				{
-					code = ReceivePackage(&msComm, &data);
-					continueParsing = DisplayResults(code);
-				}while(continueParsing == 1);
+					printf("\nScript file sent to EmStat Pico.\n");
+					nDataPoints = 0;
+					do
+					{
+						code = ReceivePackage(&msComm, &data);			  // Receives the response and stores the parsed values in the struct 'data'
+						continueParsing = DisplayResults(code);			  // Displays the results based on the returned code
+					}while(continueParsing == 1);
+				}
+			}
+			else{
+				printf("Error in retrieving the current directory.");
 			}
 			if (hCom != NULL)
 				CloseHandle(hCom);
@@ -71,8 +83,7 @@ int OpenSerialPort()
 {
 	DCB dcb = { 0 };
 	BOOL fSuccess;
-    //TODO: externalize com port addr, so that it is clear that it must be changed before running the example
-	hCom = CreateFile("\\\\.\\COM39", GENERIC_READ | GENERIC_WRITE, 0,  // must be opened with exclusive-access
+	hCom = CreateFile(PORT_NAME, GENERIC_READ | GENERIC_WRITE, 0,  		// must be opened with exclusive-access
 									  NULL, 						    // no security attributes
 									  OPEN_EXISTING,					// must use OPEN_EXISTING
 									  0,								// not overlapped I/O
@@ -84,7 +95,7 @@ int OpenSerialPort()
 		return 0;
 	}
 
-	// Set up the port connection parameters with the help of device control block (DCB)
+	// Set up the port connection parameters using device control block (DCB)
 	fSuccess = GetCommState(hCom, &dcb);
 
 	if (!fSuccess) {
@@ -93,8 +104,8 @@ int OpenSerialPort()
 	}
 
 	// Fill in DCB: 230400 bps, 8 data bits, no parity, and 1 stop bit.
-	DWORD baud = 230400;
-	dcb.BaudRate = baud; 			// set the baud rate 230400 bps
+
+	dcb.BaudRate = BAUD_RATE; 		// set the baud rate 230400 bps
 	dcb.ByteSize = 8; 				// data size
 	dcb.Parity = NOPARITY; 			// no parity bit
 	dcb.StopBits = ONESTOPBIT; 		// one stop bit
@@ -118,29 +129,30 @@ int OpenSerialPort()
 	}
 	fflush(stdout);
 
-	//Verify if the connected device is EmStat Pico.
-	fSuccess = VerifyEmStatPico();
+	fSuccess = VerifyEmStatPico();					// Verifies if the connected device is EmStat Pico.
 	if(fSuccess)
 	{
 		printf("Serial port successfully connected to EmStat Pico.\n");
 		return 1;
 	}
-	printf("Could not connect to EmStat Pico.\n");
+	printf("Connected device is not EmStat Pico.\n");
 	return 0;
 }
 
+///
+///Sends the command to get version string and verify if port is connected to Emstat pico.
+///
 BOOL VerifyEmStatPico()
 {
-	//Send the command to get version string and verify if port is connected to Emstat pico.
 	char versionString[30];
 	RetCode code;
 	BOOL isConnected = 0;
 	WriteStr(&msComm, CMD_VERSION_STRING);
 	do{
 		code = ReadBuf(&msComm, versionString);
-		if(strstr(versionString, "*\n") != NULL && strstr(versionString, "esp") != NULL) //TODO: new string is "espico"
+		if(code == CODE_VERSION_RESPONSE && strstr(versionString, "espico") != NULL) // Verifies if the device is EmStat Pico by looking for "espico" in the version response
 			isConnected = 1;
-		if(code == CODE_RESPONSE_END)
+		else if(strstr(versionString, "*\n") != NULL)								 // Reads until end of response and break
 			break;
 	}while(1);
 	return isConnected;
@@ -158,12 +170,12 @@ int WriteToDevice(char c)
 
 int ReadFromDevice()
 {
-	char tempChar; 							//Temporary character used for reading
+	char tempChar; 							// Temporary character used for reading
 	DWORD noBytesRead;
-	ReadFile(hCom, 							//Handle of the Serial port
-			&tempChar, 						//Temporary character
-			sizeof(tempChar),				//Size of TempChar
-			&noBytesRead, 					//Number of bytes read
+	ReadFile(hCom, 							// Handle of the Serial port
+			&tempChar, 						// Temporary character
+			sizeof(tempChar),				// Size of TempChar
+			&noBytesRead, 					// Number of bytes read
 			NULL);
 	return (int)tempChar;
 }
@@ -178,7 +190,7 @@ int SendScriptFile(char* fileName)
 		printf("Could not open file %s", fileName);
 		return 1;
 	}
-	while (fgets(str, 100, fp) != NULL)		//Reads a single line from the script file and writes it on the device.
+	while (fgets(str, 100, fp) != NULL)		// Reads a single line from the script file and writes it on the device.
 	{
 		WriteStr(&msComm, str);
 	}
@@ -189,43 +201,36 @@ int SendScriptFile(char* fileName)
 int DisplayResults(RetCode code)
 {
 	int continueParsing = 1;
-    //TODO: long list of if statements -> switch case
-	if(code == CODE_RESPONSE_BEGIN)
+	switch(code)
 	{
-	  //do nothing
-	}
-	else if(code == CODE_MEASURING)
-	{
-	  printf("\nMeasuring... \n");
-	}
-	else if(code == CODE_OK)
-	{
-	  if(nDataPoints == 0)
-		  printf("\nReceiving measurement response:\n");
-	  //Received valid package, print it.
-	  printf("\n %d \t", ++nDataPoints);
-	  printf("E(V): %6.3f \t", data.potential);
-	  fflush(stdout);
-	  printf("i(A) : %11.3E \t", data.current);
-	  printf("Status: %-15s  ", data.status);
-	  printf("CR: %s ", data.cr);
-		  fflush(stdout);
-		}
-	else if(code == CODE_MEASUREMENT_DONE)
-	{
-	  printf("\nMeasurement completed. ");
-	}
-	else if(code == CODE_RESPONSE_END)
-	{
-	   printf("%d data point(s) received.", nDataPoints);
-	   fflush(stdout);
-	   continueParsing = 0;
-	}
-	else
-	{
-	  //Failed to parse or identify package.
-	  printf("\nFailed to parse package: %d\n", code);
-	  continueParsing = 0;
+	case CODE_RESPONSE_BEGIN:				// Measurement response begins
+		//do nothing
+		break;
+	case CODE_MEASURING:
+		printf("\nMeasuring... \n");
+		break;
+	case CODE_OK:							// Received valid package, print it.
+		if(nDataPoints == 0)
+		printf("\nReceiving measurement response:\n");
+		printf("\n %d \t", ++nDataPoints);
+		printf("E(V): %6.3f \t", data.potential);
+		fflush(stdout);
+		printf("i(A) : %11.3E \t", data.current);
+		printf("Status: %-15s  ", data.status);
+		printf("CR: %s ", data.cr);
+		fflush(stdout);
+		break;
+	case CODE_MEASUREMENT_DONE:			    // Measurement loop complete
+		printf("\nMeasurement completed. ");
+		break;
+	case CODE_RESPONSE_END:				    // Measurement response end
+		printf("%d data point(s) received.", nDataPoints);
+	    fflush(stdout);
+	    continueParsing = 0;
+	    break;
+	default:                    			// Failed to parse or identify package.
+		printf("\nFailed to parse package: %d\n", code);
+		continueParsing = 0;
 	}
 	return continueParsing;
 }
