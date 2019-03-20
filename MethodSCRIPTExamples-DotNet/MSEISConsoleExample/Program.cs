@@ -3,31 +3,31 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.Ports;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ESPicoEISConsoleExample
 {
     class Program
     {
-        static string ScriptFileName = "EIS_on_10KOhm.txt";                                           // Name of the script file
+        static string ScriptFileName = "EIS_on_Randles_560Ohm_10kOhm_33nF.txt";                      //Name of the script file
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
-        static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         // Location of the script file
+        static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         //Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
 
-        const int PACKAGE_PARAM_VALUE_LENGTH = 8;                                                    // Length of the parameter value in a package
-        const int OFFSET_VALUE = 0x8000000;                                                          // Offset value to receive positive values
+        const string CMD_VERSION = "t\n";                                                            //Version command
+        const int BAUD_RATE = 230400;                                                                //Baudrate for EmStat Pico
+        const int READ_TIME_OUT = 7000;                                                              //Read time out for the device in ms
+        const int PACKAGE_PARAM_VALUE_LENGTH = 8;                                                    //Length of the parameter value in a package
+        const int OFFSET_VALUE = 0x8000000;                                                          //Offset value to receive positive values
 
         static SerialPort SerialPortEsP;
-        private static List<double> FrequencyValues = new List<double>();                            // Collection of Frequency values
-        private static List<double> RealImpedanceValues = new List<double>();                        // Collection of real Impedance values
-        private static List<double> ImgImpedanceValues = new List<double>();                         // Collection of imaginary Impedance values
+        private static List<double> FrequencyValues = new List<double>();                            //Collection of Frequency values
+        private static List<double> RealImpedanceValues = new List<double>();                        //Collection of real Impedance values
+        private static List<double> ImgImpedanceValues = new List<double>();                         //Collection of imaginary Impedance values
         static string RawData;
-        static int NDataPointsReceived = 0;                                                          // The number of data points received from the measurement
+        static int NDataPointsReceived = 0;                                                          //The number of data points received from the measurement
 
-        readonly static Dictionary<string, double> SI_Prefix_Factor = new Dictionary<string, double> // The SI unit of the prefixes and their corresponding factors
+        readonly static Dictionary<string, double> SI_Prefix_Factor = new Dictionary<string, double> //The SI unit of the prefixes and their corresponding factors
                                                                    { { "a", 1e-18 },
                                                                      { "f", 1e-15 },
                                                                      { "p", 1e-12 },
@@ -42,7 +42,7 @@ namespace ESPicoEISConsoleExample
                                                                      { "P", 1e15 },
                                                                      { "E", 1e18 }};
 
-        readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string>  // Measurement parameter identifiers and their corresponding labels
+        readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string>  //Measurement parameter identifiers and their corresponding labels
                                                                             { { "dc", "Frequency (Hz)" },
                                                                               { "cc", "Z' (Ohm)" },
                                                                               { "cd", "Z'' (Ohm)" } };
@@ -88,13 +88,13 @@ namespace ESPicoEISConsoleExample
 
         static void Main(string[] args)
         {
-            SerialPortEsP = OpenSerialPort();                   // Open and identify the port connected to EmStat Pico
+            SerialPortEsP = OpenSerialPort();                   //Opens and identifies the port connected to EmStat Pico
             if (SerialPortEsP != null && SerialPortEsP.IsOpen)
             {
                 Console.WriteLine("\nConnected to EmStat Pico.\n");
-                SendScriptFile();                               // Send the script file for EIS measurement
-                ProcessReceivedPackets();                       // Parse the received response packets
-                SerialPortEsP.Close();                          // Close the serial port
+                SendScriptFile();                               //Sends the script file for EIS measurement
+                ProcessReceivedPackets();                       //Parses the received response packets
+                SerialPortEsP.Close();                          //Closes the serial port
             }
             else
             {
@@ -106,7 +106,7 @@ namespace ESPicoEISConsoleExample
         }
 
         /// <summary>
-        /// Opens the serial ports and identifies the port connected to EmStat Pico 
+        /// Opens the serial ports and identifies the port connected to EmStat Pico
         /// </summary>
         /// <returns> The serial port connected to EmStat Pico</returns>
         private static SerialPort OpenSerialPort()
@@ -118,21 +118,24 @@ namespace ESPicoEISConsoleExample
                 serialPort = GetSerialPort(ports[i]);
                 try
                 {
-                    serialPort.Open();                  // Open serial port 
+                    serialPort.Open();                                   //Opens the serial port 
                     if (serialPort.IsOpen)
                     {
-                        serialPort.Write("t\n");
-                        string response = serialPort.ReadLine();
-                        if (response.Contains("esp"))   // Identify the port connected to EmStatPico
+                        serialPort.Write(CMD_VERSION);                  //Writes the version command             
+                        while (true)
                         {
-                            serialPort.ReadTimeout = 70000;
-                            return serialPort;
+                            string response = serialPort.ReadLine();
+                            response += "\n";
+                            if (response.Contains("espico"))            //Verifies if the device connected is EmStat Pico
+                                serialPort.ReadTimeout = READ_TIME_OUT; //Sets the read time out for the device
+                            if (response.Contains("*\n"))
+                                return serialPort;                      //Reads until "*\n" is found and breaks
                         }
                     }
                 }
                 catch (Exception exception)
                 {
-                    serialPort.Close();
+                    serialPort.Close();                                 //Closes the serial port in case of exception
                 }
             }
             return serialPort;
@@ -149,8 +152,8 @@ namespace ESPicoEISConsoleExample
             serialPort.DataBits = 8;
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
-            serialPort.BaudRate = 230400;
-            serialPort.ReadTimeout = 1000;
+            serialPort.BaudRate = BAUD_RATE;
+            serialPort.ReadTimeout = 1000;                  //Initial time out set to 1000ms, upon connecting to EmStat Pico, time out reset to READ_TIME_OUT
             serialPort.WriteTimeout = 2;
             return serialPort;
         }
@@ -165,9 +168,9 @@ namespace ESPicoEISConsoleExample
             {
                 while (!stream.EndOfStream)
                 {
-                    line = stream.ReadLine();               // Read a line from the script file
-                    line += "\n";                           // Append a new line character to the line read
-                    SerialPortEsP.Write(line);              // Send the read line to EmStat Pico
+                    line = stream.ReadLine();               //Read a line from the script file
+                    line += "\n";                           //Append a new line character to the line read
+                    SerialPortEsP.Write(line);              //Send the resposnse line to EmStat Pico
                 }
                 Console.Write("Measurement started.\n");
             }
@@ -182,14 +185,14 @@ namespace ESPicoEISConsoleExample
             Console.WriteLine("\nReceiving measurement response:");
             while (true)
             {
-                readLine = ReadResponseLine();              // Read a line from the response
-                RawData += readLine;                        // Add the response to raw data
+                readLine = ReadResponseLine();              //Reads a line from the response
+                RawData += readLine;                        //Adds the response to raw data
                 if (readLine == "\n")
                     break;
                 else if (readLine[0] == 'P')
                 {
-                    NDataPointsReceived++;                      // Increment the number of data points if the read line contains the header char 'P
-                    ParsePackageLine(readLine);                 // Parse the line read 
+                    NDataPointsReceived++;                  //Increments the number of data points if the read line contains the header char 'P
+                    ParsePackageLine(readLine);             //Parses the line read 
                 }              // Parse the line read 
             }
             Console.WriteLine("");
@@ -206,13 +209,13 @@ namespace ESPicoEISConsoleExample
             int readChar;
             while (true)
             {
-                readChar = SerialPortEsP.ReadChar();        // Read a character from the serial port input buffer
-                if (readChar > 0)                           // Possibility of time out exception if the operation doesn't complete within the read time out
+                readChar = SerialPortEsP.ReadChar();        //Read a character from the serial port input buffer
+                if (readChar > 0)                           //Possibility of time out exception if the operation doesn't complete within the read time out; increment READ_TIME_OUT for measurements with long response times
                 {
-                    readLine += (char)readChar;             // Append the read character to readLine to form a response line
+                    readLine += (char)readChar;             //Adds the read character to readLine to form a response line
                     if ((char)readChar == '\n')
                     {
-                        return readLine;                    // Return the readLine when a new line character is encountered
+                        return readLine;                    //Returns the readLine when a new line character is encountered
                     }
                 }
             }
@@ -231,28 +234,29 @@ namespace ESPicoEISConsoleExample
 
             string responsePackageLine = packageLine.Remove(startingIndex, 1);
             Console.Write($"\nindex = " + String.Format("{0,3} {1,2} ", NDataPointsReceived, " "));
-            parameters = responsePackageLine.Split(';');
+            parameters = responsePackageLine.Split(';');                        //The parameters are separated by the delimiter ';'
             foreach (string parameter in parameters)
             {
-                paramIdentifier = parameter.Substring(0, 2);       // The string that identifies the measurement parameter
+                paramIdentifier = parameter.Substring(0, 2);                    //The string (2 characters) that identifies the measurement parameter
                 paramValue = parameter.Substring(2, PACKAGE_PARAM_VALUE_LENGTH);
                 double paramValueWithPrefix = ParseParamValues(paramValue);
                 switch (paramIdentifier)
                 {
-                    case "dc":                                                 // Frequency reading
+                    case "dc":                                                 //Frequency reading
                         Console.Write("{0,13} :{1,10} {2,2}", MeasurementParameters[paramIdentifier], string.Format("{0:0.00}", paramValueWithPrefix).ToString(), " ");
-                        FrequencyValues.Add(paramValueWithPrefix);             // If frequency reading add the value to the FrequencyReadings array
+                        FrequencyValues.Add(paramValueWithPrefix);             //Adds the value to the FrequencyReadings array
                         break;
-                    case "cc":                                                 // Real Impedance reading
+                    case "cc":                                                 //Real Impedance reading
                         Console.Write("{0,8} :{1,10} {2,2}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
-                        RealImpedanceValues.Add(paramValueWithPrefix);         // If Z(Real) reading add the value to RealImpedanceReadings array
+                        RealImpedanceValues.Add(paramValueWithPrefix);         //Adds the value to RealImpedanceReadings array
                         break;
-                    case "cd":                                                 // Imaginary Impedance reading
+                    case "cd":                                                 //Imaginary Impedance reading
                         Console.Write("{0,8} :{1,10} {2,2}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
-                        ImgImpedanceValues.Add(paramValueWithPrefix);          // If Z(Img) reading add the value to ImgImpedanceReadings array
+                        ImgImpedanceValues.Add(paramValueWithPrefix);          //Adds the value to ImgImpedanceReadings array
                         break;
                 }
-                ParseMetaDataValues(parameter.Substring(10));
+                if (parameter.Substring(10).StartsWith(","))
+                    ParseMetaDataValues(parameter.Substring(10));              //Parses the metadata values in the parameter, if any
             }
         }
 
@@ -267,7 +271,8 @@ namespace ESPicoEISConsoleExample
         private static void ParseMetaDataValues(string packageMetaData)
         {
             string[] metaDataValues;
-            metaDataValues = packageMetaData.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+            metaDataValues = packageMetaData.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);          //The meta data values are separated by the delimiter ','
+            byte crByte;
             foreach (string metaData in metaDataValues)
             {
                 switch (metaData[0])
@@ -276,7 +281,8 @@ namespace ESPicoEISConsoleExample
                         GetReadingStatusFromPackage(metaData);
                         break;
                     case '2':
-                        GetCurrentRangeFromPackage(metaData);
+                        crByte = GetCurrentRangeFromPackage(metaData);
+                        if (crByte != 0) DisplayCR(crByte);
                         break;
                     case '4':
                         GetNoiseFromPackage(metaData);
@@ -292,100 +298,112 @@ namespace ESPicoEISConsoleExample
         private static void GetReadingStatusFromPackage(string metaDatastatus)
         {
             string status = "";
-            long statusBits = (Convert.ToInt32(metaDatastatus[1].ToString(), 16));
-            if ((statusBits & 0x0) == (long)ReadingStatus.OK)
-                status = "OK";
+            long statusBits = (Convert.ToInt32(metaDatastatus[1].ToString(), 16));          //One char of the meta data value corresponding to status is retrieved
+            if ((statusBits) == (long)ReadingStatus.OK)
+                status = nameof(ReadingStatus.OK);
             if ((statusBits & 0x2) == (long)ReadingStatus.Overload)
-                status = "Overload";
+                status = nameof(ReadingStatus.Overload);
             if ((statusBits & 0x4) == (long)ReadingStatus.Underload)
-                status = "Underload";
+                status = nameof(ReadingStatus.Underload);
             if ((statusBits & 0x8) == (long)ReadingStatus.Overload_Warning)
-                status = "Overload warning";
+                status = nameof(ReadingStatus.Overload_Warning);
             Console.Write(String.Format("Status : {0,-10} {1,2}", status, " "));
         }
 
         /// <summary>
-        /// Parses the bytes corresponding to current range from the package and prints the current range value.
+        /// Parses the bytes corresponding to current range from the package.
         /// </summary>
         /// <param name="metaDataCR"></param>
-        private static void GetCurrentRangeFromPackage(string metaDataCR)
+        /// <returns>The cr byte after parsing</returns>
+        private static byte GetCurrentRangeFromPackage(string metaDataCR)
+        {
+            byte crByte;
+            if (byte.TryParse(metaDataCR.Substring(1, 2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out crByte)) //Two characters of the meta data value corresponding to current range are retrieved as byte
+            {
+                return crByte;
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// Displays the string corresponding to the input cr byte
+        /// </summary>
+        /// <param name="crByte">The crByte value whose string is to be obtained</param>
+        private static void DisplayCR(byte crByte)
         {
             string currentRangeStr = "";
-            byte crByte;
-            if (byte.TryParse(metaDataCR.Substring(1, 2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out crByte))
+            switch (crByte)
             {
-                switch (crByte)
-                {
-                    case (byte)CurrentRanges.cr100nA:
-                        currentRangeStr = "100nA";
-                        break;
-                    case (byte)CurrentRanges.cr2uA:
-                        currentRangeStr = "2uA";
-                        break;
-                    case (byte)CurrentRanges.cr4uA:
-                        currentRangeStr = "4uA";
-                        break;
-                    case (byte)CurrentRanges.cr8uA:
-                        currentRangeStr = "8uA";
-                        break;
-                    case (byte)CurrentRanges.cr16uA:
-                        currentRangeStr = "16uA";
-                        break;
-                    case (byte)CurrentRanges.cr32uA:
-                        currentRangeStr = "32uA";
-                        break;
-                    case (byte)CurrentRanges.cr63uA:
-                        currentRangeStr = "63uA";
-                        break;
-                    case (byte)CurrentRanges.cr125uA:
-                        currentRangeStr = "125uA";
-                        break;
-                    case (byte)CurrentRanges.cr250uA:
-                        currentRangeStr = "250uA";
-                        break;
-                    case (byte)CurrentRanges.cr500uA:
-                        currentRangeStr = "500uA";
-                        break;
-                    case (byte)CurrentRanges.cr1mA:
-                        currentRangeStr = "1mA";
-                        break;
-                    case (byte)CurrentRanges.cr5mA:
-                        currentRangeStr = "15mA";
-                        break;
-                    case (byte)CurrentRanges.hscr100nA:
-                        currentRangeStr = "100nA";
-                        break;
-                    case (byte)CurrentRanges.hscr1uA:
-                        currentRangeStr = "1uA";
-                        break;
-                    case (byte)CurrentRanges.hscr6uA:
-                        currentRangeStr = "6uA";
-                        break;
-                    case (byte)CurrentRanges.hscr13uA:
-                        currentRangeStr = "13uA";
-                        break;
-                    case (byte)CurrentRanges.hscr25uA:
-                        currentRangeStr = "25uA";
-                        break;
-                    case (byte)CurrentRanges.hscr50uA:
-                        currentRangeStr = "50uA";
-                        break;
-                    case (byte)CurrentRanges.hscr100uA:
-                        currentRangeStr = "100uA";
-                        break;
-                    case (byte)CurrentRanges.hscr200uA:
-                        currentRangeStr = "200uA";
-                        break;
-                    case (byte)CurrentRanges.hscr1mA:
-                        currentRangeStr = "1mA";
-                        break;
-                    case (byte)CurrentRanges.hscr5mA:
-                        currentRangeStr = "5mA";
-                        break;
-                }
-                Console.Write(String.Format("CR : {0,-5} {1,2}", currentRangeStr, " "));
+                case (byte)CurrentRanges.cr100nA:
+                    currentRangeStr = "100nA";
+                    break;
+                case (byte)CurrentRanges.cr2uA:
+                    currentRangeStr = "2uA";
+                    break;
+                case (byte)CurrentRanges.cr4uA:
+                    currentRangeStr = "4uA";
+                    break;
+                case (byte)CurrentRanges.cr8uA:
+                    currentRangeStr = "8uA";
+                    break;
+                case (byte)CurrentRanges.cr16uA:
+                    currentRangeStr = "16uA";
+                    break;
+                case (byte)CurrentRanges.cr32uA:
+                    currentRangeStr = "32uA";
+                    break;
+                case (byte)CurrentRanges.cr63uA:
+                    currentRangeStr = "63uA";
+                    break;
+                case (byte)CurrentRanges.cr125uA:
+                    currentRangeStr = "125uA";
+                    break;
+                case (byte)CurrentRanges.cr250uA:
+                    currentRangeStr = "250uA";
+                    break;
+                case (byte)CurrentRanges.cr500uA:
+                    currentRangeStr = "500uA";
+                    break;
+                case (byte)CurrentRanges.cr1mA:
+                    currentRangeStr = "1mA";
+                    break;
+                case (byte)CurrentRanges.cr5mA:
+                    currentRangeStr = "15mA";
+                    break;
+                case (byte)CurrentRanges.hscr100nA:
+                    currentRangeStr = "100nA (High speed)";
+                    break;
+                case (byte)CurrentRanges.hscr1uA:
+                    currentRangeStr = "1uA (High speed)";
+                    break;
+                case (byte)CurrentRanges.hscr6uA:
+                    currentRangeStr = "6uA (High speed)";
+                    break;
+                case (byte)CurrentRanges.hscr13uA:
+                    currentRangeStr = "13uA (High speed)";
+                    break;
+                case (byte)CurrentRanges.hscr25uA:
+                    currentRangeStr = "25uA (High speed)";
+                    break;
+                case (byte)CurrentRanges.hscr50uA:
+                    currentRangeStr = "50uA (High speed)";
+                    break;
+                case (byte)CurrentRanges.hscr100uA:
+                    currentRangeStr = "100uA (High speed)";
+                    break;
+                case (byte)CurrentRanges.hscr200uA:
+                    currentRangeStr = "200uA (High speed)";
+                    break;
+                case (byte)CurrentRanges.hscr1mA:
+                    currentRangeStr = "1mA (High speed)";
+                    break;
+                case (byte)CurrentRanges.hscr5mA:
+                    currentRangeStr = "5mA (High speed)";
+                    break;
             }
+            Console.Write(String.Format("CR : {0,-5} {1,2}", currentRangeStr, " "));
         }
+
 
         /// <summary>
         /// Parses the noise from the package.
@@ -403,11 +421,11 @@ namespace ESPicoEISConsoleExample
         /// <returns>The parameter value after appending the unit prefix</returns>
         private static double ParseParamValues(string paramValueString)
         {
-            char strUnitPrefix = paramValueString[7];                         // Identify the SI unit prefix from the package at position 8
-            string strvalue = paramValueString.Remove(7);                     // Strip the value of the measured parameter from the package
-            int value = Convert.ToInt32(strvalue, 16);                        // Convert the hex value to int
-            double paramValue = value - OFFSET_VALUE;                         // Values offset to receive only positive values
-            return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]); // Return the value of the parameter after appending the SI unit prefix
+            char strUnitPrefix = paramValueString[7];                         //Identifies the SI unit prefix from the package at position 8
+            string strvalue = paramValueString.Remove(7);                     //Retrieves the value of the measured parameter from the package
+            int value = Convert.ToInt32(strvalue, 16);                        //Converts the hex value to int
+            double paramValue = value - OFFSET_VALUE;                         //Values offset to receive only positive values
+            return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]); //Returns the value of the parameter after appending the SI unit prefix
         }
     }
 }
