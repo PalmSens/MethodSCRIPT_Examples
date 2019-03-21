@@ -29,11 +29,11 @@
  
  /**
  * This is an example of how to use the MethodSCRIPT to connect your Arduino board to an EmStat Pico.
- * The example allows the user to start measurements on the EmStat Pico from the PC connected to the Arduino through USB.
+ * The example allows the user to start measurements on the EmStat Pico from a windows PC connected to the Arduino through USB.
  * 
  * Environment setup:
  * To run this example, you must include the MethodSCRIPT C libraries first.
- * To do this, follow the menu "Sketch -> Include Library -> Add .ZIP Library..." and select the MethodScriptComm folder.
+ * To do this, follow the menu "Sketch -> Include Library -> Add .ZIP Library..." and select the MethodSCRIPTComm folder.
  * You should now be able to compile the example.
  * 
  * Hardware setup:
@@ -66,7 +66,7 @@ bool _printSent = false;
 bool _printReceived = false;
 const char* CMD_VERSION_STRING = "t\n";
 
-//LSV measurement configuration parameters
+//LSV MethodSCRIPT
 const char* LSV_ON_10KOHM = "e\n" 
                             "var c\n"
                             "var p\n"
@@ -84,7 +84,7 @@ const char* LSV_ON_10KOHM = "e\n"
                             "endloop\n"
                             "cell_off\n\n";
                                
-//SWV measurement configuration parameters                   
+//SWV MethodSCRIPT                   
 const char* SWV_ON_10KOHM = "e\n" 
                             "var p\n"
                             "var c\n"
@@ -105,7 +105,7 @@ const char* SWV_ON_10KOHM = "e\n"
                             "cell_off\n\n";
 
 
-//The Method SCRIPT communication object.
+//The MethodSCRIPT communication object.
 MSComm _msComm;
 
 //We have to give MSComm some functions to communicate with the EmStat Pico (in MSCommInit).
@@ -171,13 +171,10 @@ int VerifyESPico()
   return isConnected;
 }
 
-//The method script is written on the device through the Serial1 port 
+//The MethodSCRIPT is sent to the device through the Serial1 port 
 void SendScriptToDevice(const char* scriptText)
 {
-  for(int i = 0; i < strlen(scriptText); i++)
-  {
-    Serial1.write(scriptText[i]);
-  }
+  WriteStr(&_msComm, scriptText);
 }
 
 //The entry point of the Arduino code
@@ -185,8 +182,8 @@ void setup()
 {
   // put your setup code here, to run once:
   //Init serial ports
-  Serial.begin(230400);     
-  Serial1.begin(230400);      
+  Serial.begin(230400);                                 //Serial is the Arduino serial port communicating with the PC
+  Serial1.begin(230400);                                //Serial1 is the port on EmStat Pico dev board communicating with the Arduino 
   while(!Serial);                                       //Waits until the Serial port is active
 
   pinPeripheral(13, PIO_SERCOM_ALT);			              //Assigns SDA function to pin 13
@@ -198,7 +195,7 @@ void setup()
   {
     if(VerifyESPico())
     {
-      SendScriptToDevice(LSV_ON_10KOHM);                //Sends the script to the device with input parameters
+      SendScriptToDevice(LSV_ON_10KOHM);                //Sends the MethodSCRIPT to the device with input parameters
       //SendScriptToDevice(SWV_ON_10KOHM);
     }
   }

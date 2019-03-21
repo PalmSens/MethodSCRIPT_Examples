@@ -90,7 +90,7 @@ typedef enum _Status
 } Status;
 
 ///
-/// Possible replies from the EmStat
+/// Possible replies from the EmStat Pico
 ///
 typedef enum _Reply
 {
@@ -101,9 +101,9 @@ typedef enum _Reply
 } Reply;
 
 ///
-/// The communication object for one EmStat
+/// The communication object for one EmStat Pico
 /// You can instantiate multiple MSComms if you have multiple EmStat Picos,
-/// but you will need write / read functions from separate (serial) ports to talk to them
+/// but you will need write / read functions from separate (serial) ports to communicate with them
 ///
 typedef struct _MSComm
 {
@@ -133,7 +133,7 @@ typedef struct _MeasureData
 //////////////////////////////////////////////////////////////////////////////
 
 ///
-/// Initialise the MSComm object
+/// Initialises the MSComm object
 ///
 /// MSComm:				The MSComm data struct
 /// write_char_func: 	Function pointer to the write function this MSComm should use
@@ -144,18 +144,18 @@ typedef struct _MeasureData
 RetCode MSCommInit(MSComm* MSComm,	WriteCharFunc write_char_func, ReadCharFunc read_char_func);
 
 ///
-/// Wait for a package and parse it
+/// Receives a package and parses it
 /// Currents are expressed in the Ampere, potentials are expressed in Volts
 ///
 /// MSComm:		The MSComm data struct
-/// retData: 	The package received is parsed and put into this struct
+/// retData: 	The package received is parsed and stored in this struct
 ///
 /// Returns: CODE_OK if successful, CODE_MEASUREMENT_DONE if measurement is completed
 ///
 RetCode ReceivePackage(MSComm* MSComm, MeasureData* retData);
 
 ///
-/// Parses a line of response and further calls to parse meta data values
+/// Parses a line of response and passes the meta data values for further parsing
 ///
 /// responseLine: The line of response to be parsed
 /// retData: 	  The struct in which the parsed values are stored

@@ -37,8 +37,8 @@ const int READ_BUFFER_LENGTH = 100;
 
 RetCode MSCommInit(MSComm* msComm,	WriteCharFunc writeCharFunc, ReadCharFunc readCharFunc)
 {
-	msComm->writeCharFunc = writeCharFunc;
-	msComm->readCharFunc = readCharFunc;
+	msComm->writeCharFunc = writeCharFunc;			//Initialises the msComm with the function pointer to its write function
+	msComm->readCharFunc = readCharFunc;			//Initialises the msComm with the function pointer to its read function
 
 	if(writeCharFunc == NULL || readCharFunc == NULL)
 	{
@@ -51,7 +51,7 @@ void WriteStr(MSComm* msComm, const char* buf)
 {
 	while(*buf != 0)
 	{
-		WriteChar(msComm, *buf);
+		WriteChar(msComm, *buf);				//Writes the input array of characters to the device
 		buf++;
 	}
 }
@@ -66,7 +66,7 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 	int tempChar; 							//Temporary character used for reading
 	int i = 0;
 	do {
-		tempChar = msComm->readCharFunc();
+		tempChar = msComm->readCharFunc(); //Reads a character from the device
 		if(tempChar > 0)
 		{
 			buf[i++] = tempChar;			//Stores tempchar into buffer
