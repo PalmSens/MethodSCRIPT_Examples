@@ -51,7 +51,7 @@ namespace ESPicoEISConsoleExample
         /// All possible current ranges, the current ranges
         /// that are supported by EmStat pico.
         /// </summary>
-        public enum CurrentRanges
+        private enum CurrentRanges
         {
             cr100nA = 0,
             cr2uA = 1,
@@ -78,7 +78,7 @@ namespace ESPicoEISConsoleExample
         }
 
         [Flags]
-        public enum ReadingStatus
+        private enum ReadingStatus
         {
             OK = 0x0,
             Overload = 0x2,
