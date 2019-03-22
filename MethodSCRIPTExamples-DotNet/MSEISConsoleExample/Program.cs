@@ -230,11 +230,13 @@ namespace ESPicoEISConsoleExample
             string[] parameters;
             string paramIdentifier;
             string paramValue;
-            int startingIndex = packageLine.IndexOf('P');
 
-            string responsePackageLine = packageLine.Remove(startingIndex, 1);
+            int startingIndex = packageLine.IndexOf('P');                        //Identifies the beginning of the package
+            string responsePackageLine = packageLine.Remove(startingIndex, 1);   //Removes the beginning character 'P'
+
             Console.Write($"\nindex = " + String.Format("{0,3} {1,2} ", NDataPointsReceived, " "));
             parameters = responsePackageLine.Split(';');                        //The parameters are separated by the delimiter ';'
+
             foreach (string parameter in parameters)
             {
                 paramIdentifier = parameter.Substring(0, 2);                    //The string (2 characters) that identifies the measurement parameter

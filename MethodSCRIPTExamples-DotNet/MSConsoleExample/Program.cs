@@ -229,28 +229,31 @@ namespace EmStatConsoleExample
         {
             string[] parameters;
             string paramIdentifier;
-            string paramValue;
-            int startingIndex = packageLine.IndexOf('P');
-            string responsePackageLine = packageLine.Remove(startingIndex, 1);
+            string paramValue;  
+
+            int startingIndex = packageLine.IndexOf('P');                        //Identifies the beginning of the package
+            string responsePackageLine = packageLine.Remove(startingIndex, 1);   //Removes the beginning character 'P'
+
             Console.Write($"\nindex = " + String.Format("{0,3} {1,2} ", NDataPointsReceived, " "));
-            parameters = responsePackageLine.Split(';');                      //The parameters are separated by the delimiter ';'
+            parameters = responsePackageLine.Split(';');                         //The parameters are separated by the delimiter ';'
+
             foreach (string parameter in parameters)
             {
-                paramIdentifier = parameter.Substring(0, 2);                 //The string (2 characters) that identifies the measurement parameter
+                paramIdentifier = parameter.Substring(0, 2);                     //The string (2 characters) that identifies the measurement parameter
                 paramValue = parameter.Substring(2, PACKAGE_PARAM_VALUE_LENGTH);
-                double paramValueWithPrefix = ParseParamValues(paramValue);  //Parses the parameter values and returns the actual values with their corresponding SI unit prefixes 
+                double paramValueWithPrefix = ParseParamValues(paramValue);      //Parses the parameter values and returns the actual values with their corresponding SI unit prefixes 
                 switch (paramIdentifier)
                 {
-                    case "da":                                               //Potential reading
-                        VoltageReadings.Add(paramValueWithPrefix);           //Adds the value to the VoltageReadings array
+                    case "da":                                                  //Potential reading
+                        VoltageReadings.Add(paramValueWithPrefix);              //Adds the value to the VoltageReadings array
                         break;
-                    case "ba":                                               //Current reading
-                        CurrentReadings.Add(paramValueWithPrefix);           //Adds the value to the CurrentReadings array
+                    case "ba":                                                  //Current reading
+                        CurrentReadings.Add(paramValueWithPrefix);              //Adds the value to the CurrentReadings array
                         break;
                 }
                 Console.Write("{0,4} = {1,10} {2,2}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
-                if(parameter.Substring(10).StartsWith(","))               
-                    ParseMetaDataValues(parameter.Substring(10));            //Parses the metadata values in the parameter, if any
+                if(parameter.Substring(10).StartsWith(","))                 
+                    ParseMetaDataValues(parameter.Substring(10));               //Parses the metadata values in the parameter, if any
             }
         }
 

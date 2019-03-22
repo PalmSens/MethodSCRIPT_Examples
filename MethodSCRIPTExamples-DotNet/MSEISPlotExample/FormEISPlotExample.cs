@@ -377,25 +377,26 @@ namespace EmStatPicoEISPlotExample
             string[] parameters;
             string paramIdentifier;
             string paramValue;
-            int startingIndex = packageLine.IndexOf('P');
 
-            string responsePackageLine = packageLine.Remove(startingIndex, 1);
-            parameters = responsePackageLine.Split(';');                     //The parameters are separated by the delimiter ';'
+            int startingIndex = packageLine.IndexOf('P');                       //Identifies the beginning of the package
+            string responsePackageLine = packageLine.Remove(startingIndex, 1);  //Removes the beginning character 'P'
+
+            parameters = responsePackageLine.Split(';');                        //The parameters are separated by the delimiter ';'
             foreach (string parameter in parameters)
             {
-                paramIdentifier = parameter.Substring(0, 2);                 //The string (2 characters) that identifies the measurement parameter
+                paramIdentifier = parameter.Substring(0, 2);                    //The string (2 characters) that identifies the measurement parameter
                 paramValue = parameter.Substring(2, PACKAGE_PARAM_VALUE_LENGTH);
                 double paramValueWithPrefix = ParseParamValues(paramValue);
                 switch (paramIdentifier)
                 {
-                    case "dc":                                               //Frequency reading
-                        FrequencyValues.Add(paramValueWithPrefix);           //Adds the value to the FrequencyReadings list
+                    case "dc":                                                  //Frequency reading
+                        FrequencyValues.Add(paramValueWithPrefix);              //Adds the value to the FrequencyReadings list
                         break;
-                    case "cc":                                               //Real Impedance reading
-                        RealImpedanceValues.Add(paramValueWithPrefix);       //Adds the value to RealImpedanceReadings list
+                    case "cc":                                                  //Real Impedance reading
+                        RealImpedanceValues.Add(paramValueWithPrefix);          //Adds the value to RealImpedanceReadings list
                         break;
-                    case "cd":                                               //Imaginary Impedance reading
-                        ImgImpedanceValues.Add(paramValueWithPrefix);        //Adds the value to ImgImpedanceReadings list
+                    case "cd":                                                  //Imaginary Impedance reading
+                        ImgImpedanceValues.Add(paramValueWithPrefix);           //Adds the value to ImgImpedanceReadings list
                         break;
                 }
             }
