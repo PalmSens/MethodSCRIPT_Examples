@@ -37,7 +37,7 @@ import PSEsPicoLib
 
 #script specific settings
 MSfilepath = ".\\MethodSCRIPT files"
-MScriptFile = "cv_ls_test.mscr"
+MScriptFile = "MSExampleCV.mscr"
 
 #combine the path and filename 
 MScriptFile = os.path.join(MSfilepath, MScriptFile)
