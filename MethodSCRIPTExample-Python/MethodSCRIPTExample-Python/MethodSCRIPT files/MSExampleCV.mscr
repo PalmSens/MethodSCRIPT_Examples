@@ -1,0 +1,19 @@
+e
+var c
+var p
+set_pgstat_mode 3
+set_max_bandwidth 200k
+set_cr 10625n
+set_autoranging 85n 850u
+set_e 0m
+cell_on
+wait 1
+#Eres,Ires,Ebegin,Evtx1,Evtx2,Estep,Scanrate
+meas_loop_cv p c 0m 500m -500m 5m 500m
+pck_start
+pck_add p
+pck_add c
+pck_end
+endloop
+cell_off
+
