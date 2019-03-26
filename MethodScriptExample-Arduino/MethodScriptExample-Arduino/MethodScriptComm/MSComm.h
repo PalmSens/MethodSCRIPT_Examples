@@ -1,11 +1,11 @@
-/*
+/* ----------------------------------------------------------------------------
+ *         PalmSens MethodSCRIPT SDK
+ * ----------------------------------------------------------------------------
  ============================================================================
  Name        : MSComm.h
- Author      : 
- Version     :
  Copyright   :
  * ----------------------------------------------------------------------------
- * Copyright (c) 2016, PalmSens BV
+ * Copyright (c) 2019, PalmSens BV
  *
  * All rights reserved.
  *
@@ -33,14 +33,14 @@
  * ----------------------------------------------------------------------------
  *  MSComm handles the communication with the EmStat pico.
  *	Only this file needs to be included in your software.
- *	To communicate with an EmStat, create a MSComm struct and call MSCommInit() on it.
- *	If communication with multiple EmStats is required, create a separate MSComm with different
- * 	communication ports (defined by the write_char_func and read_char_func) for each EmStat.
+ *	To communicate with an EmStat Pico, create a MSComm struct and call MSCommInit() on it.
+ *	If communication with multiple EmStat Picos is required, create a separate MSComm with different
+ * 	communication ports (defined by the write_char_func and read_char_func) for each EmStat Pico.
  *
  *	Once a MSComm struct has been successfully created, send the parameters for measurement
  *	by reading a script string/script file for a specific measurement type.
  *
- *	To receive data from the EmStat, call ReceivePackage() periodically.
+ *	To receive data from the EmStat Pico, call ReceivePackage().
  ============================================================================
  */
 
@@ -75,7 +75,7 @@ typedef enum _CellOnOff
 } CellOnOff;
 
 ///
-/// Current status, if there is a underload or overload that datapoint may be inaccurate.
+/// Current status, if there is a underload or overload
 ///
 typedef enum _Status
 {
@@ -90,19 +90,20 @@ typedef enum _Status
 } Status;
 
 ///
-/// Possible replies from the EmStat.
+/// Possible replies from the EmStat Pico
 ///
 typedef enum _Reply
 {
+	REPLY_VERSION_RESPONSE = 't',
 	REPLY_MEASURING = 'M',
 	REPLY_MEASURE_DP	= 'P',
 	REPLY_ENDOFMEASLOOP	= '*'
 } Reply;
 
 ///
-/// The communication object for one EmStat.
-/// You can instantiate multiple MSComms if you have multiple EmStat picos,
-/// but you will need write / read functions from separate (serial) ports to talk to them.
+/// The communication object for one EmStat Pico
+/// You can instantiate multiple MSComms if you have multiple EmStat Picos,
+/// but you will need write / read functions from separate (serial) ports to communicate with them
 ///
 typedef struct _MSComm
 {
@@ -111,19 +112,18 @@ typedef struct _MSComm
 } MSComm;
 
 ///
-/// Encapsulates the data packages received from the emstat pico,
-/// for measurement package
+/// Encapsulates the data packages received from the EmStat Pico for measurement package
 ///
 typedef struct _MeasureData
 {
 	/// Potential in Volts
 	float potential;
-	/// Current in Current Range
+	/// Current in Ampere
 	float current;
 	/// Reading status
-	char* status;
+	const char* status;
 	/// Current range
-	char* cr;
+	const char* cr;
 } MeasureData;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -133,63 +133,95 @@ typedef struct _MeasureData
 //////////////////////////////////////////////////////////////////////////////
 
 ///
-/// Initialize the MSComm object.
+/// Initialises the MSComm object
 ///
-/// MSComm:			The MSComm data struct.
-/// write_char_func: 	Function pointer to the write function this MSComm should use.
-/// read_char_func: 	Function pointer to the read function this MSComm should use.
+/// MSComm:				The MSComm data struct
+/// write_char_func: 	Function pointer to the write function this MSComm should use
+/// read_char_func: 	Function pointer to the read function this MSComm should use
 ///
 /// Returns: CODE_OK if successful, otherwise CODE_NULL.
 ///
 RetCode MSCommInit(MSComm* MSComm,	WriteCharFunc write_char_func, ReadCharFunc read_char_func);
 
 ///
-/// Wait for a package and parse it.
-/// Currents are expressed in the Ampere, potentials are expressed in Volts.
+/// Receives a package and parses it
+/// Currents are expressed in the Ampere, potentials are expressed in Volts
 ///
-/// MSComm:	The MSComm data struct.
-/// retData: 	The package received is parsed and put into this struct.
+/// MSComm:		The MSComm data struct
+/// retData: 	The package received is parsed and stored in this struct
 ///
-/// Returns: CODE_OK if successful, CODE_MEASUREMENT_DONE if measurement is completed.
+/// Returns: CODE_OK if successful, CODE_MEASUREMENT_DONE if measurement is completed
+///
 RetCode ReceivePackage(MSComm* MSComm, MeasureData* retData);
 
 ///
-/// Parses a line of response and further calls to parse meta data values.
+/// Parses a line of response and passes the meta data values for further parsing
+///
+/// responseLine: The line of response to be parsed
+/// retData: 	  The struct in which the parsed values are stored
 ///
 void ParseResponse(char *responseLine, MeasureData* retData);
 
 ///
-/// Splits the input string in to tokens based on the delimiters set (delim) and stores the pointer to the successive token in *stringp.
-/// This has to be performed repeatedly until end of string or until no further tokens are found.
+/// Splits the input string in to tokens based on the delimiters set (delim) and stores the pointer to the successive token in *stringp
+/// This has to be performed repeatedly until end of string or until no further tokens are found
 ///
-/// Returns: the current token (char* ) found
+/// stringp: The pointer to the next string token
+/// delim:   The array containing a set of delimiters
+///
+/// Returns: The current token (char* ) found
+///
 char* strtokenize(char** stringp, const char* delim);
 
 ///
-/// Parses a parameter and calls the function to parse meta data values if any.
+/// Fetches the string to be displayed for the input status
+///
+/// status: The enum Status whose string is to be fetched
+///
+/// Returns: The corresponding string for the input enum status
+///
+char* StatusToString(Status status);
+
+///
+/// Parses a parameter and calls the function to parse meta data values if any
+///
+/// param: 	 The parameter value to be parsed
+/// retData: The struct in which the parsed values are stored
 ///
 void ParseParam(char* param, MeasureData* retData);
 
 ///
-/// Retrieves the parameter value by parsing the input value and appending the SI uint prefix to it.
+/// Retrieves the parameter value by parsing the input value and appending the SI unit prefix to it
 ///
 /// Returns: The actual parameter value in float (with its SI unit prefix)
+///
 float GetParameterValue(char* paramValue);
 
 ///
 /// Parses the meta data values and calls the corresponding functions based on the meta data type (status, current range, noise)
+///
+/// metaDataParams: The meta data parameter values to be parsed
+/// retData: 		The struct in which the parsed values are stored
 ///
 void ParseMetaDataValues(char *metaDataParams, MeasureData* retData);
 
 ///
 /// Parses the bytes corresponding to the status of the package(OK, Overload, Underload, Overload_warning)
 ///
-char* GetReadingStatusFromPackage(char* metaDataStatus);
+/// metaDataStatus: The meta data status value to be parsed
+///
+/// Returns: A string corresponding to the parsed status
+
+const char* GetReadingStatusFromPackage(char* metaDataStatus);
 
 ///
 /// Parses the bytes corresponding to current range of the parameter
 ///
-char* GetCurrentRangeFromPackage(char* metaDataCR);
+/// metaDataCR: The meta data current range value to be parsed
+///
+/// Returns: A string corresponding to the parsed current range value
+///
+const char* GetCurrentRangeFromPackage(char* metaDataCR);
 
 ///
 /// Returns the double value corresponding to the input unit prefix char
@@ -200,18 +232,26 @@ const double GetUnitPrefixValue(char charPrefix);
 //////////////////////////////////////////////////////////////////////////////
 // Internal Communication Functions
 //
-// These functions are used by the SDK internally to communicate with the emstat pico.
+// These functions are used by the SDK internally to communicate with the EmStat Pico.
 // You probably don't need to use these directly, but they're here so you can if you want.
 //////////////////////////////////////////////////////////////////////////////
 
 ///
 /// Reads a character buffer using the supplied read_char_func
+///
+/// MSComm:	The MSComm data struct
+/// buf:	The buffer in which the response is stored
+///
 /// Returns: CODE_OK if successful, otherwise CODE_NULL.
 ///
 RetCode ReadBuf(MSComm* MSComm, char* buf);
 
 ///
 /// Reads a character using the supplied read_char_func
+///
+/// MSComm:	The MSComm data struct
+/// c:		The character read is stored in this variable
+///
 /// Returns: CODE_OK if successful, otherwise CODE_TIMEOUT.
 ///
 RetCode ReadChar(MSComm* MSComm, char* c);
@@ -219,10 +259,16 @@ RetCode ReadChar(MSComm* MSComm, char* c);
 ///
 /// Writes a character using the supplied write_char_func
 ///
+/// MSComm:	The MSComm data struct
+/// c:		The character to be written
+///
 void WriteChar(MSComm* MSComm, char c);
 
 ///
 /// Writes a 0 terminated string using the supplied write_char_func
+///
+/// MSComm:	The MSComm data struct
+/// buf:	The data to be written
 ///
 void WriteStr(MSComm* MSComm, const char* buf);
 

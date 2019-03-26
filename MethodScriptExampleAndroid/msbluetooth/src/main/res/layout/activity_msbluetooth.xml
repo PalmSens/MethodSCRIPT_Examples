@@ -17,7 +17,9 @@
         android:layout_marginTop="22dp"
         android:layout_toEndOf="@+id/btnConnect"
         android:visibility="invisible"
-        tools:visibility="invisible" />
+        tools:visibility="invisible"
+        android:layout_toRightOf="@+id/btnConnect"
+        android:layout_marginLeft="21dp" />
 
     <Spinner
         android:id="@+id/spinnerConnectedDevices"
@@ -26,7 +28,9 @@
         android:layout_alignParentTop="true"
         android:layout_marginStart="22dp"
         android:layout_marginTop="29dp"
-        android:layout_toEndOf="@+id/lblBluetoothDevices" />
+        android:layout_toEndOf="@+id/lblBluetoothDevices"
+        android:layout_marginLeft="22dp"
+        android:layout_toRightOf="@+id/lblBluetoothDevices" />
 
     <!--<Button
         android:id="@+id/btnFindUnpairedDevices"
@@ -48,7 +52,9 @@
         android:layout_marginStart="23dp"
         android:layout_marginTop="31dp"
         android:text="Bluetooth Devices"
-        android:textAlignment="center" />
+        android:textAlignment="center"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="23dp" />
 
     <TextView
         android:id="@+id/txtResponse"
@@ -58,7 +64,9 @@
         android:layout_alignParentStart="true"
         android:layout_marginStart="24dp"
         android:layout_marginTop="40dp"
-        android:fontFamily="monospace" />
+        android:fontFamily="monospace"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="24dp" />
 
     <Button
         android:id="@+id/btnConnect"
@@ -69,7 +77,9 @@
         android:layout_marginTop="19dp"
         android:layout_toEndOf="@+id/spinnerConnectedDevices"
         android:onClick="onClickConnect"
-        android:text="Connect" />
+        android:text="Connect"
+        android:layout_marginLeft="24dp"
+        android:layout_toRightOf="@+id/spinnerConnectedDevices" />
 
     <Button
         android:id="@+id/btnSend"
@@ -80,7 +90,9 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="20dp"
         android:onClick="onClickSendScript"
-        android:text="Send script" />
+        android:text="Send script"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="24dp" />
 
     <Button
         android:id="@+id/btnAbort"
@@ -91,7 +103,9 @@
         android:layout_marginTop="21dp"
         android:layout_toEndOf="@+id/btnSend"
         android:onClick="onClickAbort"
-        android:text="Abort" />
+        android:text="Abort"
+        android:layout_marginLeft="51dp"
+        android:layout_toRightOf="@+id/btnSend" />
 
     <Button
         android:id="@+id/btnScan"
@@ -102,7 +116,9 @@
         android:layout_marginStart="26dp"
         android:layout_marginTop="10dp"
         android:onClick="onClickScan"
-        android:text="Scan" />
+        android:text="Scan"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="26dp" />
 
     <ProgressBar
         android:id="@+id/progressBarScan"
@@ -114,6 +130,8 @@
         android:layout_marginTop="4dp"
         android:layout_toEndOf="@+id/btnScan"
         android:visibility="invisible"
-        tools:visibility="invisible" />
+        tools:visibility="invisible"
+        android:layout_marginLeft="36dp"
+        android:layout_toRightOf="@+id/btnScan" />
 
 </RelativeLayout>

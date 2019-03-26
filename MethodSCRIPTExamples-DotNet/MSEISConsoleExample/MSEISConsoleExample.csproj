@@ -50,7 +50,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="scripts\EIS_on_10KOhm.txt">
+    <Content Include="scripts\EIS_on_Randles_560Ohm_10kOhm_33nF.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

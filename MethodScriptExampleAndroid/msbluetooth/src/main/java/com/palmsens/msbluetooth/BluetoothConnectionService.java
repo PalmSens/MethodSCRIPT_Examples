@@ -27,28 +27,29 @@ public class BluetoothConnectionService {
 
     public BluetoothConnectionService(Context context, Handler handler) {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        mHandler = handler;                                             // The handler to post back messages to the main activity
+        mHandler = handler;                                             //The handler to post back messages to the main activity
     }
 
     /**
      * <Summary>
-     *     Called from the MSBluetoothActivity on click of button Connect.
-     *     Sets the selected device and the UUID of the device and starts a new runnable to connect to the device.
+     * Called from the MSBluetoothActivity on click of button Connect.
+     * Sets the selected device and the UUID of the device and starts a new runnable to connect to the device.
      * </Summary>
-     * @param device  The selected bluetooth device
-     * @param uuid    The UUID of the selected device
+     *
+     * @param device The selected bluetooth device
+     * @param uuid   The UUID of the selected device
      */
     public void startClient(BluetoothDevice device, UUID uuid) {
         Log.d(TAG, "startClient: Started.");
         mDevice = device;
         mUUID = uuid;
-        new Thread(connectedThread).start();                            // Starts a new runnable thread to connect to the device
+        new Thread(connectedThread).start();                            //Starts a new runnable thread to read the response from the device
     }
 
     /**
      * <Summary>
-     *     Called from the MSBluetoothActivity on click of Disconnect.
-     *     Marks that the thread is stopped to enable closing of the socket from within the runnable thread (connectedThread)
+     * Called from the MSBluetoothActivity on click of Disconnect.
+     * Marks that the thread is stopped to enable closing of the socket from within the runnable thread (connectedThread)
      * </Summary>
      */
     public void disconnect() {
@@ -57,22 +58,22 @@ public class BluetoothConnectionService {
 
     /**
      * <Summary>
-     *     Closes the socket and sets the instream and out stream to null to shut down the connection when the device is disconnected.
+     * Closes the socket and sets the instream and out stream to null to shut down the connection when the device is disconnected.
      * </Summary>
      */
     public void closeSocket() {
         try {
             mSocket.close();
-            mInStream = null;
-            mOutStream = null;
-        } catch (IOException e) { }
+        } catch (IOException e) {
+        }
     }
 
     /**
      * <Summary>
-     *     Called from the MSBluetoothActivity for sending the version command and sending the script file.
-     *     Writes to the output stream of the bluetooth socket.
+     * Called from the MSBluetoothActivity for sending the version command and sending the script file.
+     * Writes to the output stream of the bluetooth socket.
      * </Summary>
+     *
      * @param bytes
      */
     public void write(byte[] bytes) {
@@ -88,30 +89,28 @@ public class BluetoothConnectionService {
 
     /**
      * <Summary>
-     *     A thread implementing the Runnable to connect to a device, listen to the response continuously and post the messages back to the main activity.
-     *     Creates a RfcommSocket and connects to the bluetooth device using that socket.
-     *     The input and output memory streams of this socket is used to perform read and write operations on the device.
-     *     If the device is disconnected, the thread is stopped and socket is closed.
+     * A thread implementing the Runnable to connect to a device, listen to the response continuously and post the messages back to the main activity.
+     * Creates a RfcommSocket and connects to the bluetooth device using that socket.
+     * The input and output memory streams of this socket is used to perform read and write operations on the device.
+     * If the device is disconnected, the thread is stopped and socket is closed.
      * </Summary>
      */
     private Runnable connectedThread = new Runnable() {
 
         String mReadLine = "";
-        private boolean connectDevice() {
 
+        private boolean connectDevice() {
             boolean isConnected = false;
-            BluetoothSocket tmp = null;
 
             try {
                 Log.d(TAG, "ConnectedThread: Trying to create InsecureRfcomSocket using UUID: " + mDevice.toString() + mUUID);
-                tmp = mDevice.createInsecureRfcommSocketToServiceRecord(mUUID);
+                mSocket = mDevice.createInsecureRfcommSocketToServiceRecord(mUUID);
             } catch (IOException e) {
                 Log.e(TAG, "ConnectedThread: Could not create InsecureRfcomSocket " + e.getMessage());
+                return false;
             }
 
-            mSocket = tmp;
-
-            mBluetoothAdapter.cancelDiscovery();                                    // Always cancel discovery because it will slow down a connection
+            mBluetoothAdapter.cancelDiscovery();                                    //Always cancel discovery because it will slow down a connection
 
             try {
                 // This is a blocking call and will only return on successful connection or an exception, hence in a runnable
@@ -123,15 +122,14 @@ public class BluetoothConnectionService {
                         .sendToTarget();
                 Log.d(TAG, "run: ConnectedThread connected.");
             } catch (IOException e) {
-                // Close the socket
                 try {
-                    mSocket.close();
+                    mSocket.close();                                               //Closes the socket
                     isConnected = false;
                     Log.d(TAG, "run: Closed Socket.");
                     mHandler.obtainMessage(MSBluetoothActivity.MESSAGE_SOCKET_CLOSED, -1, -1, "Could not connect to device".getBytes())
                             .sendToTarget();
                 } catch (IOException e1) {
-                    Log.e(TAG, "mConnectedThread: run: Unable to close connection in socket " + e1.getMessage());
+                    Log.e(TAG, "ConnectedThread: run: Unable to close connection in socket " + e1.getMessage());
                 }
                 Log.d(TAG, "run: ConnectedThread: Could not connect to UUID: " + mUUID);
             }
@@ -151,25 +149,27 @@ public class BluetoothConnectionService {
                 mThreadisStopped = false;
                 // Keep listening to the InputStream until an exception occurs
                 while (!mThreadisStopped) {
-                    // Read from the InputStream
                     try {
                         if (mInStream != null && mInStream.available() > 0) {
-                            readSize = mInStream.read(rbuf, offset, 1);                 // Reads a character from the socket's in stream
-                            rchar = new String(rbuf);
-                            mReadLine += rchar;                                             // A line of response string is formed until new line is encountered
+                            readSize = mInStream.read(rbuf, offset, 1);                     //Reads a character from the socket's in stream
+                            if(readSize > 0)
+                            {
+                                rchar = new String(rbuf);
+                                mReadLine += rchar;                                             //A line of response string is formed until new line is encountered
 
-                            if (rchar.equals("\n")) {
-                                mHandler.post(new Runnable() {
-                                    final String line = mReadLine;
+                                if (rchar.equals("\n")) {
+                                    mHandler.post(new Runnable() {
+                                        final String line = mReadLine;
 
-                                    @Override
-                                    public void run() {
-                                        // Send the obtained bytes to the UI Activity
-                                        mHandler.obtainMessage(MSBluetoothActivity.MESSAGE_READ, -1, -1, line.getBytes())
-                                                .sendToTarget();
-                                    }
-                                });
-                                mReadLine = "";
+                                        @Override
+                                        public void run() {
+                                            //Sends the obtained bytes to the UI Activity
+                                            mHandler.obtainMessage(MSBluetoothActivity.MESSAGE_READ, -1, -1, line.getBytes())
+                                                    .sendToTarget();
+                                        }
+                                    });
+                                    mReadLine = "";
+                                }
                             }
                         }
                     } catch (IOException e) {
@@ -178,7 +178,7 @@ public class BluetoothConnectionService {
                         break;
                     }
                 }
-                closeSocket();                                                                 // Closes the socket upon disconnecting the device
+                closeSocket();                                                                 //Closes the socket upon disconnecting the device
             }
         }
     };

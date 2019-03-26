@@ -57,7 +57,7 @@
     <Content Include="scripts\LSV_on_10KOhm.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="scripts\meas_swv_test.txt">
+    <Content Include="scripts\SWV_on_10KOhm.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
