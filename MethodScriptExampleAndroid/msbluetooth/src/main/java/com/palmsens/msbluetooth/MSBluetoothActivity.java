@@ -51,6 +51,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
     private static final String CMD_VERSION = "t\n";
     private static final String CMD_ABORT = "Z\n";
     private static final String SCRIPT_FILE_NAME = "LSV_on_10KOhm.txt"; //"SWV_on_10KOhm.txt"
+    private static final UUID defaultUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     private static final int REQUEST_CODE_LOCATION = 1;
 
@@ -89,37 +90,6 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
     private boolean mIsScriptActive = false;
     private boolean mIsScanning;
     private final CallBackHandler mHandler = new CallBackHandler(this);
-    /**
-     * Broadcast Receiver that detects bond state changes (Pairing status changes)
-     * Once pairing is complete and the bond state of the device is BOND_BONDED, createBluetoothConnection() is called to create a new BluetoothConnectionService object.
-     */
-    private final BroadcastReceiver mBroadcastReceiverPairing = new BroadcastReceiver() {
-        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            BluetoothDevice device;
-            if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
-                device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                if (device.getBondState() == BluetoothDevice.BOND_BONDED) {                          //Device is bonded already
-                    Toast.makeText(context, "Pairing complete.", Toast.LENGTH_SHORT).show();
-                    mProgressConnect.setVisibility(View.INVISIBLE);               // Sets the progress bar invisible
-                    createBluetoothConnection();
-                    updateView();
-                }
-                if (device.getBondState() == BluetoothDevice.BOND_BONDING) {                         //Creating a bond
-                    btnScan.setEnabled(false);
-                    Toast.makeText(context, "Pairing the device...", Toast.LENGTH_SHORT).show();
-                    mProgressConnect.setVisibility(View.VISIBLE);                                    //Sets the progress bar visible
-                }
-                if (device.getBondState() == BluetoothDevice.BOND_NONE) {
-                    Toast.makeText(context, "Device Could not be paired", Toast.LENGTH_SHORT).show();
-                    mProgressConnect.setVisibility(View.INVISIBLE);                                  //Sets the progress bar invisible
-                    updateView();
-                }
-            }
-        }
-    };
 
     /**
      * The SI unit of the prefixes and their corresponding factors
@@ -200,30 +170,6 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
     }
 
     //region Bluetooth broadcast receivers
-    /**
-     * Broadcast Receiver for listing devices that are not paired yet; Executed by onClickScan method.
-     * When a device is found, it is added to the mBTDevices array and once the discovery is finished, the device names are added to the spinner
-     */
-    private BroadcastReceiver mBroadcastReceiverDiscovery = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            Log.d(TAG, "onReceive: ACTION FOUND.");
-
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                if (device.getName() != null && device.getName().startsWith("PS") && !mBTDevices.contains(device))
-                    mBTDevices.add(device);
-                Log.d(TAG, "onReceive: " + device.getName() + ": " + device.getAddress());
-            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                mBluetoothAdapter.cancelDiscovery();                                                    //Cancels discovery when discovery is finished
-                if (mIsScanning) {
-                    Toast.makeText(context, "Bluetooth devices scan complete.", Toast.LENGTH_SHORT).show();
-                    onScanStopped();
-                }
-            }
-        }
-    };
 
     /**
      * Broadcast Receiver for listing paired devices upon on/off bluetooth.
@@ -253,6 +199,66 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
     };
 
     /**
+     * Broadcast Receiver for listing devices that are not paired yet; Executed by onClickScan method.
+     * When a device is found, it is added to the mBTDevices array and once the discovery is finished, the device names are added to the spinner
+     */
+    private BroadcastReceiver mBroadcastReceiverDiscovery = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            Log.d(TAG, "onReceive: ACTION FOUND.");
+
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if (device.getName() != null && device.getName().startsWith("PS") && !mBTDevices.contains(device))
+                    mBTDevices.add(device);
+                Log.d(TAG, "onReceive: " + device.getName() + ": " + device.getAddress());
+            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                if(mBluetoothAdapter.isDiscovering())
+                    mBluetoothAdapter.cancelDiscovery();                                                 //Cancels discovery when discovery is finished
+                if (mIsScanning) {
+                    Toast.makeText(context, "Bluetooth devices scan complete.", Toast.LENGTH_SHORT).show();
+                    onScanStopped();
+                }
+            }
+        }
+    };
+
+    /**
+     * Broadcast Receiver that detects bond state changes (Pairing status changes)
+     * Once pairing is complete and the bond state of the device is BOND_BONDED, createBluetoothConnection() is called to create a new BluetoothConnectionService object.
+     */
+    private final BroadcastReceiver mBroadcastReceiverPairing = new BroadcastReceiver() {
+        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            BluetoothDevice device;
+            if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
+                device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if (device.getBondState() == BluetoothDevice.BOND_BONDED) {                          //Device is bonded already
+                    Toast.makeText(context, "Pairing complete.", Toast.LENGTH_SHORT).show();
+                    mProgressConnect.setVisibility(View.INVISIBLE);               // Sets the progress bar invisible
+                    createBluetoothConnection();
+                    updateView();
+                }
+                if (device.getBondState() == BluetoothDevice.BOND_BONDING) {                         //Creating a bond
+                    btnScan.setEnabled(false);
+                    Toast.makeText(context, "Pairing the device...", Toast.LENGTH_SHORT).show();
+                    mProgressConnect.setVisibility(View.VISIBLE);                                    //Sets the progress bar visible
+                }
+                if (device.getBondState() == BluetoothDevice.BOND_NONE) {
+                    Toast.makeText(context, "Device Could not be paired", Toast.LENGTH_SHORT).show();
+                    mProgressConnect.setVisibility(View.INVISIBLE);                                  //Sets the progress bar invisible
+                    updateView();
+                }
+            }
+        }
+    };
+
+    //endregion
+
+    /**
      * <Summary>
      * Itemselected listener that creates a new bluetooth connection after verifying if the device is paired.
      * </Summary>
@@ -265,7 +271,8 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        mBluetoothAdapter.cancelDiscovery();
+        if(mBluetoothAdapter.isDiscovering())
+            mBluetoothAdapter.cancelDiscovery();
         if (mIsScanning) onScanStopped();
         mSelectedDevice = mBTDevices.get(position);
         //NOTE: Requires API 19+
@@ -543,7 +550,9 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      */
     private void createBluetoothConnection() {
         ParcelUuid[] uuid = mSelectedDevice.getUuids();
-        mSelectedUUID = uuid[0].getUuid();
+        mSelectedUUID = uuid != null ? uuid[0].getUuid() : defaultUUID;
+        if(mBluetoothConnection != null && mBluetoothConnection.mIsDeviceConnected)
+            return;
         mBluetoothConnection = new BluetoothConnectionService(MSBluetoothActivity.this, mHandler);
     }
 
@@ -553,6 +562,10 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      * </Summary>
      */
     public void startBTConnection() {
+        if(mBluetoothConnection == null)
+        {
+            createBluetoothConnection();
+        }
         Log.d(TAG, "startBTConnection: Initializing RFCOM Bluetooth Connection.");
         mBluetoothConnection.startClient(mSelectedDevice, mSelectedUUID);
     }
@@ -659,6 +672,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         if (mIsScriptActive)
             abortScript();                         //Aborts any running script upon disconnection
         mBluetoothConnection.disconnect();                          //Disconnects the device
+        mBluetoothConnection = null;
         Toast.makeText(this, "Device is disconnected.", Toast.LENGTH_SHORT).show();
         spinnerConnectedDevices.setEnabled(true);
         updateView();                                               //Updates the UI (enable/disable buttons)

@@ -23,6 +23,8 @@ public class BluetoothConnectionService {
     private BluetoothSocket mSocket;
     private InputStream mInStream;
     private OutputStream mOutStream;
+
+    public boolean mIsDeviceConnected = false;
     /**
      * <Summary>
      * A thread implementing the Runnable to connect to a device, listen to the response continuously and post the messages back to the main activity.
@@ -35,8 +37,14 @@ public class BluetoothConnectionService {
 
         StringBuilder mReadLine = new StringBuilder();
 
+        /**
+         * <Summary>
+         *     Creates a bluetooth socket connection
+         * </Summary>
+         * @return
+         */
         private boolean connectDevice() {
-            boolean isConnected = false;
+            mIsDeviceConnected = false;
 
             try {
                 Log.d(TAG, "ConnectedThread: Trying to create InsecureRfcomSocket using UUID: " + mDevice.toString() + mUUID);
@@ -46,30 +54,41 @@ public class BluetoothConnectionService {
                 return false;
             }
 
-            mBluetoothAdapter.cancelDiscovery();                                    //Always cancel discovery because it will slow down a connection
+            if(mBluetoothAdapter.isDiscovering())
+                mBluetoothAdapter.cancelDiscovery();                                    //Always cancel discovery because it will slow down a connection
 
             try {
                 // This is a blocking call and will only return on successful connection or an exception, hence in a runnable
                 mSocket.connect();
-                isConnected = true;
-                mInStream = mSocket.getInputStream();
-                mOutStream = mSocket.getOutputStream();
-                mHandler.obtainMessage(MSBluetoothActivity.MESSAGE_SOCKET_CONNECTED, -1, -1, "Could not connect to device".getBytes())
-                        .sendToTarget();
-                Log.d(TAG, "run: ConnectedThread connected.");
+                mIsDeviceConnected = true;
+                onSocketConnected();
             } catch (IOException e) {
                 try {
                     mSocket.close();                                               //Closes the socket
-                    isConnected = false;
+                    mIsDeviceConnected = false;
                     Log.d(TAG, "run: Closed Socket.");
                     mHandler.obtainMessage(MSBluetoothActivity.MESSAGE_SOCKET_CLOSED, -1, -1, "Could not connect to device".getBytes())
                             .sendToTarget();
                 } catch (IOException e1) {
                     Log.e(TAG, "ConnectedThread: run: Unable to close connection in socket " + e1.getMessage());
                 }
-                Log.d(TAG, "run: ConnectedThread: Could not connect to UUID: " + mUUID);
+                Log.d(TAG, "run: ConnectedThread: Could not connect to Device: ");
             }
-            return isConnected;
+            return mIsDeviceConnected;
+        }
+
+        public void onSocketConnected() throws IOException {
+            try{
+                mIsDeviceConnected = true;
+                mInStream = mSocket.getInputStream();
+                mOutStream = mSocket.getOutputStream();
+                mHandler.obtainMessage(MSBluetoothActivity.MESSAGE_SOCKET_CONNECTED, -1, -1, "Connected to device".getBytes())
+                        .sendToTarget();
+                Log.d(TAG, "run: ConnectedThread connected.");
+            }
+            catch (IOException e){
+                throw new IOException(e);
+            }
         }
 
         @Override
