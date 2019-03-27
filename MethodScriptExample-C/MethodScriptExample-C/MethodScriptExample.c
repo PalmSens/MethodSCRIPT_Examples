@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 		{
 			char buff[PATH_MAX];
 			char *currentDirectory = getcwd(buff, PATH_MAX);		      // Fetches the current directory
-			const char* filePath = "\\ScriptFiles\\LSV_on_10KOhm.txt"; 	  // "SWV_on_10KOhm.txt";
+			const char* filePath = "\\ScriptFiles\\LSV_on_10kOhm.txt"; 	  // "SWV_on_10kOhm.txt";
 			int combinedFilePathSize = PATH_MAX + 1 + strlen(filePath);	  // Determines the max size of the combined file path
 			char combinedFilePath[combinedFilePathSize];				  // An array to hold the combined file path
 			if(currentDirectory != NULL)

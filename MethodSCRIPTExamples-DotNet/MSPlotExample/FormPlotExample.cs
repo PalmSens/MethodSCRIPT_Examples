@@ -13,7 +13,7 @@ namespace EmStatPicoPlotExample
 {
     public partial class frmPlotExample : Form
     {
-        static string ScriptFileName = "LSV_on_10KOhm.txt";                                            
+        static string ScriptFileName = "LSV_on_10kOhm.txt";                                            
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         //Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -21,7 +21,7 @@ namespace EmStatPicoPlotExample
         const string CMD_VERSION = "t\n";                                                            //Version command
         const int BAUD_RATE = 230400;                                                                //Baudrate for EmStat Pico
         const int READ_TIME_OUT = 7000;                                                              //Read time out for the device in ms
-        const int PACKAGE_PARAM_VALUE_LENGTH = 8;                                                    //Length of the parameter value in a package
+        const int PACKAGE_DATA_VALUE_LENGTH = 8;                                                    //Length of the data value in a package
         const int OFFSET_VALUE = 0x8000000;                                                          //Offset value to receive positive values
 
         private SerialPort SerialPortEsP;
@@ -47,7 +47,7 @@ namespace EmStatPicoPlotExample
                                                                      { "P", 1e15 },
                                                                      { "E", 1e18 }};
 
-        readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string>  //Measurement parameter identifiers and their corresponding labels
+        readonly static Dictionary<string, string> MeasurementVariables = new Dictionary<string, string>  //Variable types and their corresponding labels
                                                                             { { "da", "E (V)" },
                                                                               { "ba", "I (A)" },
                                                                               { "dc", "Frequency" },
@@ -113,10 +113,10 @@ namespace EmStatPicoPlotExample
             string[] ports = SerialPort.GetPortNames();
             for (int i = 0; i < ports.Length; i++)
             {
-                serialPort = GetSerialPort(ports[i]);    //Fetches a new instance of the serial port with the port name
+                serialPort = GetSerialPort(ports[i]);                   //Fetches a new instance of the serial port with the port name
                 try
                 {
-                    serialPort.Open();                   //Opens serial port 
+                    serialPort.Open();                                  //Opens serial port 
                     if (serialPort.IsOpen)
                     {
                         serialPort.Write(CMD_VERSION);                  //Writes the version command             
@@ -179,14 +179,14 @@ namespace EmStatPicoPlotExample
                 {
                     line = stream.ReadLine();               //Reads a line from the script file
                     line += "\n";                           //Appends a new line character to the line read
-                    SerialPortEsP.Write(line);              //Sends the response line to EmStat Pico
+                    SerialPortEsP.Write(line);              //Sends the read line to EmStat Pico
                 }
                 lbConsole.Items.Add("Measurement started.");
             }
         }
 
         /// <summary>
-        /// Processes the response packets from the EmStat Pico and store the response in RawData.
+        /// Processes the response packages from the EmStat Pico and stores the response in RawData.
         /// Possibilities of time out exception in case the script file was empty 
         /// </summary>
         private void ProcessReceivedPackets()
@@ -195,7 +195,7 @@ namespace EmStatPicoPlotExample
             lbConsole.Items.Add("Receiving measurement response:");
             while (true)
             {
-                readLine = ReadResponseLine();              //Reads a line from the response
+                readLine = ReadResponseLine();              //Reads a line from the measurement response
                 RawData += readLine;                        //Adds the response to raw data
                 if (readLine == "\n")
                     break;
@@ -233,48 +233,48 @@ namespace EmStatPicoPlotExample
         }
 
         /// <summary>
-        /// Parses a single line of the package and adds the values of the measurement parameters to the corresponding arrays
+        /// Parses a measurement data package and adds the parsed data values to their corresponding arrays
         /// </summary>
-        /// <param name="responsePackageLine">The line from response package to be parsed</param>
+        /// <param name="responsePackageLine">The measurement data package to be parsed</param>
         private void ParsePackageLine(string packageLine)
         {
-            string[] parameters;
-            string paramIdentifier;
-            string paramValue;
+            string[] variables;
+            string variableIdentifier;
+            string dataValue;
 
             int startingIndex = packageLine.IndexOf('P');                       //Identifies the beginning of the package
             string responsePackageLine = packageLine.Remove(startingIndex, 1);  //Removes the beginning character 'P'
 
-            parameters = responsePackageLine.Split(';');                        //The parameters are separated by the delimiter ';'
-            foreach (string parameter in parameters)
+            variables = responsePackageLine.Split(';');                         //The data values are separated by the delimiter ';'
+            foreach (string parameter in variables)
             {
-                paramIdentifier = parameter.Substring(0, 2);                   //The string (2 characters) that identifies the measurement parameter
-                paramValue = parameter.Substring(2, PACKAGE_PARAM_VALUE_LENGTH);
-                double paramValueWithPrefix = ParseParamValues(paramValue);
-                switch (paramIdentifier)
+                variableIdentifier = parameter.Substring(0, 2);                 //The string (2 characters) that identifies the variable type
+                dataValue = parameter.Substring(2, PACKAGE_DATA_VALUE_LENGTH);
+                double dataValueWithPrefix = ParseParamValues(dataValue);       //Parses the data value package and returns the actual values with their corresponding SI unit prefixes 
+                switch (variableIdentifier)
                 {
                     case "da":                                                 //Potential reading
-                        VoltageReadings.Add(paramValueWithPrefix);             //Adds the value to the VoltageReadings array
+                        VoltageReadings.Add(dataValueWithPrefix);              //Adds the value to the VoltageReadings array
                         break;
                     case "ba":                                                 //Current reading
-                        CurrentReadings.Add(paramValueWithPrefix * 1e6);       //Adds the value in uA to the CurrentReadings array
+                        CurrentReadings.Add(dataValueWithPrefix * 1e6);       //Adds the value in uA to the CurrentReadings array
                         break;
                 }
             }
         }
 
         /// <summary>
-        /// Parses the measurement parameter values and appends the respective prefixes
+        /// Parses the data value package and appends the respective prefixes
         /// </summary>
-        /// <param name="paramValueString"></param>
-        /// <returns>The parameter value after appending the unit prefix</returns>
+        /// <param name="paramValueString">The data value package to be parsed</param>
+        /// <returns>The actual data value after appending the unit prefix</returns>
         private double ParseParamValues(string paramValueString)
         {
             char strUnitPrefix = paramValueString[7];                         //Identifies the SI unit prefix from the package at position 8
-            string strvalue = paramValueString.Remove(7);                     //Retrieves the value of the measured parameter from the package
+            string strvalue = paramValueString.Remove(7);                     //Retrieves the value of the variable the package
             int value = Convert.ToInt32(strvalue, 16);                        //Converts the hex value to int
             double paramValue = value - OFFSET_VALUE;                         //Values offset to receive only positive values
-            return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]); //Returns the value of the parameter after appending the SI unit prefix
+            return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]); //Returns the actual data value after appending the SI unit prefix
         }
 
         /// <summary>
@@ -282,7 +282,7 @@ namespace EmStatPicoPlotExample
         /// </summary>
         private void UpdatePlot()
         {
-            plotData.Points.Add(new DataPoint(VoltageReadings.Last(), CurrentReadings.Last())); //Adds the last added measurement values as new data points and update the plot
+            plotData.Points.Add(new DataPoint(VoltageReadings.Last(), CurrentReadings.Last())); //Adds the last added measurement values as new data points and updates the plot
             plotModel.InvalidatePlot(true);
         }
 
@@ -339,7 +339,7 @@ namespace EmStatPicoPlotExample
             ClearPlot();                                    //Clears the plot to begin a new measurement
             NDataPointsReceived = 0;
             SendScriptFile();                               //Sends the script file for LSV measurement
-            ProcessReceivedPackets();                       //Parses the received response packets
+            ProcessReceivedPackets();                       //Parses the received measurement packages
             btnMeasure.Enabled = true;
         }
 

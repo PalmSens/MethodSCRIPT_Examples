@@ -50,12 +50,12 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     private static final String CMD_VERSION = "t\n";
     private static final String CMD_ABORT = "Z\n";
-    private static final String SCRIPT_FILE_NAME = "LSV_on_10KOhm.txt"; //"SWV_on_10KOhm.txt"
+    private static final String SCRIPT_FILE_NAME = "LSV_on_10kOhm.txt"; //"SWV_on_10kOhm.txt"
     private static final UUID defaultUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     private static final int REQUEST_CODE_LOCATION = 1;
 
-    private static final int PACKAGE_PARAM_VALUE_LENGTH = 8;                       //Length of the parameter value in a package
+    private static final int PACKAGE_DATA_VALUE_LENGTH = 8;                       //Length of the data value in a package
     private static final int OFFSET_VALUE = 0x8000000;
 
     private int mNDataPointsReceived = 0;
@@ -166,6 +166,35 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
         ReadingStatus(int value) {
             this.value = value;
+        }
+    }
+
+    /**
+     * The beginning characters of the measurement response to help parsing the response
+     */
+    private enum Reply {
+        REPLY_BEGIN_VERSION('t'),
+        REPLY_VERSION_TYPE('B'),
+        REPLY_BEGIN_RESPONSE('e'),
+        REPLY_MEASURING('M'),
+        REPLY_BEGIN_PACKETS('P'),
+        REPLY_END_MEAS_LOOP('*'),
+        REPLY_EMPTY_LINE('\n'),
+        REPLY_ABORTED('Z');
+
+        private final char mReply;
+
+        Reply(char reply) {
+            this.mReply = reply;
+        }
+
+        public static Reply getReply(char reply) {
+            for (Reply replyChar : values()) {
+                if (replyChar.mReply == reply) {
+                    return replyChar;
+                }
+            }
+            return null;
         }
     }
 
@@ -292,45 +321,55 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         }
     }
 
-    /**
-     * <Summary>
-     * Unregisters all the broadcast receivers to enable garbage collection.
-     * </Summary>
-     */
-    @Override
-    protected void onDestroy() {
-        Log.d(TAG, "onDestroy: called.");
-        super.onDestroy();
-        unregisterReceiver(mBroadcastReceiverBTState);
-        unregisterReceiver(mBroadcastReceiverDiscovery);
-        unregisterReceiver(mBroadcastReceiverPairing);
-    }
-
-    //endregion
-
-    /**
-     * <Summary>
-     * Checks if bluetooth is turned on, else raises a request to turn on bluetooth and finds the paired devices.
-     * </Summary>
-     */
-    private void enableBluetooth() {
-        if (mBluetoothAdapter == null) {
-            Log.d(TAG, "enableBluetooth: Does not have BT capabilities.");
-            return;                                                                          //Returns if device doesn't support bluetooth
-        }
-        if (!mBluetoothAdapter.isEnabled()) {
-            Log.d(TAG, "enableBluetooth: enabling BT.");                               //Starts the activity to request turning on bluetooth
-            BluetoothAdapter.getDefaultAdapter().enable();
-
-        } else {
-            Log.d(TAG, "BT enabled already");
-            findPairedDevices();                                                             //Finds paired devices if bluetooth is enabled already
-        }
-    }
-
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
         // Do nothing
+    }
+
+    /**
+     * The Handler that gets information back from the BluetoothConnectionService
+     * Used as a static class with a weak reference to the activity inorder to avoid possible memory leaks.
+     */
+    public static class CallBackHandler extends Handler {
+        WeakReference<MSBluetoothActivity> mWeakRefActivity;
+
+        CallBackHandler(MSBluetoothActivity act) {
+            mWeakRefActivity = new WeakReference<>(act);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            MSBluetoothActivity activity = mWeakRefActivity.get();
+            if (activity != null) {
+                byte[] readBuff;
+                String readMessage;
+                switch (msg.what) {
+                    case MESSAGE_READ:
+                        readBuff = (byte[]) msg.obj;                                         //The message posted as bytes to the handler
+                        readMessage = new String(readBuff);                                  //Constructs a string from the valid bytes in the buffer
+                        activity.processResponse(readMessage);
+                        break;
+
+                    case MESSAGE_SOCKET_CLOSED:
+                        readBuff = (byte[]) msg.obj;
+                        readMessage = new String(readBuff);
+                        Toast.makeText(activity, readMessage, Toast.LENGTH_SHORT).show();   //Shows a toast message if socket is closed and connection fails
+                        activity.updateView();
+                        break;
+
+                    case MESSAGE_SOCKET_CONNECTED:
+                        activity.sendVersionCmd();                                           //Sends the version command once the bluetooth socket is connected
+                        break;
+
+                    case MESSAGE_TOAST:
+                        readBuff = (byte[]) msg.obj;
+                        readMessage = new String(readBuff);
+                        Toast.makeText(activity, readMessage, Toast.LENGTH_SHORT).show();
+                        activity.updateView();
+                        break;
+                }//end switch
+            }
+        }
     }
 
     @Override
@@ -366,6 +405,40 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         registerReceiver(mBroadcastReceiverPairing, filter);                                   //Broadcasts when bond state changes (ie:pairing)
         enableBluetooth();                                                                     //Method call to turn on bluetooth
         updateView();
+    }
+
+    /**
+     * <Summary>
+     * Unregisters all the broadcast receivers to enable garbage collection.
+     * </Summary>
+     */
+    @Override
+    protected void onDestroy() {
+        Log.d(TAG, "onDestroy: called.");
+        super.onDestroy();
+        unregisterReceiver(mBroadcastReceiverBTState);
+        unregisterReceiver(mBroadcastReceiverDiscovery);
+        unregisterReceiver(mBroadcastReceiverPairing);
+    }
+
+    /**
+     * <Summary>
+     * Checks if bluetooth is turned on, else raises a request to turn on bluetooth and finds the paired devices.
+     * </Summary>
+     */
+    private void enableBluetooth() {
+        if (mBluetoothAdapter == null) {
+            Log.d(TAG, "enableBluetooth: Does not have BT capabilities.");
+            return;                                                                          //Returns if device doesn't support bluetooth
+        }
+        if (!mBluetoothAdapter.isEnabled()) {
+            Log.d(TAG, "enableBluetooth: enabling BT.");                               //Starts the activity to request turning on bluetooth
+            BluetoothAdapter.getDefaultAdapter().enable();
+
+        } else {
+            Log.d(TAG, "BT enabled already");
+            findPairedDevices();                                                             //Finds paired devices if bluetooth is enabled already
+        }
     }
 
     /**
@@ -604,7 +677,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     * Opens and reads from the script file and writes it on the device using the bluetooth socket's out stream.
+     * Reads from the script file and writes it on the device using the bluetooth socket's out stream.
      * </Summary>
      *
      * @return A boolean to indicate if the script file was sent successfully to the device.
@@ -685,11 +758,9 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      *
      * @param line A complete line of response read from the device.
      */
-    //TODO: Remove 'e' before sending it for parsing - DONE
-    //TODO: A separate method to process the line read and update UI when complete - DONE
     private void processResponse(String line) {
         Reply beginChar = Reply.getReply(line.charAt(0));
-        if (beginChar == null)                                          //If connected to Palmsens, the response to version cmd might be different
+        if (beginChar == null)                                         //If connected to other Palmsens devices, the response to version cmd might be different
         {
             Toast.makeText(this, "Failed to connect", Toast.LENGTH_SHORT).show();
             return;
@@ -702,7 +773,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         } else {
             if (beginChar == Reply.REPLY_BEGIN_RESPONSE)
                 line = line.substring(1);                              //Removes the beginning character of the response if it is 'e'
-            if (mIsConnected && processReceivedPackages(line)) {       //Calls the method to process the received response packets
+            if (mIsConnected && processReceivedPackage(line)) {       //Calls the method to process the received measurement package
                 btnSend.setEnabled(true);                              //Updates the UI upon completion of parsing and displaying of the response
                 mIsScriptActive = false;
                 btnAbort.setEnabled(false);
@@ -712,13 +783,13 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     * Processes the response packets from the EmStat Pico and store the response in RawData.
+     * Processes the measurement package from the EmStat Pico and stores the response in RawData.
      * </Summary>
      *
-     * @param readLine A complete line of response read from the device.
+     * @param readLine A measurement package read from the device.
      * @return A boolean to indicate if measurement is complete.
      */
-    private boolean processReceivedPackages(String readLine) {
+    private boolean processReceivedPackage(String readLine) {
         boolean isComplete = false;
         Reply beginChar = Reply.getReply(readLine.charAt(0));
         switch (beginChar) {
@@ -747,15 +818,15 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <summary>
-     * Parses a single line of the package and adds the values of the measurement parameters to the corresponding arrays
+     * Parses a measurement data package and adds the parsed data values to their corresponding arrays
      * </summary>
      *
-     * @param packageLine The line from response package to be parsed
+     * @param packageLine The measurement data package to be parsed
      */
     private void parsePackageLine(String packageLine) {
-        String[] parameters;
-        String paramIdentifier;
-        String paramValue;
+        String[] variables;
+        String variableIdentifier;
+        String dataValue;
 
         int startingIndex = packageLine.indexOf('P');                            //Identifies the beginning of the package
         String responsePackageLine = packageLine.substring(startingIndex + 1);   //Removes the beginning character 'P'
@@ -764,44 +835,43 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         txtResponse.append(String.format(Locale.getDefault(), "%n  %-4d", mNDataPointsReceived));
         Log.d(TAG, String.valueOf(mNDataPointsReceived) + "  " + responsePackageLine);
 
-        parameters = responsePackageLine.split(";");                       //Parameter values are separated by the delimiter ';'
-        for (String parameter : parameters) {
-            paramIdentifier = parameter.substring(startingIndex, 2);             //The String (2 characters) that identifies the measurement parameter
-            paramValue = parameter.substring(startingIndex + 2, startingIndex + 2 + PACKAGE_PARAM_VALUE_LENGTH);
-            double paramValueWithPrefix = parseParamValues(paramValue);          //Parses the parameter values and returns the actual values with their corresponding SI unit prefixes
-            switch (paramIdentifier) {
+        variables = responsePackageLine.split(";");                       //The data values are separated by the delimiter ';'
+        for (String variable : variables) {
+            variableIdentifier = variable.substring(startingIndex, 2);             //The String (2 characters) that identifies the measurement variable
+            dataValue = variable.substring(startingIndex + 2, startingIndex + 2 + PACKAGE_DATA_VALUE_LENGTH);
+            double dataValueWithPrefix = parseParamValues(dataValue);          //Parses the data values and returns the actual values with their corresponding SI unit prefixes
+            switch (variableIdentifier) {
                 case "da":                                                       //Potential reading
-                    mVoltageReadings.add(paramValueWithPrefix);                  //Adds the value to the mVoltageReadings array
+                    mVoltageReadings.add(dataValueWithPrefix);                  //Adds the value to the mVoltageReadings array
                     break;
                 case "ba":                                                       //Current reading
-                    mCurrentReadings.add(paramValueWithPrefix);                  //Adds the value to the mCurrentReadings array
+                    mCurrentReadings.add(dataValueWithPrefix);                  //Adds the value to the mCurrentReadings array
                     break;
             }
-            txtResponse.append(String.format(Locale.getDefault(), "%1$-3s %2$ -1.4e ", " ", paramValueWithPrefix));
-            if (parameter.length() > 10 && parameter.charAt(10) == ',')
-                parseMetaDataValues(parameter.substring(11));                    //Parses the metadata values in the parameter, if any
+            txtResponse.append(String.format(Locale.getDefault(), "%1$-3s %2$ -1.4e ", " ", dataValueWithPrefix));
+            if (variable.length() > 10 && variable.charAt(10) == ',')
+                parseMetaDataValues(variable.substring(11));                    //Parses the metadata values in the variable, if any
         }
     }
 
     /**
      * <Summary>
-     * Parses the measurement parameter values and appends the respective prefixes
+     * Parses the measurement data values and appends their respective prefixes
      * </Summary>
-     *
-     * @param paramValueString The parameter value to be parsed
-     * @return The parameter value (double) after appending the unit prefix
+     * @param paramValueString The data value package value to be parsed
+     * @return The actual data value (double) after appending the unit prefix
      */
     private double parseParamValues(String paramValueString) {
         char strUnitPrefix = paramValueString.charAt(7);                         //Identifies the SI unit prefix from the package at position 8
-        String strvalue = paramValueString.substring(0, 7);                      //Retrieves the value of the measured parameter from the package
+        String strvalue = paramValueString.substring(0, 7);                      //Retrieves the value of the variable from the package
         int value = Integer.parseInt(strvalue, 16);                        //Converts the hex value to int
         double paramValue = value - OFFSET_VALUE;                                //Values offset to receive only positive values
-        return (paramValue * SI_PREFIX_FACTORS.get(strUnitPrefix));              //Returns the value of the parameter after appending the SI unit prefix
+        return (paramValue * SI_PREFIX_FACTORS.get(strUnitPrefix));              //Returns the actual data value after appending the SI unit prefix
     }
 
     /**
      * <Summary>
-     * Parses the meta data values of the variables, if any.
+     * Parses the meta data values of the variable, if any.
      * The first character in each meta data value specifies the type of data.
      * 1 - 1 char hex mask holding the status (0 = OK, 2 = overload, 4 = underload, 8 = overload warning (80% of max))
      * 2 - 2 chars hex holding the current range index. First bit high (0x80) indicates a high speed mode cr.
@@ -813,7 +883,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
     private void parseMetaDataValues(String packageMetaData) {
         String[] metaDataValues;
         byte crByte;
-        metaDataValues = packageMetaData.split(",");                        //The meta data values are separated by the delimiter ','
+        metaDataValues = packageMetaData.split(",");                        //The metadata values are separated by the delimiter ','
         for (String metaData : metaDataValues) {
             switch (metaData.charAt(0)) {
                 case '1':
@@ -839,7 +909,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      */
     private void getReadingStatusFromPackage(String metaDatastatus) {
         String status = "";
-        long statusBits = (Integer.parseInt(String.valueOf(metaDatastatus.charAt(1)), 16));     //One char of the meta data value corresponding to status is retrieved
+        long statusBits = (Integer.parseInt(String.valueOf(metaDatastatus.charAt(1)), 16));     //One char of the metadata value corresponding to status is retrieved
         if ((statusBits) == (long) ReadingStatus.OK.value)
             status = ReadingStatus.OK.name();
         if ((statusBits & 0x2) == (long) ReadingStatus.Overload.value)
@@ -856,13 +926,12 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      * Parses the bytes corresponding to current range from the package.
      * </Summary>
      *
-     * @param metaDataCR The current range meta data value to be parsed
+     * @param metaDataCR The current range metadata value to be parsed
      * @return The current range byte value
      */
-    //TODO: Change if-else to Switch case - DONE
     private byte getCurrentRangeFromPackage(String metaDataCR) {
         byte crByte;
-        crByte = Byte.parseByte(String.valueOf(metaDataCR.substring(1, 2)), 16);                //Two characters of the meta data value corresponding to current range are retrieved as byte
+        crByte = Byte.parseByte(String.valueOf(metaDataCR.substring(1, 2)), 16);                //Two characters of the metadata value corresponding to current range are retrieved as byte
         return crByte;
     }
 
@@ -952,11 +1021,13 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      * Parses the noise from the package.
      * </Summary>
      *
-     * @param metaDataNoise The meta data noise to be parsed.
+     * @param metaDataNoise The metadata noise to be parsed.
      */
     private void GetNoiseFromPackage(String metaDataNoise) {
 
     }
+
+    //region Events
 
     /**
      * <Summary>
@@ -1033,79 +1104,6 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         }
     }
 
-    /**
-     * The beginning characters of the measurement response to help parsing the response
-     */
-    private enum Reply {
-        REPLY_BEGIN_VERSION('t'),
-        REPLY_VERSION_TYPE('B'),
-        REPLY_BEGIN_RESPONSE('e'),
-        REPLY_MEASURING('M'),
-        REPLY_BEGIN_PACKETS('P'),
-        REPLY_END_MEAS_LOOP('*'),
-        REPLY_EMPTY_LINE('\n'),
-        REPLY_ABORTED('Z');
-
-        private final char mReply;
-
-        Reply(char reply) {
-            this.mReply = reply;
-        }
-
-        public static Reply getReply(char reply) {
-            for (Reply replyChar : values()) {
-                if (replyChar.mReply == reply) {
-                    return replyChar;
-                }
-            }
-            return null;
-        }
-    }
-
-    /**
-     * The Handler that gets information back from the BluetoothConnectionService
-     */
-    public static class CallBackHandler extends Handler {
-        WeakReference<MSBluetoothActivity> mWeakRefActivity;
-
-        CallBackHandler(MSBluetoothActivity act) {
-            mWeakRefActivity = new WeakReference<>(act);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            MSBluetoothActivity activity = mWeakRefActivity.get();
-            if (activity != null) {
-                byte[] readBuff;
-                String readMessage;
-                switch (msg.what) {
-                    case MESSAGE_READ:
-                        readBuff = (byte[]) msg.obj;                                         //The message posted as bytes to the handler
-                        readMessage = new String(readBuff);                                  //Constructs a string from the valid bytes in the buffer
-                        activity.processResponse(readMessage);
-                        break;
-
-                    case MESSAGE_SOCKET_CLOSED:
-                        readBuff = (byte[]) msg.obj;
-                        readMessage = new String(readBuff);
-                        Toast.makeText(activity, readMessage, Toast.LENGTH_SHORT).show();   //Shows a toast message if socket is closed and connection fails
-                        activity.updateView();
-                        break;
-
-                    case MESSAGE_SOCKET_CONNECTED:
-                        activity.sendVersionCmd();                                           //Sends the version command once the bluetooth socket is connected
-                        break;
-
-                    case MESSAGE_TOAST:
-                        readBuff = (byte[]) msg.obj;
-                        readMessage = new String(readBuff);
-                        Toast.makeText(activity, readMessage, Toast.LENGTH_SHORT).show();
-                        activity.updateView();
-                        break;
-                }//end switch
-            }
-        }
-    }
-
     //endregion
+
 }

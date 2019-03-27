@@ -37,11 +37,11 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     private static final String CMD_VERSION_STRING = "t\n";
     private static final String CMD_ABORT_STRING = "Z\n";
-    private static final String SCRIPT_FILE_NAME = "LSV_on_10KOhm.txt"; //"SWV_on_10KOhm.txt";
-    private static final int BAUD_RATE = 230400;                                                    // Baud Rate for EmStat Pico
-    private static final int LATENCY_TIMER = 16;                                                    // Read time out for the device in milli seconds.
-    private static final int PACKAGE_PARAM_VALUE_LENGTH = 8;                                        // Length of the parameter value in a package
-    private static final int OFFSET_VALUE = 0x8000000;                                              // Offset value to receive positive values
+    private static final String SCRIPT_FILE_NAME = "LSV_on_10kOhm.txt"; //"SWV_on_10kOhm.txt";
+    private static final int BAUD_RATE = 230400;                                                    //Baud Rate for EmStat Pico
+    private static final int LATENCY_TIMER = 16;                                                    //Read time out for the device in milli seconds.
+    private static final int PACKAGE_DATA_VALUE_LENGTH = 8;                                         //Length of the data value in a package
+    private static final int OFFSET_VALUE = 0x8000000;                                              //Offset value to receive positive values
     /**
      * The SI unit of the prefixes and their corresponding factors
      */
@@ -60,8 +60,9 @@ public class MethodSCRIPTExample extends AppCompatActivity {
         put('P', 1e15);
         put('E', 1e18);
     }};
-    private static List<Double> mCurrentReadings = new ArrayList<>();                               // Collection of current readings
-    private static List<Double> mVoltageReadings = new ArrayList<>();                               // Collection of potential readings
+
+    private static List<Double> mCurrentReadings = new ArrayList<>();                               //Collection of current readings
+    private static List<Double> mVoltageReadings = new ArrayList<>();                               //Collection of potential readings
     private static D2xxManager ftD2xxManager = null;
     private final Handler mHandler = new Handler();
     private FT_Device ftDevice;
@@ -76,12 +77,100 @@ public class MethodSCRIPTExample extends AppCompatActivity {
     private boolean mIsScriptActive = false;
     private boolean mThreadIsStopped = true;
     private boolean mIsVersionCmdSent = false;
+
+    /**
+     * The beginning characters of the measurement response packages to help parsing the response
+     */
+    private enum Reply {
+        REPLY_BEGIN_VERSION('t'),
+        REPLY_VERSION_TYPE('B'),
+        REPLY_BEGIN_RESPONSE('e'),
+        REPLY_MEASURING('M'),
+        REPLY_BEGIN_PACKETS('P'),
+        REPLY_END_MEAS_LOOP('*'),
+        REPLY_EMPTY_LINE('\n'),
+        REPLY_ABORTED('Z');
+
+        private final char mReply;
+
+        Reply(char reply) {
+            this.mReply = reply;
+        }
+
+        public static Reply getReply(char reply) {
+            for (Reply replyChar : values()) {
+                if (replyChar.mReply == reply) {
+                    return replyChar;
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * All possible current ranges that are supported by EmStat Pico.
+     */
+    private enum CurrentRanges {
+        cr100nA(0),
+        cr2uA(1),
+        cr4uA(2),
+        cr8uA(3),
+        cr16uA(4),
+        cr32uA(5),
+        cr63uA(6),
+        cr125uA(7),
+        cr250uA(8),
+        cr500uA(9),
+        cr1mA(10),
+        cr5mA(11),
+        hscr100nA(128),
+        hscr1uA(129),
+        hscr6uA(130),
+        hscr13uA(131),
+        hscr25uA(132),
+        hscr50uA(133),
+        hscr100uA(134),
+        hscr200uA(135),
+        hscr1mA(136),
+        hscr5mA(137);
+
+        private final int crIndex;
+
+        CurrentRanges(int crIndex) {
+            this.crIndex = crIndex;                 //Assigns an index (int) to the enum values
+        }
+
+        public static CurrentRanges getCurrentRange(int currentRange) {
+            for (CurrentRanges cr : values()) {
+                if (cr.crIndex == currentRange) {
+                    return cr;
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Reading status OK, Overload, Underload, Overload_warning
+     */
+    private enum ReadingStatus {
+        OK(0x0),
+        Overload(0x2),
+        Underload(0x4),
+        Overload_warning(0x8);
+
+        private final int value;
+
+        ReadingStatus(int value) {
+            this.value = value;
+        }
+    }
+
     /**
      * Broadcast Receiver for receiving action USB device attached/detached.
      * When the device is attached, calls the method discoverDevices to identify the device.
      * When the device is detached, calls closeDevice()
      */
-    //TODO: Close the device when detached - DONE
     private BroadcastReceiver mUsbReceiverAttach = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -98,6 +187,7 @@ public class MethodSCRIPTExample extends AppCompatActivity {
             }
         }
     };
+
     /**
      * <Summary>
      * A runnable that keeps listening for response from the device until device is disconnected.
@@ -105,9 +195,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      * when a line of response is read, it is posted on the handler of the main thread (UI thread) for further processing.
      * </Summary>
      */
-    // TODO: Add more commenting - DONE
-    // TODO: Move verifyEmStatPico elsewhere - DONE
-    // TODO: Send the response line in run() and processing and updating the UI to be done elsewhere - DONE
     private Runnable mLoop = new Runnable() {
         StringBuilder readLine = new StringBuilder();
 
@@ -131,10 +218,10 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
                                     @Override
                                     public void run() {
-                                        processResponse(line);                  //Calls the method to process the response line
+                                        processResponse(line);                  //Calls the method to process the measurement package
                                     }
                                 });
-                                readLine = new StringBuilder();                 //Resets the readLine to store the next line of response
+                                readLine = new StringBuilder();                 //Resets the readLine to store the next measurement package
                             }
                         } // end of if(readSize>0)
                     }// end of synchronized
@@ -145,7 +232,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
         }
     };
 
-    //TODO: If D2xxManager null, exit application with an alert - DONE
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -178,6 +264,13 @@ public class MethodSCRIPTExample extends AppCompatActivity {
             alert.show();
             return;
         }
+        discoverDevice();
+        updateView();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         discoverDevice();
         updateView();
     }
@@ -219,13 +312,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
         return isDeviceFound;
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        discoverDevice();
-        updateView();
-    }
-
     /**
      * <Summary>
      * Opens the device and calls the method to set the device configurations.
@@ -233,7 +319,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      *
      * @return A boolean to indicate if the device was opened and configured.
      */
-    // TODO: Check if ftDevice is not null, if so close and reopen - DONE
     private boolean openDevice() {
         if (ftDevice != null) {
             ftDevice.close();
@@ -260,7 +345,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      * Sets the device configuration properties like Baudrate (230400), databits (8), stop bits (1), parity (None) and bit mode.
      * </Summary>
      */
-    //TODO: Latency timer make it constant and mention that it is in ms. - DONE
     private void SetConfig() {
         byte dataBits = D2xxManager.FT_DATA_BITS_8;
         byte stopBits = D2xxManager.FT_STOP_BITS_1;
@@ -296,7 +380,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      *
      * @param versionString The response string to be verified
      */
-    // TODO: Change version string to "espico" - DONE.
     private void verifyEmstatPico(String versionString) {
         if (versionString.contains("espico")) {
             Toast.makeText(this, "Connected to EmStatPico", Toast.LENGTH_SHORT).show();
@@ -327,7 +410,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      * @param script data to be written
      * @return A boolean indicating if the write operation succeeded.
      */
-    //TODO: Verify if the bytes written equals bytes sent - DONE
     private boolean writeToDevice(String script) {
         int bytesWritten;
         boolean isWriteSuccess = false;
@@ -351,12 +433,11 @@ public class MethodSCRIPTExample extends AppCompatActivity {
     /**
      * <Summary>
      * <Summary>
-     * Opens and reads from the script file and writes it on the device using the bluetooth socket's out stream.
+     * Reads from the script file and writes it on the device using the bluetooth socket's out stream.
      * </Summary>
      *
      * @return A boolean to indicate if the script file was sent successfully to the device.
      */
-    //TODO: Close the bufferedReader in finally - DONE
     private boolean sendScriptFile() {
         boolean isScriptSent = false;
         String line;
@@ -403,7 +484,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      * Updates the view buttons.
      * </Summary>
      */
-    //TODO: Check if ftDevice is open, before aborting on disconnect - DONE
     private void closeDevice() {
         mThreadIsStopped = true;
         if (ftDevice != null && ftDevice.isOpen()) {
@@ -423,10 +503,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      * Processes the response from the EmStat Pico.
      * </Summary>
      *
-     * @param line A complete line of response read from the device.
+     * @param line A measurement package read from the device.
      */
-    //TODO: Remove 'e' before sending it for parsing - DONE
-    //TODO: A separate method to process the line read and update UI when complete - DONE
     private void processResponse(String line) {
         Reply beginChar = Reply.getReply(line.charAt(0));
         if (beginChar == null)                                          //If connected to Palmsens, the response to version cmd might be different
@@ -442,8 +520,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
         } else {
             if (beginChar == Reply.REPLY_BEGIN_RESPONSE)
                 line = line.substring(1);                              //Removes the beginning character of the response if it is 'e'
-            if (mIsConnected && processReceivedPackages(line)) {         //Calls the method to process the received response packets
-                btnSend.setEnabled(true);                              //Updates the UI upon completion of parsing and displaying of the response
+            if (mIsConnected && processReceivedPackage(line)) {       //Calls the method to process the received response package
+                btnSend.setEnabled(true);                             //Updates the UI upon completion of parsing and displaying of the response
                 mIsScriptActive = false;
                 btnAbort.setEnabled(false);
             }
@@ -452,13 +530,13 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Processes the response packets from the EmStat Pico and store the response in RawData.
+     * Processes the measurement response packages from the EmStat Pico and stores the response in RawData.
      * </Summary>
      *
-     * @param readLine A complete line of response read from the device.
+     * @param readLine A measurement package read from the device.
      * @return A boolean to indicate if measurement is complete.
      */
-    private boolean processReceivedPackages(String readLine) {
+    private boolean processReceivedPackage(String readLine) {
         boolean isComplete = false;
         Reply beginChar = Reply.getReply(readLine.charAt(0));
         switch (beginChar) {
@@ -487,62 +565,61 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <summary>
-     * Parses a single line of the package and adds the values of the measurement parameters to the corresponding arrays
+     * Parses a measurement data package and adds the parsed data values to their corresponding arrays
      * </summary>
      *
-     * @param packageLine The line from response package to be parsed
+     * @param packageLine The measurement data package to be parsed
      */
-    //TODO: To verify if metadata present use the 10th character ',' condition, just that it is more explicit- DONE
     private void parsePackageLine(String packageLine) {
-        String[] parameters;
-        String paramIdentifier;
-        String paramValue;
+        String[] variables;
+        String variableIdentifier;
+        String dataValue;
 
-        int startingIndex = packageLine.indexOf('P');                            //Identifies the beginning of the package
+        int startingIndex = packageLine.indexOf('P');                            //Identifies the beginning of the measurement data package
         String responsePackageLine = packageLine.substring(startingIndex + 1);   //Removes the beginning character 'P'
 
         startingIndex = 0;
         txtResponse.append(String.format(Locale.getDefault(), "%n  %-4d", mNDataPointsReceived));
         Log.d(TAG, String.valueOf(mNDataPointsReceived) + "  " + responsePackageLine);
 
-        parameters = responsePackageLine.split(";");                       //Parameter values are separated by the delimiter ';'
-        for (String parameter : parameters) {
-            paramIdentifier = parameter.substring(startingIndex, 2);             //The String (2 characters) that identifies the measurement parameter
-            paramValue = parameter.substring(startingIndex + 2, startingIndex + 2 + PACKAGE_PARAM_VALUE_LENGTH);
-            double paramValueWithPrefix = parseParamValues(paramValue);          //Parses the parameter values and returns the actual values with their corresponding SI unit prefixes
-            switch (paramIdentifier) {
+        variables = responsePackageLine.split(";");                       //The data values are separated by the delimiter ';'
+        for (String variable : variables) {
+            variableIdentifier = variable.substring(startingIndex, 2);           //The String (2 characters) that identifies the measurement variable
+            dataValue = variable.substring(startingIndex + 2, startingIndex + 2 + PACKAGE_DATA_VALUE_LENGTH);
+            double dataValueWithPrefix = parseParamValues(dataValue);           //Parses the variable values and returns the actual values with their corresponding SI unit prefixes
+            switch (variableIdentifier) {
                 case "da":                                                       //Potential reading
-                    mVoltageReadings.add(paramValueWithPrefix);                  //Adds the value to the mVoltageReadings array
+                    mVoltageReadings.add(dataValueWithPrefix);                  //Adds the value to the mVoltageReadings array
                     break;
                 case "ba":                                                       //Current reading
-                    mCurrentReadings.add(paramValueWithPrefix);                  //Adds the value to the mCurrentReadings array
+                    mCurrentReadings.add(dataValueWithPrefix);                  //Adds the value to the mCurrentReadings array
                     break;
             }
-            txtResponse.append(String.format(Locale.getDefault(), "%1$-3s %2$ -1.4e ", " ", paramValueWithPrefix));
-            if (parameter.length() > 10 && parameter.charAt(10) == ',')
-                parseMetaDataValues(parameter.substring(11));                    //Parses the metadata values in the parameter, if any
+            txtResponse.append(String.format(Locale.getDefault(), "%1$-3s %2$ -1.4e ", " ", dataValueWithPrefix));
+            if (variable.length() > 10 && variable.charAt(10) == ',')
+                parseMetaDataValues(variable.substring(11));                    //Parses the metadata values in the variable, if any
         }
     }
 
     /**
      * <Summary>
-     * Parses the measurement parameter values and appends the respective prefixes
+     * Parses the data value package and appends the respective prefixes
      * </Summary>
      *
-     * @param paramValueString The parameter value to be parsed
-     * @return The parameter value (double) after appending the unit prefix
+     * @param paramValueString The data value package to be parsed
+     * @return The actual data value (double) after appending the unit prefix
      */
     private double parseParamValues(String paramValueString) {
         char strUnitPrefix = paramValueString.charAt(7);                         //Identifies the SI unit prefix from the package at position 8
-        String strvalue = paramValueString.substring(0, 7);                      //Retrieves the value of the measured parameter from the package
+        String strvalue = paramValueString.substring(0, 7);                      //Retrieves the value of the variable from the package
         int value = Integer.parseInt(strvalue, 16);                        //Converts the hex value to int
         double paramValue = value - OFFSET_VALUE;                                //Values offset to receive only positive values
-        return (paramValue * SI_PREFIX_FACTORS.get(strUnitPrefix));              //Returns the value of the parameter after appending the SI unit prefix
+        return (paramValue * SI_PREFIX_FACTORS.get(strUnitPrefix));              //Returns the actual data value after appending the SI unit prefix
     }
 
     /**
      * <Summary>
-     * Parses the meta data values of the variables, if any.
+     * Parses the metadata values of the variable, if any.
      * The first character in each meta data value specifies the type of data.
      * 1 - 1 char hex mask holding the status (0 = OK, 2 = overload, 4 = underload, 8 = overload warning (80% of max))
      * 2 - 2 chars hex holding the current range index. First bit high (0x80) indicates a high speed mode cr.
@@ -580,7 +657,7 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      */
     private void getReadingStatusFromPackage(String metaDatastatus) {
         String status = "";
-        long statusBits = (Integer.parseInt(String.valueOf(metaDatastatus.charAt(1)), 16));
+        int statusBits = (Integer.parseInt(String.valueOf(metaDatastatus.charAt(1)), 16));
         if ((statusBits) == (long) ReadingStatus.OK.value)
             status = ReadingStatus.OK.name();
         if ((statusBits & 0x2) == (long) ReadingStatus.Overload.value)
@@ -599,10 +676,9 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      *
      * @param metaDataCR The current range meta data value to be parsed
      */
-    //TODO: Change if-else to Switch case - DONE
     private byte getCurrentRangeFromPackage(String metaDataCR) {
         byte crByte;
-        crByte = Byte.parseByte(String.valueOf(metaDataCR.substring(1, 2)), 16);                //Two characters of the meta data value corresponding to current range are retrieved as byte
+        crByte = Byte.parseByte(String.valueOf(metaDataCR.substring(1, 2)), 16);                //Two characters of the metadata value corresponding to current range are retrieved as byte
         return crByte;
     }
 
@@ -692,11 +768,13 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      * Parses the noise from the package.
      * </Summary>
      *
-     * @param metaDataNoise The meta data noise to be parsed.
+     * @param metaDataNoise The metadata noise to be parsed.
      */
     private void GetNoiseFromPackage(String metaDataNoise) {
 
     }
+
+    //region Events
 
     /**
      * <Summary>
@@ -744,96 +822,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Error sending script", Toast.LENGTH_SHORT).show();
             btnSend.setEnabled(true);
-        }
-    }
-
-    //region Events
-
-    /**
-     * The beginning characters of the measurement response to help parsing the response
-     */
-    private enum Reply {
-        REPLY_BEGIN_VERSION('t'),
-        REPLY_VERSION_TYPE('B'),
-        REPLY_BEGIN_RESPONSE('e'),
-        REPLY_MEASURING('M'),
-        REPLY_BEGIN_PACKETS('P'),
-        REPLY_END_MEAS_LOOP('*'),
-        REPLY_EMPTY_LINE('\n'),
-        REPLY_ABORTED('Z');
-
-        private final char mReply;
-
-        Reply(char reply) {
-            this.mReply = reply;
-        }
-
-        public static Reply getReply(char reply) {
-            for (Reply replyChar : values()) {
-                if (replyChar.mReply == reply) {
-                    return replyChar;
-                }
-            }
-            return null;
-        }
-    }
-
-    /**
-     * All possible current ranges that are supported by EmStat Pico.
-     */
-    private enum CurrentRanges {
-        cr100nA(0),
-        cr2uA(1),
-        cr4uA(2),
-        cr8uA(3),
-        cr16uA(4),
-        cr32uA(5),
-        cr63uA(6),
-        cr125uA(7),
-        cr250uA(8),
-        cr500uA(9),
-        cr1mA(10),
-        cr5mA(11),
-        hscr100nA(128),
-        hscr1uA(129),
-        hscr6uA(130),
-        hscr13uA(131),
-        hscr25uA(132),
-        hscr50uA(133),
-        hscr100uA(134),
-        hscr200uA(135),
-        hscr1mA(136),
-        hscr5mA(137);
-
-        private final int crIndex;
-
-        CurrentRanges(int crIndex) {
-            this.crIndex = crIndex;                 //Assigns an index (int) to the enum values
-        }
-
-        public static CurrentRanges getCurrentRange(int currentRange) {
-            for (CurrentRanges cr : values()) {
-                if (cr.crIndex == currentRange) {
-                    return cr;
-                }
-            }
-            return null;
-        }
-    }
-
-    /**
-     * Reading status OK, Overload, Underload, Overload_warning
-     */
-    private enum ReadingStatus {
-        OK(0x0),
-        Overload(0x2),
-        Underload(0x4),
-        Overload_warning(0x8);
-
-        private final int value;
-
-        ReadingStatus(int value) {
-            this.value = value;
         }
     }
     //endregion

@@ -54,10 +54,10 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="scripts\LSV_on_10KOhm.txt">
+    <Content Include="scripts\LSV_on_10kOhm.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="scripts\SWV_on_10KOhm.txt">
+    <Content Include="scripts\SWV_on_10kOhm.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

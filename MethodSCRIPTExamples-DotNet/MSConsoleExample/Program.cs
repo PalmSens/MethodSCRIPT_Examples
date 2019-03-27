@@ -9,7 +9,7 @@ namespace EmStatConsoleExample
 {
     class Program
     {
-        static string ScriptFileName = "LSV_on_10KOhm.txt";//"SWV_on_10KOhm.txt";                    //Name of the script file
+        static string ScriptFileName = "LSV_on_10kOhm.txt";//"SWV_on_10kOhm.txt";                    //Name of the script file
         static string AppLocation = Assembly.GetExecutingAssembly().Location;
         static string FilePath = System.IO.Path.GetDirectoryName(AppLocation) + "\\scripts";         //Location of the script file
         static string ScriptFilePath = Path.Combine(FilePath, ScriptFileName);
@@ -17,7 +17,7 @@ namespace EmStatConsoleExample
         const string CMD_VERSION = "t\n";                                                            //Version command
         const int BAUD_RATE = 230400;                                                                //Baudrate for EmStat Pico
         const int READ_TIME_OUT = 7000;                                                              //Read time out for the device in ms
-        const int PACKAGE_PARAM_VALUE_LENGTH = 8;                                                    //Length of the parameter value in a package
+        const int PACKAGE_DATA_VALUE_LENGTH = 8;                                                     //Length of the data value in a package
         const int OFFSET_VALUE = 0x8000000;                                                          //Offset value to receive positive values
 
         static SerialPort SerialPortEsP;
@@ -41,7 +41,7 @@ namespace EmStatConsoleExample
                                                             { "P", 1e15 },
                                                             { "E", 1e18 }};
 
-        readonly static Dictionary<string, string> MeasurementParameters = new Dictionary<string, string>  //Measurement parameter identifiers and their corresponding labels
+        readonly static Dictionary<string, string> MeasurementVariables = new Dictionary<string, string>  //Variable types and their corresponding labels
                                                                             { { "da", "E (V)" },
                                                                               { "ba", "i (A)" },
                                                                               { "dc", "Frequency (Hz)" },
@@ -93,7 +93,7 @@ namespace EmStatConsoleExample
             {
                 Console.WriteLine("\nConnected to EmStat Pico.\n");
                 SendScriptFile();                               //Sends the script file for LSV measurement
-                ProcessReceivedPackages();                      //Parses the received response packages
+                ProcessReceivedPackages();                      //Parses the received measurement response packages
                 SerialPortEsP.Close();                          //Closes the serial port
             }
             else
@@ -170,14 +170,14 @@ namespace EmStatConsoleExample
                 {
                     line = stream.ReadLine();               //Reads a line from the script file
                     line += "\n";                           //Adds a new line character to the line read
-                    SerialPortEsP.Write(line);              //Sends the response line to EmStat Pico
+                    SerialPortEsP.Write(line);              //Sends the read line to EmStat Pico
                 }
                 Console.WriteLine("Measurement started.");
             }
         }
 
         /// <summary>
-        /// Processes the response packets from the EmStat Pico and store the response in RawData.
+        /// Processes the response packages from the EmStat Pico and stores the response in RawData.
         /// </summary>
         private static void ProcessReceivedPackages()
         {
@@ -185,7 +185,7 @@ namespace EmStatConsoleExample
             Console.WriteLine("\nReceiving measurement response:");
             while (true)
             {
-                readLine = ReadResponseLine();               //Reads a line from the response
+                readLine = ReadResponseLine();               //Reads a line from the measurement response
                 RawData += readLine;                         //Adds the response to raw data
                 if (readLine == "\n")
                     break;
@@ -222,43 +222,43 @@ namespace EmStatConsoleExample
         }
 
         /// <summary>
-        /// Parses a single line of the package and adds the values of the measurement parameters to the corresponding arrays
+        /// Parses a measurement data package and adds the parsed data values to their corresponding arrays
         /// </summary>
         /// <param name="responsePackageLine">The line from response package to be parsed</param>
         private static void ParsePackageLine(string packageLine)
         {
-            string[] parameters;
-            string paramIdentifier;
-            string paramValue;  
+            string[] variables;
+            string variableIdentifier;
+            string dataValue;  
 
             int startingIndex = packageLine.IndexOf('P');                        //Identifies the beginning of the package
             string responsePackageLine = packageLine.Remove(startingIndex, 1);   //Removes the beginning character 'P'
 
             Console.Write($"\nindex = " + String.Format("{0,3} {1,2} ", NDataPointsReceived, " "));
-            parameters = responsePackageLine.Split(';');                         //The parameters are separated by the delimiter ';'
+            variables = responsePackageLine.Split(';');                         //The data values are separated by the delimiter ';'
 
-            foreach (string parameter in parameters)
+            foreach (string variable in variables)
             {
-                paramIdentifier = parameter.Substring(0, 2);                     //The string (2 characters) that identifies the measurement parameter
-                paramValue = parameter.Substring(2, PACKAGE_PARAM_VALUE_LENGTH);
-                double paramValueWithPrefix = ParseParamValues(paramValue);      //Parses the parameter values and returns the actual values with their corresponding SI unit prefixes 
-                switch (paramIdentifier)
+                variableIdentifier = variable.Substring(0, 2);                 //The string (2 characters) that identifies the variable type
+                dataValue = variable.Substring(2, PACKAGE_DATA_VALUE_LENGTH);
+                double dataValueWithPrefix = ParseParamValues(dataValue);      //Parses the data value package and returns the actual values with their corresponding SI unit prefixes 
+                switch (variableIdentifier)
                 {
                     case "da":                                                  //Potential reading
-                        VoltageReadings.Add(paramValueWithPrefix);              //Adds the value to the VoltageReadings array
+                        VoltageReadings.Add(dataValueWithPrefix);              //Adds the value to the VoltageReadings array
                         break;
                     case "ba":                                                  //Current reading
-                        CurrentReadings.Add(paramValueWithPrefix);              //Adds the value to the CurrentReadings array
+                        CurrentReadings.Add(dataValueWithPrefix);              //Adds the value to the CurrentReadings array
                         break;
                 }
-                Console.Write("{0,4} = {1,10} {2,2}", MeasurementParameters[paramIdentifier], string.Format("{0:0.000E+00}", paramValueWithPrefix).ToString(), " ");
-                if(parameter.Substring(10).StartsWith(","))                 
-                    ParseMetaDataValues(parameter.Substring(10));               //Parses the metadata values in the parameter, if any
+                Console.Write("{0,4} = {1,10} {2,2}", MeasurementVariables[variableIdentifier], string.Format("{0:0.000E+00}", dataValueWithPrefix).ToString(), " ");
+                if(variable.Substring(10).StartsWith(","))                 
+                    ParseMetaDataValues(variable.Substring(10));               //Parses the metadata values in the variable, if any
             }
         }
 
         /// <summary>
-        /// Parses the meta data values of the variables, if any.
+        /// Parses the metadata values of the variable, if any.
         /// The first character in each meta data value specifies the type of data.
         /*  1 - 1 char hex mask holding the status (0 = OK, 2 = overload, 4 = underload, 8 = overload warning (80% of max))
          *  2 - 2 chars hex holding the current range index. First bit high (0x80) indicates a high speed mode cr.
@@ -268,7 +268,7 @@ namespace EmStatConsoleExample
         private static void ParseMetaDataValues(string packageMetaData)
         {
             string[] metaDataValues;
-            metaDataValues = packageMetaData.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);          //The meta data values are separated by the delimiter ','
+            metaDataValues = packageMetaData.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);          //The metadata values are separated by the delimiter ','
             byte crByte;
             foreach (string metaData in metaDataValues)
             {
@@ -295,7 +295,7 @@ namespace EmStatConsoleExample
         private static void GetReadingStatusFromPackage(string metaDatastatus)
         {
             string status = "";
-            long statusBits = (Convert.ToInt32(metaDatastatus[1].ToString(), 16));          //One char of the meta data value corresponding to status is retrieved
+            int statusBits = (Convert.ToInt32(metaDatastatus[1].ToString(), 16));          //One char of the metadata value corresponding to status is retrieved
             if ((statusBits) == (long)ReadingStatus.OK)
                 status = nameof(ReadingStatus.OK);
             if ((statusBits & 0x2) == (long)ReadingStatus.Overload)
@@ -315,7 +315,7 @@ namespace EmStatConsoleExample
         private static byte GetCurrentRangeFromPackage(string metaDataCR) 
         {
             byte crByte;
-            if (byte.TryParse(metaDataCR.Substring(1, 2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out crByte)) //Two characters of the meta data value corresponding to current range are retrieved as byte
+            if (byte.TryParse(metaDataCR.Substring(1, 2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out crByte)) //Two characters of the metadata value corresponding to current range are retrieved as byte
             {
                 return crByte;
             }
@@ -411,17 +411,17 @@ namespace EmStatConsoleExample
         }
 
         /// <summary>
-        /// Parses the measurement parameter values and appends the respective prefixes
+        /// Parses the data value package and appends the respective SI unit prefixes
         /// </summary>
-        /// <param name="paramValueString">The parameter value to be parsed</param>
-        /// <returns>The parameter value after appending the unit prefix</returns>
+        /// <param name="paramValueString">The data value package to be parsed</param>
+        /// <returns>The actual data value after appending the unit prefix</returns>
         private static double ParseParamValues(string paramValueString)
         {
             char strUnitPrefix = paramValueString[7];                         //Identifies the SI unit prefix from the package at position 8
-            string strvalue = paramValueString.Remove(7);                     //Retrieves the value of the measured parameter from the package
+            string strvalue = paramValueString.Remove(7);                     //Retrieves the value of the variable the package
             int value = Convert.ToInt32(strvalue, 16);                        //Converts the hex value to int
             double paramValue = value - OFFSET_VALUE;                         //Values offset to receive only positive values
-            return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]); //Returns the value of the parameter after appending the SI unit prefix
+            return (paramValue * SI_Prefix_Factor[strUnitPrefix.ToString()]); //Returns the actual data value after appending the SI unit prefix
         }
     }
 }

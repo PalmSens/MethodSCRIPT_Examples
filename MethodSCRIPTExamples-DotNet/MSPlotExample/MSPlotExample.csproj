@@ -91,10 +91,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="scripts\LSV_on_10KOhm.txt">
+    <Content Include="scripts\LSV_on_10kOhm.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="scripts\SWV_on_10KOhm.txt">
+    <Content Include="scripts\SWV_on_10kOhm.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

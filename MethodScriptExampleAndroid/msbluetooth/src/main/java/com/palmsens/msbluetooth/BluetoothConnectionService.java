@@ -64,7 +64,7 @@ public class BluetoothConnectionService {
                 onSocketConnected();
             } catch (IOException e) {
                 try {
-                    mSocket.close();                                               //Closes the socket
+                    mSocket.close();                                                    //Closes the socket
                     mIsDeviceConnected = false;
                     Log.d(TAG, "run: Closed Socket.");
                     mHandler.obtainMessage(MSBluetoothActivity.MESSAGE_SOCKET_CLOSED, -1, -1, "Could not connect to device".getBytes())
@@ -77,6 +77,12 @@ public class BluetoothConnectionService {
             return mIsDeviceConnected;
         }
 
+        /**
+         * <Summary>
+         *     Fetches the input/output streams from the socket and sends the message to UI thread upon successful connection.
+         * </Summary>
+         * @throws IOException
+         */
         public void onSocketConnected() throws IOException {
             try{
                 mIsDeviceConnected = true;
@@ -107,7 +113,7 @@ public class BluetoothConnectionService {
                             readSize = mInStream.read(rbuf, offset, 1);                     //Reads a character from the socket's in stream
                             if (readSize > 0) {
                                 rchar = new String(rbuf);
-                                mReadLine.append(rchar);                                             //A line of response string is formed until new line is encountered
+                                mReadLine.append(rchar);                                         //A line of response package is formed until new line is encountered
 
                                 if (rchar.equals("\n")) {
                                     mHandler.post(new Runnable() {
@@ -137,7 +143,7 @@ public class BluetoothConnectionService {
 
     public BluetoothConnectionService(Context context, MSBluetoothActivity.CallBackHandler handler) {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        mHandler = handler;                                             //The handler to post back messages to the main activity
+        mHandler = handler;                                                                    //The handler to post back messages to the main activity
     }
 
     /**
@@ -153,7 +159,7 @@ public class BluetoothConnectionService {
         Log.d(TAG, "startClient: Started.");
         mDevice = device;
         mUUID = uuid;
-        new Thread(connectedThread).start();                            //Starts a new runnable thread to read the response from the device
+        new Thread(connectedThread).start();                                                   //Starts a new runnable thread to connect to the device
     }
 
     /**
