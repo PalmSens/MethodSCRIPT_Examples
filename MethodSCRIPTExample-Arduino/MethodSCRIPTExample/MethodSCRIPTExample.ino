@@ -144,6 +144,7 @@ int VerifyESPico()
   int i = 0;
   int isConnected = 0;
   RetCode code;
+  
   SendScriptToDevice(CMD_VERSION_STRING);
   while (!Serial1.available());                                   //Waits until Serial1 is available
   while (Serial1.available())
@@ -154,13 +155,18 @@ int VerifyESPico()
       if(strstr(_versionString, "espbl") != NULL)
       {
         Serial.println("EmStat Pico is connected in boot loader mode.");
-        isConnected = 0;;
+        isConnected = 0;
       }
       else if(strstr(_versionString, "espico") != NULL)           //Verifies if the device is EmStat Pico by looking for "espico" in the version response
+      {
+        Serial.println("Connected to EmStat Pico");
         isConnected = 1;
+      }
     } 
     else if(strstr(_versionString, "*\n") != NULL)                //Reads until end of response and break
+    {
       break;
+    }
     else 
     {
       Serial.println("Connected device is not EmStat Pico");
@@ -210,7 +216,6 @@ void loop()
   //If we have any buffered messages waiting for us
   while (Serial1.available())
   {
-    
     RetCode code = ReceivePackage(&_msComm, &data);     //Reads from the device and parses the response
     switch(code)
     {

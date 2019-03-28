@@ -38,7 +38,7 @@ MSComm msComm;
 MeasureData data;
 int nDataPoints;
 
-const char* PORT_NAME = "\\\\.\\COM39";									   // The name of the port - to be changed, by looking up the device manager
+const char* PORT_NAME = "\\\\.\\COM43";									   // The name of the port - to be changed, by looking up the device manager
 const DWORD BAUD_RATE = 230400;											   // The baud rate for EmStat Pico
 
 int main(int argc, char *argv[])
@@ -59,9 +59,9 @@ int main(int argc, char *argv[])
 			{
 				char *combinedPath = strcat(currentDirectory, filePath);  // Concatenates the current directory and file path to generate the combined file path
 				strcpy(combinedFilePath, combinedPath);
-				if(SendScriptFile(combinedFilePath))
+				if(SendScript(combinedFilePath))
 				{
-					printf("\nScript file sent to EmStat Pico.\n");
+					printf("\nMethodSCRIPT sent to EmStat Pico.\n");
 					nDataPoints = 0;
 					do
 					{
@@ -180,7 +180,7 @@ int ReadFromDevice()
 	return (int)tempChar;
 }
 
-int SendScriptFile(char* fileName)
+int SendScript(char* fileName)
 {
 	FILE *fp;
 	char str[100];
