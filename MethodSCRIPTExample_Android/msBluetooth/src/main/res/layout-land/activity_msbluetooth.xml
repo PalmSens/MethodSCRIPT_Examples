@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.palmsens.msbluetooth.MSBluetoothActivity">
+
+    <ProgressBar
+        android:id="@+id/progressBarConnect"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="21dp"
+        android:layout_marginTop="22dp"
+        android:layout_toEndOf="@+id/btnConnect"
+        android:visibility="invisible"
+        tools:visibility="invisible" />
+
+    <Spinner
+        android:id="@+id/spinnerConnectedDevices"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="29dp"
+        android:layout_toEndOf="@+id/lblBluetoothDevices" />
+
+    <!--<Button
+        android:id="@+id/btnFindUnpairedDevices"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="5dp"
+        android:layout_toEndOf="@+id/spinnerConnectedDevices"
+        android:onClick="btnDiscover"
+        android:text="Discover" />-->
+
+    <TextView
+        android:id="@+id/lblBluetoothDevices"
+        android:layout_width="127dp"
+        android:layout_height="29dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="23dp"
+        android:layout_marginTop="31dp"
+        android:text="Bluetooth Devices"
+        android:textAlignment="center" />
+
+    <TextView
+        android:id="@+id/txtResponse"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnSend"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="40dp"
+        android:fontFamily="monospace" />
+
+    <Button
+        android:id="@+id/btnConnect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="19dp"
+        android:layout_toEndOf="@+id/spinnerConnectedDevices"
+        android:onClick="onClickConnect"
+        android:text="Connect" />
+
+    <Button
+        android:id="@+id/btnSend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnScan"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="36dp"
+        android:onClick="onClickSendScript"
+        android:text="Send script" />
+
+    <Button
+        android:id="@+id/btnAbort"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnScan"
+        android:layout_marginStart="62dp"
+        android:layout_marginTop="37dp"
+        android:layout_toEndOf="@+id/btnSend"
+        android:onClick="onClickAbort"
+        android:text="Abort" />
+
+    <Button
+        android:id="@+id/btnScan"
+        android:layout_width="wrap_content"
+        android:layout_height="38dp"
+        android:layout_below="@+id/btnConnect"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="23dp"
+        android:layout_marginTop="15dp"
+        android:onClick="onClickScan"
+        android:text="Scan" />
+
+    <ProgressBar
+        android:id="@+id/progressBarScan"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnConnect"
+        android:layout_marginStart="34dp"
+        android:layout_marginTop="11dp"
+        android:layout_toEndOf="@+id/btnScan"
+        android:visibility="invisible"
+        tools:visibility="invisible" />
+
+</RelativeLayout>
