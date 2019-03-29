@@ -84,6 +84,8 @@ if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
        ser.close()                                  #close the comport
     except Exception as e1:                         #catch exception 
         print("error communicating...: " + str(e1)) #print the exception
+    finally:
+        ser.close()
 else:
     print("cannot open serial port ")
 
@@ -120,7 +122,7 @@ ax1.set_ylabel('Z', color=color)            #axes-1 is Z (impedance)
 ax1.semilogx(applied_frequency, Z, color=color)         #X-axis is logarithmic
 ax1.tick_params(axis='y', labelcolor=color) #show ticks
 
-## Turn on the minor TICKS, which are required for the minor GRID
+# Turn on the minor TICKS, which are required for the minor GRID
 ax1.minorticks_on()
 
 # Customize the major grid

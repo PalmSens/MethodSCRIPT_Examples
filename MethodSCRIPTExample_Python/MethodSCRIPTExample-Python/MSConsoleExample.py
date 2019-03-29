@@ -77,9 +77,10 @@ if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
 
        else:
            print("Unable to connected!")                  
-       ser.close()                                  #close the comport
     except Exception as e1:                         #catch exception 
         print("error communicating...: " + str(e1)) #print the exception
+    finally:
+       ser.close()                                  #close the comport
 else:
     print("cannot open serial port ")
     

@@ -2,7 +2,7 @@ e
 var c
 var p
 set_pgstat_mode 3
-set_max_bandwidth 200k
+set_max_bandwidth 1k
 set_cr 10625n
 set_autoranging 85n 850u
 set_e 0m
