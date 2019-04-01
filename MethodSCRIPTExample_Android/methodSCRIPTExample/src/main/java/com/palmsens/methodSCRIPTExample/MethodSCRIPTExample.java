@@ -83,7 +83,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      */
     private enum Reply {
         REPLY_BEGIN_VERSION('t'),
-        REPLY_VERSION_TYPE('B'),
         REPLY_BEGIN_RESPONSE('e'),
         REPLY_MEASURING('M'),
         REPLY_BEGIN_PACKETS('P'),
@@ -111,38 +110,38 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      * All possible current ranges that are supported by EmStat Pico.
      */
     private enum CurrentRanges {
-        cr100nA(0),
-        cr2uA(1),
-        cr4uA(2),
-        cr8uA(3),
-        cr16uA(4),
-        cr32uA(5),
-        cr63uA(6),
-        cr125uA(7),
-        cr250uA(8),
-        cr500uA(9),
-        cr1mA(10),
-        cr5mA(11),
-        hscr100nA(128),
-        hscr1uA(129),
-        hscr6uA(130),
-        hscr13uA(131),
-        hscr25uA(132),
-        hscr50uA(133),
-        hscr100uA(134),
-        hscr200uA(135),
-        hscr1mA(136),
-        hscr5mA(137);
+        CR_100nA(0),
+        CR_2uA(1),
+        CR_4uA(2),
+        CR_8uA(3),
+        CR_16uA(4),
+        CR_32uA(5),
+        CR_63uA(6),
+        CR_125uA(7),
+        CR_250uA(8),
+        CR_500uA(9),
+        CR_1mA(10),
+        CR_5mA(11),
+        HSCR_100nA(128),
+        HSCR_1uA(129),
+        HSCR_6uA(130),
+        HSCR_13uA(131),
+        HSCR_25uA(132),
+        HSCR_50uA(133),
+        HSCR_100uA(134),
+        HSCR_200uA(135),
+        HSCR_1mA(136),
+        HSCR_5mA(137);
 
-        private final int crIndex;
+        private final int mCrIndex;
 
         CurrentRanges(int crIndex) {
-            this.crIndex = crIndex;                 //Assigns an index (int) to the enum values
+            this.mCrIndex = crIndex;
         }
 
         public static CurrentRanges getCurrentRange(int currentRange) {
             for (CurrentRanges cr : values()) {
-                if (cr.crIndex == currentRange) {
+                if (cr.mCrIndex == currentRange) {
                     return cr;
                 }
             }
@@ -190,9 +189,9 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * A runnable that keeps listening for response from the device until device is disconnected.
-     * The response is read character by character.
-     * when a line of response is read, it is posted on the handler of the main thread (UI thread) for further processing.
+     *      A runnable that keeps listening for response from the device until device is disconnected.
+     *      The response is read character by character.
+     *      When a line of measurement package is read, it is posted on the handler of the main thread (UI thread) for further processing.
      * </Summary>
      */
     private Runnable mLoop = new Runnable() {
@@ -277,7 +276,7 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Unregisters the broadcast receiver(s) to enable garbage collection.
+     *      Unregisters the broadcast receiver(s) to enable garbage collection.
      * </Summary>
      */
     @Override
@@ -289,9 +288,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Looks up for the device info list using the D2xxManager to check if any USB device is connected.
+     *      Looks up for the device info list using the D2xxManager to check if any USB device is connected.
      * </Summary>
-     *
      * @return A boolean indicating if any device is found
      */
     private boolean discoverDevice() {
@@ -314,9 +312,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Opens the device and calls the method to set the device configurations.
+     *  Opens the device and calls the method to set the device configurations.
      * </Summary>
-     *
      * @return A boolean to indicate if the device was opened and configured.
      */
     private boolean openDevice() {
@@ -342,7 +339,7 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Sets the device configuration properties like Baudrate (230400), databits (8), stop bits (1), parity (None) and bit mode.
+     *      Sets the device configuration properties like Baudrate (230400), databits (8), stop bits (1), parity (None) and bit mode.
      * </Summary>
      */
     private void SetConfig() {
@@ -363,8 +360,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Sends the version command to verify if the connected device is EmStat Pico.
-     * Also starts a runnable thread (mLoop) that keeps listening to the response untill device is disconnected.
+     *      Sends the version command to verify if the connected device is EmStat Pico.
+     *      Also starts a runnable thread (mLoop) that keeps listening to the response untill device is disconnected.
      * </Summary>
      */
     private void sendVersionCmd() {
@@ -375,9 +372,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Checks for the string "esp" in the version response to confirm if the device is EmStat Pico.
+     *      Checks for the string "esp" in the version response to confirm if the device is EmStat Pico.
      * </Summary>
-     *
      * @param versionString The response string to be verified
      */
     private void verifyEmstatPico(String versionString) {
@@ -393,7 +389,7 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Enables/Disables buttons based on the connection/script status.
+     *      Enables/Disables buttons based on the connection/MethodSCRIPT status.
      * </Summary>
      */
     private void updateView() {
@@ -404,10 +400,9 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Writes the input data to the USB device
+     *      Writes the input data to the USB device
      * </Summary>
-     *
-     * @param script data to be written
+     * @param script MethodSCRIPT to be written
      * @return A boolean indicating if the write operation succeeded.
      */
     private boolean writeToDevice(String script) {
@@ -432,11 +427,9 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * <Summary>
-     * Reads from the script file and writes it on the device using the bluetooth socket's out stream.
+     *      Reads from the script file and writes it on the device using the bluetooth socket's out stream.
      * </Summary>
-     *
-     * @return A boolean to indicate if the script file was sent successfully to the device.
+     * @return A boolean to indicate if the MethodSCRIPT file was sent successfully to the device.
      */
     private boolean sendScriptFile() {
         boolean isScriptSent = false;
@@ -468,7 +461,7 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Aborts the script
+     *      Aborts the MethodSCRIPT
      * </Summary>
      */
     private void abortScript() {
@@ -480,8 +473,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Aborts active script if any and closes the device.
-     * Updates the view buttons.
+     *      Aborts active script if any and closes the device.
+     *      Updates the view buttons.
      * </Summary>
      */
     private void closeDevice() {
@@ -500,25 +493,19 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Processes the response from the EmStat Pico.
+     *      Processes the measurement packages from the device.
      * </Summary>
-     *
      * @param line A measurement package read from the device.
      */
     private void processResponse(String line) {
-        Reply beginChar = Reply.getReply(line.charAt(0));
-        if (beginChar == null)                                          //If connected to Palmsens, the response to version cmd might be different
-        {
-            Toast.makeText(this, "Failed to connect", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        char beginChar = line.charAt(0);
         if (mIsVersionCmdSent)                                          //Identifies if it is the response to version command
         {
             if (line.contains("*\n"))
                 return;
             verifyEmstatPico(line);                                    //Calls the verifyEmStatPico method to verify if the device is EmStat Pico
         } else {
-            if (beginChar == Reply.REPLY_BEGIN_RESPONSE)
+            if (beginChar == 'e')
                 line = line.substring(1);                              //Removes the beginning character of the response if it is 'e'
             if (mIsConnected && processReceivedPackage(line)) {       //Calls the method to process the received response package
                 btnSend.setEnabled(true);                             //Updates the UI upon completion of parsing and displaying of the response
@@ -530,9 +517,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Processes the measurement response packages from the EmStat Pico and stores the response in RawData.
+     *      Processes the measurement packages from the EmStat Pico and stores the response in RawData.
      * </Summary>
-     *
      * @param readLine A measurement package read from the device.
      * @return A boolean to indicate if measurement is complete.
      */
@@ -565,9 +551,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <summary>
-     * Parses a measurement data package and adds the parsed data values to their corresponding arrays
+     *      Parses a measurement data package and adds the parsed data values to their corresponding arrays
      * </summary>
-     *
      * @param packageLine The measurement data package to be parsed
      */
     private void parsePackageLine(String packageLine) {
@@ -603,9 +588,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Parses the data value package and appends the respective prefixes
+     *      Parses the data value package and appends the respective prefixes
      * </Summary>
-     *
      * @param paramValueString The data value package to be parsed
      * @return The actual data value (double) after appending the unit prefix
      */
@@ -619,13 +603,12 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Parses the metadata values of the variable, if any.
-     * The first character in each meta data value specifies the type of data.
-     * 1 - 1 char hex mask holding the status (0 = OK, 2 = overload, 4 = underload, 8 = overload warning (80% of max))
-     * 2 - 2 chars hex holding the current range index. First bit high (0x80) indicates a high speed mode cr.
-     * 4 - 1 char hex holding the noise value
+     *      Parses the metadata values of the variable, if any.
+     *      The first character in each meta data value specifies the type of data.
+     *      1 - 1 char hex mask holding the status (0 = OK, 2 = overload, 4 = underload, 8 = overload warning (80% of max))
+     *      2 - 2 chars hex holding the current range index. First bit high (0x80) indicates a high speed mode cr.
+     *      4 - 1 char hex holding the noise value
      * </Summary>
-     *
      * @param packageMetaData The metadata values from the package to be parsed.
      */
     private void parseMetaDataValues(String packageMetaData) {
@@ -650,9 +633,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Parses the reading status from the package. 1 char hex mask holding the status (0 = OK, 2 = overload, 4 = underload, 8 = overload warning (80% of max))
+     *      Parses the reading status from the package. 1 char hex mask holding the status (0 = OK, 2 = overload, 4 = underload, 8 = overload warning (80% of max))
      * </Summary>
-     *
      * @param metaDatastatus The status metadata to be parsed
      */
     private void getReadingStatusFromPackage(String metaDatastatus) {
@@ -671,9 +653,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Parses the bytes corresponding to current range from the package and prints the current range value.
+     *      Parses the bytes corresponding to current range from the package and prints the current range value.
      * </Summary>
-     *
      * @param metaDataCR The current range meta data value to be parsed
      */
     private byte getCurrentRangeFromPackage(String metaDataCR) {
@@ -682,78 +663,80 @@ public class MethodSCRIPTExample extends AppCompatActivity {
         return crByte;
     }
 
-    /// <summary>
-    /// Displays the string corresponding to the input cr byte
-    /// </summary>
-    /// <param name="crByte">The crByte value whose string is to be obtained</param>
+    /**
+     * <summary>
+     *      Displays the string corresponding to the input cr byte
+     * </summary>
+     * @param crByte The current range value whose string is to be obtained
+     */
     private void DisplayCR(byte crByte) {
         String currentRangeStr;
         CurrentRanges crRange = CurrentRanges.getCurrentRange(crByte);
         switch (crRange) {
-            case cr100nA:
+            case CR_100nA:
                 currentRangeStr = "100nA";
                 break;
-            case cr2uA:
+            case CR_2uA:
                 currentRangeStr = "2uA";
                 break;
-            case cr4uA:
+            case CR_4uA:
                 currentRangeStr = "4uA";
                 break;
-            case cr8uA:
+            case CR_8uA:
                 currentRangeStr = "8uA";
                 break;
-            case cr16uA:
+            case CR_16uA:
                 currentRangeStr = "16uA";
                 break;
-            case cr32uA:
+            case CR_32uA:
                 currentRangeStr = "32uA";
                 break;
-            case cr63uA:
+            case CR_63uA:
                 currentRangeStr = "63uA";
                 break;
-            case cr125uA:
+            case CR_125uA:
                 currentRangeStr = "125uA";
                 break;
-            case cr250uA:
+            case CR_250uA:
                 currentRangeStr = "250uA";
                 break;
-            case cr500uA:
+            case CR_500uA:
                 currentRangeStr = "500uA";
                 break;
-            case cr1mA:
+            case CR_1mA:
                 currentRangeStr = "1mA";
                 break;
-            case cr5mA:
+            case CR_5mA:
                 currentRangeStr = "5mA";
                 break;
-            case hscr100nA:
+            case HSCR_100nA:
                 currentRangeStr = "100nA (High speed)";
                 break;
-            case hscr1uA:
+            case HSCR_1uA:
                 currentRangeStr = "1uA (High speed)";
                 break;
-            case hscr6uA:
+            case HSCR_6uA:
                 currentRangeStr = "6uA (High speed)";
                 break;
-            case hscr13uA:
+            case HSCR_13uA:
                 currentRangeStr = "13uA (High speed)";
                 break;
-            case hscr25uA:
+            case HSCR_25uA:
                 currentRangeStr = "25uA (High speed)";
                 break;
-            case hscr50uA:
+            case HSCR_50uA:
                 currentRangeStr = "50uA (High speed)";
                 break;
-            case hscr100uA:
+            case HSCR_100uA:
                 currentRangeStr = "100uA (High speed)";
                 break;
-            case hscr200uA:
+            case HSCR_200uA:
                 currentRangeStr = "200uA (High speed)";
                 break;
-            case hscr1mA:
+            case HSCR_1mA:
                 currentRangeStr = "1mA (High speed)";
                 break;
-            case hscr5mA:
+            case HSCR_5mA:
                 currentRangeStr = "5mA (High speed)";
                 break;
             default:
@@ -765,9 +748,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Parses the noise from the package.
+     *      Parses the noise from the package.
      * </Summary>
-     *
      * @param metaDataNoise The metadata noise to be parsed.
      */
     private void GetNoiseFromPackage(String metaDataNoise) {
@@ -778,9 +760,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Opens the device on click of connect and sends the version command to verify if the device is EmStat Pico.
+     * O        pens the device on click of connect and sends the version command to verify if the device is EmStat Pico.
      * </Summary>
-     *
      * @param view btnConnect
      */
     public void onClickConnect(View view) {
@@ -796,9 +777,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Aborts the script on click of Abort button.
+     *      Aborts the MethodSCRIPT on click of Abort button.
      * </Summary>
-     *
      * @param view btnAbort
      */
     public void onClickAbort(View view) {
@@ -807,9 +787,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     * Sends the script file on click of Send button.
+     *      Sends the MethodSCRIPT on click of Send button.
      * </Summary>
-     *
      * @param view btnSend
      */
     public void onClickSend(View view) {

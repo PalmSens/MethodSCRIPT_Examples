@@ -1,4 +1,4 @@
-package com.palmsens.msbluetooth;
+package com.palmsens.msBluetooth;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -27,10 +27,10 @@ public class BluetoothConnectionService {
     public boolean mIsDeviceConnected = false;
     /**
      * <Summary>
-     * A thread implementing the Runnable to connect to a device, listen to the response continuously and post the messages back to the main activity.
-     * Creates a RfcommSocket and connects to the bluetooth device using that socket.
-     * The input and output memory streams of this socket is used to perform read and write operations on the device.
-     * If the device is disconnected, the thread is stopped and socket is closed.
+     *      A thread implementing the Runnable to connect to a device, listen to the response continuously and post the messages back to the main activity.
+     *      Creates a RfcommSocket and connects to the bluetooth device using that socket.
+     *      The input and output memory streams of this socket is used to perform read and write operations on the device.
+     *      If the device is disconnected, the thread is stopped and socket is closed.
      * </Summary>
      */
     private Runnable connectedThread = new Runnable() {
@@ -41,7 +41,7 @@ public class BluetoothConnectionService {
          * <Summary>
          *     Creates a bluetooth socket connection
          * </Summary>
-         * @return
+         * @return True if device is connected successfully
          */
         private boolean connectDevice() {
             mIsDeviceConnected = false;
@@ -110,7 +110,7 @@ public class BluetoothConnectionService {
                 while (!mThreadisStopped) {
                     try {
                         if (mInStream != null && mInStream.available() > 0) {
-                            readSize = mInStream.read(rbuf, offset, 1);                     //Reads a character from the socket's in stream
+                            readSize = mInStream.read(rbuf, offset, 1);                     //Reads a character from the socket in stream
                             if (readSize > 0) {
                                 rchar = new String(rbuf);
                                 mReadLine.append(rchar);                                         //A line of response package is formed until new line is encountered
@@ -141,6 +141,13 @@ public class BluetoothConnectionService {
         }
     };
 
+    /**
+     * <Summary>
+     *     Initializes the BluetoothConnectionService object
+     * </Summary>
+     * @param context The main activity (MSBluetoothActivity)
+     * @param handler The handler to post messages back to the main activity
+     */
     public BluetoothConnectionService(Context context, MSBluetoothActivity.CallBackHandler handler) {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mHandler = handler;                                                                    //The handler to post back messages to the main activity
@@ -148,10 +155,9 @@ public class BluetoothConnectionService {
 
     /**
      * <Summary>
-     * Called from the MSBluetoothActivity on click of button Connect.
-     * Sets the selected device and the UUID of the device and starts a new runnable to connect to the device.
+     *      Called from the MSBluetoothActivity on click of button Connect.
+     *      Sets the selected device and the UUID of the device and starts a new runnable to connect to the device.
      * </Summary>
-     *
      * @param device The selected bluetooth device
      * @param uuid   The UUID of the selected device
      */
@@ -164,8 +170,8 @@ public class BluetoothConnectionService {
 
     /**
      * <Summary>
-     * Called from the MSBluetoothActivity on click of Disconnect.
-     * Marks that the thread is stopped to enable closing of the socket from within the runnable thread (connectedThread)
+     *      Called from the MSBluetoothActivity on click of Disconnect.
+     *      Marks that the thread is stopped to enable closing of the socket from within the runnable thread (connectedThread)
      * </Summary>
      */
     public void disconnect() {
@@ -174,7 +180,7 @@ public class BluetoothConnectionService {
 
     /**
      * <Summary>
-     * Closes the socket and sets the instream and out stream to null to shut down the connection when the device is disconnected.
+     *      Closes the socket and sets the instream and out stream to null to shut down the connection when the device is disconnected.
      * </Summary>
      */
     private void closeSocket() {
@@ -187,10 +193,9 @@ public class BluetoothConnectionService {
 
     /**
      * <Summary>
-     * Called from the MSBluetoothActivity for sending the version command and sending the script file.
-     * Writes to the output stream of the bluetooth socket.
+     *      Called from the MSBluetoothActivity for sending the version command and sending the MethodSCRIPT.
+     *      Writes to the output stream of the bluetooth socket.
      * </Summary>
-     *
      * @param bytes The data (bytes) to be written to the output stream
      */
     public void write(byte[] bytes) {
