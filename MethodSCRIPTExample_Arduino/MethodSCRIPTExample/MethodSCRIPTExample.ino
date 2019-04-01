@@ -118,12 +118,12 @@ int write_wrapper(char c)
   {
     Serial.write(c);               //Sends all data to PC, if required for debugging purposes (_printReceived to be set to true)
   }
-  return Serial1.write(c);
+  return Serial1.write(c);        //Writes a character to the device
 }
 
 int read_wrapper()
 {
-  int c = Serial1.read();
+  int c = Serial1.read();         //Reads a character from the device
   
   if(_printReceived == true && c != -1) //-1 means no data
   {

@@ -190,7 +190,7 @@ int SendScript(char* fileName)
 		printf("Could not open file %s", fileName);
 		return 1;
 	}
-	while (fgets(str, 100, fp) != NULL)		// Reads a single line from the script file and writes it on the device.
+	while (fgets(str, 100, fp) != NULL)		// Reads a single line from the script file and sends it to the device.
 	{
 		WriteStr(&msComm, str);
 	}
