@@ -201,8 +201,8 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
     //region Bluetooth broadcast receivers
 
     /**
-     * Broadcast Receiver for listing paired devices upon on/off bluetooth.
-     * When the bluetooth state is ON, calls the method to find the list of paired bluetooth devices.
+     * Broadcast Receiver for listing paired devices upon on/off Bluetooth.
+     * When the Bluetooth state is ON, calls the method to find the list of paired Bluetooth devices.
      */
     private final BroadcastReceiver mBroadcastReceiverBTState = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -212,7 +212,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
                 final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
 
                 switch (state) {
-                    case BluetoothAdapter.STATE_ON:                                                    //When bluetooth is turned ON
+                    case BluetoothAdapter.STATE_ON:                                                    //When Bluetooth is turned ON
                         Log.d(TAG, "mBroadcastReceiverBTState: STATE ON");
                         findPairedDevices();
                         btnConnect.setEnabled(spinnerConnectedDevices.getAdapter() != null && !spinnerConnectedDevices.getAdapter().isEmpty());
@@ -256,7 +256,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     *      Itemselected listener that creates a new bluetooth connection after verifying if the device is paired.
+     *      Itemselected listener that sets the selected device.
      * </Summary>
      * @param parent   The adapter of the spinnerConnectedDevices
      * @param view     spinner
@@ -311,7 +311,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
                         break;
 
                     case MESSAGE_SOCKET_CONNECTED:
-                        activity.sendVersionCmd();                                           //Sends the version command once the bluetooth socket is connected
+                        activity.sendVersionCmd();                                           //Sends the version command once the Bluetooth socket is connected
                         break;
 
                     case MESSAGE_TOAST:
@@ -348,13 +348,13 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         IntentFilter BTIntent = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        registerReceiver(mBroadcastReceiverBTState, BTIntent);                                  //Registers the broadcast receiver to receive bluetooth action state changed
+        registerReceiver(mBroadcastReceiverBTState, BTIntent);                                  //Registers the broadcast receiver to receive Bluetooth action state changed
 
         IntentFilter discoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);    //Broadcasts when device is found
         discoverDevicesIntent.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);            //Broadcasts when discovery is finished
         registerReceiver(mBroadcastReceiverDiscovery, discoverDevicesIntent);
 
-        enableBluetooth();                                                                     //Method call to turn on bluetooth
+        enableBluetooth();                                                                     //Method call to turn on Bluetooth
         updateView();
     }
 
@@ -373,27 +373,27 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     *      Checks if bluetooth is turned on, else raises a request to turn on bluetooth and finds the paired devices.
+     *      Checks if Bluetooth is turned on, else raises a request to turn on Bluetooth and finds the paired devices.
      * </Summary>
      */
     private void enableBluetooth() {
         if (mBluetoothAdapter == null) {
             Log.d(TAG, "enableBluetooth: Does not have BT capabilities.");
-            return;                                                                          //Returns if device doesn't support bluetooth
+            return;                                                                          //Returns if device doesn't support Bluetooth
         }
         if (!mBluetoothAdapter.isEnabled()) {
-            Log.d(TAG, "enableBluetooth: enabling BT.");                               //Starts the activity to request turning on bluetooth
+            Log.d(TAG, "enableBluetooth: enabling BT.");                               //Starts the activity to request turning on Bluetooth
             BluetoothAdapter.getDefaultAdapter().enable();
 
         } else {
             Log.d(TAG, "BT enabled already");
-            findPairedDevices();                                                             //Finds paired devices if bluetooth is enabled already
+            findPairedDevices();                                                             //Finds paired devices if Bluetooth is enabled already
         }
     }
 
     /**
      * <Summary>
-     *      Clears the spinner and updates UI if bluetooth connection is lost.
+     *      Clears the spinner and updates UI if Bluetooth connection is lost.
      * </Summary>
      */
     private void onBluetoothOff() {
@@ -410,7 +410,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      *      Returns a list of the names of all connected devices.
      * </Summary>
      *
-     * @param connectedDevices List of connected bluetooth devices
+     * @param connectedDevices List of connected Bluetooth devices
      * @return A string array with the connected device names
      */
     public String[] GetDeviceNames(ArrayList<BluetoothDevice> connectedDevices) {
@@ -423,7 +423,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     *      Finds and adds the paired bluetooth devices to the spinner adapter.
+     *      Finds and adds the paired Bluetooth devices to the spinner adapter.
      * </Summary>
      */
     private void findPairedDevices() {
@@ -440,7 +440,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     *      The bluetooth adapter starts discovering unpaired devices. Device found and Discovery finished actions are received and handled by the mBroadcastReceiverDiscovery
+     *      The Bluetooth adapter starts discovering unpaired devices. Device found and Discovery finished actions are received and handled by the mBroadcastReceiverDiscovery
      * </Summary>
      */
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -459,13 +459,13 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     *      Clears the list of bluetooth devices array and starts a new bluetooth discovery.
+     *      Clears the list of Bluetooth devices array and starts a new Bluetooth discovery.
      * </Summary>
      */
     private void discover() {
         mBTDevices.clear();                                                                     //Clears the connected devices list to remove devices not in range
         mProgressScan.setVisibility(View.VISIBLE);
-        mBluetoothAdapter.startDiscovery();                                                     //Starts discovering nearby bluetooth devices
+        mBluetoothAdapter.startDiscovery();                                                     //Starts discovering nearby Bluetooth devices
     }
 
     /**
@@ -508,7 +508,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
                 if (isGranted)                  //Location permission has been granted, okay to retrieve the location of the device.
                 {
-                    discover();                 //Discovers nearyby bluetooth devices
+                    discover();                 //Discovers nearyby Bluetooth devices
                 }
 
                 // User selected the Never Ask Again Option, alerts to change settings in app settings manually
@@ -563,7 +563,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
     /**
      * <Summary>
      *      This method is required for all devices running API23+
-     *      Android must programmatically check the permissions for bluetooth. Adding the proper permissions in manifest is not enough.
+     *      Android must programmatically check the permissions for Bluetooth. Adding the proper permissions in manifest is not enough.
      *      NOTE: This will only execute on versions > LOLLIPOP because it is not needed otherwise.
      * </Summary>
      */
@@ -593,7 +593,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     *      Creates a new bluetooth connection service object and assigns the handler for call back to handle message postings to update the UI
+     *      Creates a new Bluetooth connection service object and assigns the handler for call back to handle message postings to update the UI
      * </Summary>
      */
     private void createBluetoothConnection() {
@@ -604,12 +604,12 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
             return;
         mProgressConnect.setVisibility(View.VISIBLE);
         mBluetoothConnection = new BluetoothConnectionService(MSBluetoothActivity.this, mHandler);
-        startBTConnection();
+        startBTConnection();       //Device pairing is handled while creating the Bluetooth RFComm socket
     }
 
     /**
      * <Summary>
-     *      Starts a bluetooth connection (Opens a bluetooth socket and prepares the in stream and out stream for data)
+     *      Starts a Bluetooth connection (Opens a Bluetooth socket and prepares the in stream and out stream for data)
      * </Summary>
      */
     public void startBTConnection() {
@@ -651,7 +651,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     *      Reads from the script file and writes it on the device using the bluetooth socket's out stream.
+     *      Reads from the script file and writes it on the device using the Bluetooth socket out stream.
      * </Summary>
      * @return A boolean to indicate if the MethodSCRIPT was sent successfully to the device.
      */
@@ -696,8 +696,8 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     *      Trigerred when the bluetooth scanning is finished.
-     *      Enables the UI elements to start a new scan for bluetooth devices
+     *      Trigerred when the Bluetooth scanning is finished.
+     *      Enables the UI elements to start a new scan for Bluetooth devices
      * </Summary>
      */
     private void onScanStopped() {
@@ -713,8 +713,8 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
     /**
      * <Summary>
      *      Trigerred on click of disconnect button.
-     *      Aborts active script if any and disconnects the bluetooth connection.
-     *      Enables the UI elements to start a new scan for bluetooth devices
+     *      Aborts active script if any and disconnects the Bluetooth connection.
+     *      Enables the UI elements to start a new scan for Bluetooth devices
      * </Summary>
      */
     private void disconnect() {
@@ -1030,7 +1030,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     *      Calls the method to discover unpaired devices. Also registers the broadcast receiver to receive bluetooth bond state changes
+     *      Calls the method to discover unpaired devices. Also registers the broadcast receiver to receive Bluetooth bond state changes
      * </Summary>
      * @param view btnScan
      */
@@ -1042,7 +1042,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
             mIsScanning = true;
             btnScan.setText("Cancel");
             if (!mBluetoothAdapter.isEnabled()) {
-                Log.d(TAG, "enableBluetooth: enabling BT.");             //Starts the activity to request turning on bluetooth
+                Log.d(TAG, "enableBluetooth: enabling BT.");             //Starts the activity to request turning on Bluetooth
                 BluetoothAdapter.getDefaultAdapter().enable();
             }
             discoverUnpairedDevices();                                        //Discovers unpaired devices
@@ -1053,7 +1053,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
 
     /**
      * <Summary>
-     *      Creates a new bluetooth connection with the selected device if it is not already connected. Else disconnects the device.
+     *      Creates a new Bluetooth connection with the selected device if it is not already connected. Else disconnects the device.
      * </Summary>
      * @param view btnConnect
      */
@@ -1064,7 +1064,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         btnScan.setEnabled(false);
         spinnerConnectedDevices.setEnabled(false);
         if (!mIsConnected) {
-                createBluetoothConnection();                                 //Creates a new bluetooth connection service object
+                createBluetoothConnection();                                 //Creates a new Bluetooth connection service object
         } else {
             disconnect();                                                    //Disconnects the device
             Toast.makeText(this, "Device is disconnected.", Toast.LENGTH_SHORT).show();

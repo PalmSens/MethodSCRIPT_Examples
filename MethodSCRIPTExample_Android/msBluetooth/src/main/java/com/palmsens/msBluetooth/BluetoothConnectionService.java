@@ -48,7 +48,7 @@ public class BluetoothConnectionService {
 
             try {
                 Log.d(TAG, "ConnectedThread: Trying to create InsecureRfcomSocket using UUID: " + mDevice.toString() + mUUID);
-                mSocket = mDevice.createInsecureRfcommSocketToServiceRecord(mUUID);
+                mSocket = mDevice.createInsecureRfcommSocketToServiceRecord(mUUID);     //Pairs the device if not paired already
             } catch (IOException e) {
                 Log.e(TAG, "ConnectedThread: Could not create InsecureRfcomSocket " + e.getMessage());
                 return false;
@@ -158,7 +158,7 @@ public class BluetoothConnectionService {
      *      Called from the MSBluetoothActivity on click of button Connect.
      *      Sets the selected device and the UUID of the device and starts a new runnable to connect to the device.
      * </Summary>
-     * @param device The selected bluetooth device
+     * @param device The selected Bluetooth device
      * @param uuid   The UUID of the selected device
      */
     public void startClient(BluetoothDevice device, UUID uuid) {
@@ -194,7 +194,7 @@ public class BluetoothConnectionService {
     /**
      * <Summary>
      *      Called from the MSBluetoothActivity for sending the version command and sending the MethodSCRIPT.
-     *      Writes to the output stream of the bluetooth socket.
+     *      Writes to the output stream of the Bluetooth socket.
      * </Summary>
      * @param bytes The data (bytes) to be written to the output stream
      */

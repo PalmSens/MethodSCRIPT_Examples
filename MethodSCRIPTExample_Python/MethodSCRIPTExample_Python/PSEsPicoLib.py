@@ -91,8 +91,8 @@ def GetValueMatrix(content):
     vt_array=[] 
     i=0
     for resultLine in content:
-        if (len(resultLine) > 11) : #don't parse resultlines having not at least one data field
-            vals,vts = ParseResultsFromLine(resultLine)
+        vals,vts = ParseResultsFromLine(resultLine)
+        if len(vals) > 0:
             val_array.append(vals)
             vt_array.append(vts)
             print(val_array[i])
@@ -100,11 +100,10 @@ def GetValueMatrix(content):
             i = i +1
     return val_array
 
-
 def ParseResultFile(resultfile):
     with open(resultfile) as f:
         content = f.readlines()
-        content = [x.strip() for x in content] #
+        content = [x.strip() for x in content]
     values = GetValueMatrix(content)
     return values    
 
@@ -118,26 +117,26 @@ def FindComport(exclude_port):
     myport = None
     for port in ports :
         print(port.device)
-        if (port.device != exclude_port):   #Exclude port from the available ports
-            myport = port.device            #Set the port to the highest availabe port
+        if (port.device != exclude_port):               #Exclude port from the available ports
+            myport = port.device                        #Set the port to the highest availabe port
     return myport   
 
 def OpenComport(ser,comport,timeout):
-    ser.port = comport               #set the port 
-    ser.baudrate = 230400       #Baudrate is 230400 for EmstatPico
-    ser.bytesize = serial.EIGHTBITS #number of bits per bytes
-    ser.parity = serial.PARITY_NONE #set parity check: no parity
-    ser.stopbits = serial.STOPBITS_ONE #number of stop bits
-    #ser.timeout = None          #block read
-    ser.timeout = timeout             #timeout block read
-    ser.xonxoff = False         #disable software flow control
-    ser.rtscts = False          #disable hardware (RTS/CTS) flow control
-    ser.dsrdtr = False          #disable hardware (DSR/DTR) flow control
-    ser.writeTimeout = 2        #timeout for write is 2 seconds
+    ser.port = comport                                  #set the port 
+    ser.baudrate = 230400                               #Baudrate is 230400 for EmstatPico
+    ser.bytesize = serial.EIGHTBITS                     #number of bits per bytes
+    ser.parity = serial.PARITY_NONE                     #set parity check: no parity
+    ser.stopbits = serial.STOPBITS_ONE                  #number of stop bits
+    #ser.timeout = None                                 #block read
+    ser.timeout = timeout                               #timeout block read
+    ser.xonxoff = False                                 #disable software flow control
+    ser.rtscts = False                                  #disable hardware (RTS/CTS) flow control
+    ser.dsrdtr = False                                  #disable hardware (DSR/DTR) flow control
+    ser.writeTimeout = 2                                #timeout for write is 2 seconds
     try: 
-        ser.open()                          #open the port
-    except serial.SerialException as e:     #catch exception
-        print("error open serial port: " + str(e)) #print the exception
+        ser.open()                                      #open the port
+    except serial.SerialException as e:                 #catch exception
+        print("error open serial port: " + str(e))      #print the exception
         return False
     return True
 
@@ -145,9 +144,9 @@ def OpenComport(ser,comport,timeout):
 def IsConnected(ser):
     prev_timeout = ser.timeout                          #Get the current timeout to restore it later
     ser.timeout = 4                                     #Set the timeout to 2 seconds
-    ser.write(bytes("t\n",  'ascii'))                    #write the command 
+    ser.write(bytes("t\n",  'ascii'))                   #write the command 
     response =  ser.read_until(bytes("*\n", 'ascii'))   #read until *\n
-    response = str(response, 'ascii')                    #convert bytes to ascii string        
+    response = str(response, 'ascii')                   #convert bytes to ascii string        
     start=response.find('esp')                          #check the presents of "esp" in the repsonse
     ser.timeout = prev_timeout                          #restore timeout
     if start == -1:                                     #return if string is found
@@ -159,8 +158,8 @@ def GetVersion(ser):
     version = ser.read_until(bytes("*\n",  'ascii'))
     version = str(version,  'ascii')
     version = version.strip()
-    version = version.replace('\n',' ')
-    version = version[1:]        #remove first character (echoed 't')
+    version = version.replace('\n',' ')                 #version command can be multiple lines
+    version = version[1:]                               #remove first character (echoed 't')
     #print("version=" + version)
     return version
     
@@ -174,7 +173,7 @@ def GetRegister(ser,reg):
 def GetSerial(ser):
     ser.write(bytes("i\n",  'ascii'))
     strResponse = str(ser.readline(),  'ascii')
-    strResponse = strResponse[1:]        #remove first character (echoed 'i')
+    strResponse = strResponse[1:]                       #remove first character (echoed 'i')
     return strResponse
 
 def SetHybernatemode(ser):
@@ -188,7 +187,7 @@ def GetResults(ser):
         str_line = response.decode("ascii")
         print("read data: " + str(response))
         datafile = datafile + str_line
-        if (str_line == '\n'):
+        if (str_line == '\n'):                          #empty line means end of script
             break
     return datafile
 
@@ -208,7 +207,7 @@ def ParseResultsFromLine(res_line):
         pck = res_line[1:len(res_line)]     #ignore last and first character
         for v in pck.split(';'):            #value fields are seperated by a semicolon
             str_vt = v[0:2]                 #get the value-type 
-            str_var = v[2:2+8]              #strip out value type, we ignore it for now
+            str_var = v[2:2+8]              #strip out value type
             val = ParseVarString(str_var)   #Parse the value
             lval.append(val)                #append value to the list
             lvt.append(str_vt)              
