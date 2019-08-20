@@ -103,7 +103,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         put('u', 1e-6);
         put('m', 1e-3);
         put(' ', 1.0);
-        put('K', 1e3);
+        put('k', 1e3);
         put('M', 1e6);
         put('G', 1e9);
         put('T', 1e12);
@@ -744,8 +744,6 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
                 return;
             if(!mIsDeviceVerified) verifyEmstatPico(line);             //Calls the verifyEmStatPico method to verify if the device is EmStat Pico
         } else {
-            if (beginChar == 'e')
-                line = line.substring(1);                              //Removes the beginning character of the response if it is 'e'
             if (mIsConnected && processReceivedPackage(line)) {        //Calls the method to process the received measurement package
                 btnSend.setEnabled(true);                              //Updates the UI upon completion of parsing and displaying of the response
                 mIsScriptActive = false;

@@ -32,8 +32,8 @@
 
 #include "MSComm.h"
 
-const int OFFSET_VALUE = 0x8000000;
-const int READ_BUFFER_LENGTH = 100;
+#define OFFSET_VALUE 0x8000000
+#define READ_BUFFER_LENGTH 100
 
 RetCode MSCommInit(MSComm* msComm,	WriteCharFunc writeCharFunc, ReadCharFunc readCharFunc)
 {
@@ -96,7 +96,7 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 
 RetCode ReceivePackage(MSComm* msComm, MeasureData* retData)
 {
-	char bufferLine[100];
+	char bufferLine[READ_BUFFER_LENGTH];
 	RetCode ret = ReadBuf(msComm, bufferLine);							// Reads a line of response from the device
 	if (ret != CODE_OK)
 		return ret;
@@ -189,7 +189,7 @@ const double GetUnitPrefixValue(char charPrefix)
 			return 1e-3;
 		case ' ':
 			return 1;
-		case 'K':
+		case 'k':
 			return 1e3;
 		case 'M':
 			return 1e6;

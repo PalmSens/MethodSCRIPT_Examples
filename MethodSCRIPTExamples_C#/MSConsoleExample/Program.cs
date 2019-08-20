@@ -34,7 +34,7 @@ namespace EmStatConsoleExample
                                                             { "u", 1e-6 },
                                                             { "m", 1e-3 },
                                                             { " ", 1 },
-                                                            { "K", 1e3 },
+                                                            { "k", 1e3 },
                                                             { "M", 1e6 },
                                                             { "G", 1e9 },
                                                             { "T", 1e12 },
