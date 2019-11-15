@@ -32,8 +32,9 @@
  * The example allows the user to start measurements on the EmStat Pico from a windows PC connected to the Arduino through USB.
  * 
  * Environment setup:
- * To run this example, you must include the MethodSCRIPT C libraries first.
+ * To run this example, you must include the MethodSCRIPT C libraries and the MathHelperLibrary.
  * To do this, follow the menu "Sketch -> Include Library -> Add .ZIP Library..." and select the MethodSCRIPTComm folder.
+ * Follow the same process and include the MathHelperLibrary.
  * You should now be able to compile the example.
  * 
  * Hardware setup:
@@ -51,13 +52,10 @@
 //Because MSComm is a C library and Arduino uses a C++ compiler, we must use the "extern "C"" wrapper.
 extern "C" {
   #include <MSComm.h>
-  #include <MathHelpers.C>
+  #include <MathHelpers.h>
 };
 #include <Arduino.h>
 #include "wiring_private.h"
-
-//Create a new UART instance assigning it to TX (14) and RX (13) pins on the Arduino
-Uart Serial1(&sercom5, 14, 13, SERCOM_RX_PAD_3, UART_TX_PAD_2); 
 
 int _nDataPoints = 0;
 char _versionString[30];
@@ -130,12 +128,6 @@ int read_wrapper()
     //Serial.write(c);            //Sends all received data to PC, if required for debugging purposes (_printReceived to be set to true)
   }
   return c;
-}
-
-// Attach the interrupt handler to the SERCOM
-void SERCOM5_Handler()
-{
- Serial1.IrqHandler();
 }
 
 //Verify if connected to EmStat Pico by checking the version string contains the "espico"
