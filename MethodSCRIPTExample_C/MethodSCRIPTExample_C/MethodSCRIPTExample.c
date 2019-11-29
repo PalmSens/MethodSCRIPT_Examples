@@ -35,10 +35,18 @@ HANDLE hCom;
 DWORD dwBytesWritten = 0;
 DWORD dwBytesRead;
 MSComm msComm;
-MeasureData data;
-int nDataPoints;
+MeasureData data;		//data point holding the parsed results
+int nDataPoints;		//number of parsed datapoints
+FILE *pFCsv;			//CSV File pointer
 
-const char* PORT_NAME = "\\\\.\\COM43";									   // The name of the port - to be changed, by looking up the device manager
+//const char* METHODSCRIPT_FILEPATHNAME = "\\ScriptFiles\\LSV_on_10kOhm.txt"; 	  // "SWV_on_10kOhm.txt"
+const char* METHODSCRIPT_FILEPATHNAME = "\\ScriptFiles\\MSExampleEIS.mscr"; 	  // "MSExampleEIS.mscr";
+
+//const char* RESULT_FILEPATHNAME = ".\\Results\\LSV_on_10kOhm.csv";
+const char* RESULT_FILEPATHNAME = ".\\Results\\MSExampleEIS.csv";
+
+
+const char* PORT_NAME = "\\\\.\\COM4";									   // The name of the port - to be changed, by looking up the device manager
 const DWORD BAUD_RATE = 230400;											   // The baud rate for EmStat Pico
 
 int main(int argc, char *argv[])
@@ -52,21 +60,22 @@ int main(int argc, char *argv[])
 		{
 			char buff[PATH_MAX];
 			char *currentDirectory = getcwd(buff, PATH_MAX);		      // Fetches the current directory
-			const char* filePath = "\\ScriptFiles\\LSV_on_10kOhm.txt"; 	  // "SWV_on_10kOhm.txt";
-			int combinedFilePathSize = PATH_MAX + 1 + strlen(filePath);	  // Determines the max size of the combined file path
-			char combinedFilePath[combinedFilePathSize];				  // An array to hold the combined file path
+			const char* filePath = METHODSCRIPT_FILEPATHNAME; 	  			// MethodScript Filename incl. path
+			int combinedFilePathSize = PATH_MAX + 1 + strlen(filePath);	  	// Determines the max size of the combined file path
+			char combinedFilePath[combinedFilePathSize];				  	// An array to hold the combined file path
 			if(currentDirectory != NULL)
 			{
 				char *combinedPath = strcat(currentDirectory, filePath);  // Concatenates the current directory and file path to generate the combined file path
 				strcpy(combinedFilePath, combinedPath);
-				if(SendScript(combinedFilePath))
+				if(SendScriptFile(combinedFilePath))
 				{
 					printf("\nMethodSCRIPT sent to EmStat Pico.\n");
 					nDataPoints = 0;
 					do
 					{
-						code = ReceivePackage(&msComm, &data);			  // Receives the response and stores the parsed values in the struct 'data'
-						continueParsing = DisplayResults(code);			  // Displays the results based on the returned code
+						code = ReceivePackage(&msComm, &data);			// Receives the response and stores the parsed values in the struct 'data'
+						ResultsToCsv(code);								// Write result data-point to a CSV file
+						continueParsing = DisplayResults(code);			// Displays the results based on the returned code
 					}while(continueParsing == 1);
 				}
 			}
@@ -177,10 +186,13 @@ int ReadFromDevice()
 			sizeof(tempChar),				// Size of TempChar
 			&noBytesRead, 					// Number of bytes read
 			NULL);
+	//Check for timeout
+	if(noBytesRead != sizeof(tempChar))
+		return -1;
 	return (int)tempChar;
 }
 
-int SendScript(char* fileName)
+int SendScriptFile(char* fileName)
 {
 	FILE *fp;
 	char str[100];
@@ -204,18 +216,29 @@ int DisplayResults(RetCode code)
 	switch(code)
 	{
 	case CODE_RESPONSE_BEGIN:				// Measurement response begins
-		//do nothing
+		printf("\nResponse begin\n");
 		break;
 	case CODE_MEASURING:
 		printf("\nMeasuring... \n");
 		break;
 	case CODE_OK:							// Received valid package, print it.
 		if(nDataPoints == 0)
-		printf("\nReceiving measurement response:\n");
+			printf("\nReceiving measurement response:\n");
 		printf("\n %d \t", ++nDataPoints);
-		printf("E(V): %6.3f \t", data.potential);
-		fflush(stdout);
-		printf("i(A) : %11.3E \t", data.current);
+		if (data.zreal != HUGE_VALF)
+		{
+			printf("frequency(Hz): %8.1f \t", data.frequency);
+			printf("Zreal(Ohm): %16.3f \t", data.zreal);
+			printf("Zimag(Ohm): %16.3f \t", data.zimag);
+			fflush(stdout);
+
+		}
+		else
+		{
+			printf("E(V): %6.3f \t", data.potential);
+			printf("i(A) : %11.3E \t", data.current);
+			fflush(stdout);
+		}
 		printf("Status: %-15s  ", data.status);
 		printf("CR: %s ", data.cr);
 		fflush(stdout);
@@ -233,4 +256,64 @@ int DisplayResults(RetCode code)
 		continueParsing = 0;
 	}
 	return continueParsing;
+}
+
+void ResultsToCsv(RetCode code)
+{
+	switch(code)
+	{
+	case CODE_RESPONSE_BEGIN:					// Measurement response begins
+		OpenCSVFile(RESULT_FILEPATHNAME,&pFCsv);
+		break;
+	case CODE_MEASURING:
+		break;
+	case CODE_OK:								// Received valid package, print it.
+		if(nDataPoints == 0)
+		{
+			WriteHeaderToCSVFile(pFCsv);
+		}
+		WriteDataToCSVFile(pFCsv,data);
+		break;
+	case CODE_MEASUREMENT_DONE:			    	// Measurement loop complete
+		fclose(pFCsv);
+		break;
+	case CODE_RESPONSE_END:				    	// Measurement response end
+	    break;
+	default:                    				// Failed to parse or identify package.
+		break;
+	}
+}
+
+void OpenCSVFile(const char *pFilename,FILE **fp)
+{
+	//char str[100];
+
+	*fp = fopen(pFilename, "w");		//Open file for writing (overwrite existing)
+	if (*fp == NULL)
+	{
+		printf("Could not open CSV file %s", pFilename);
+	}
+}
+
+void WriteHeaderToCSVFile(FILE *fp)
+{
+	if (fp == NULL)
+	{
+		printf("Unable to write header to CSV file\r\n");
+		fflush(stdout);
+		return;
+	}
+	fprintf(fp,"Index,Potential,Current,Frequency,Zreal,Zimag,CR,Status\n");
+}
+
+
+void WriteDataToCSVFile(FILE *fp, MeasureData resultdata)
+{
+	if (fp == NULL)
+	{
+		printf("Unable to write to CSV file\r\n");
+		fflush(stdout);
+		return;
+	}
+	fprintf(fp,"%d,%f,%f,%f,%f,%f,%s,%s\n",nDataPoints+1,resultdata.potential,resultdata.current,resultdata.frequency,resultdata.zreal,resultdata.zimag,resultdata.cr,resultdata.status);
 }

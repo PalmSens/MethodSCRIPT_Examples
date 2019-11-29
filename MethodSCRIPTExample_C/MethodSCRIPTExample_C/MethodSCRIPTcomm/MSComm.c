@@ -70,8 +70,8 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 		if(tempChar > 0)
 		{
 			buf[i++] = tempChar;			//Stores tempchar into buffer
-			if(buf[0] == (int)'e')
-				return CODE_RESPONSE_BEGIN;
+			//printf("%c", (char)tempChar);	//print incomming character
+			//fflush(stdout);
 			if(tempChar == '\n')
 			{
 				buf[i] = '\0';
@@ -79,6 +79,8 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 					return CODE_VERSION_RESPONSE;
 				if(buf[0] == REPLY_MEASURING)
 					return CODE_MEASURING;
+				else if(strcmp(buf, "e\n") == 0)	//Wdg 20-11-2019 added
+					return CODE_RESPONSE_BEGIN;		//..
 				else if(strcmp(buf, "*\n") == 0)
 					return CODE_MEASUREMENT_DONE;
 				else if(strcmp(buf, "\n") == 0)
@@ -89,7 +91,7 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 					return CODE_NOT_IMPLEMENTED;
 			}
 		}
-	} while (i < READ_BUFFER_LENGTH);
+	} while (i < READ_BUFFER_LENGTH-1);
 	buf[i] = '\0';
 	return CODE_NULL;
 }
@@ -106,9 +108,11 @@ RetCode ReceivePackage(MSComm* msComm, MeasureData* retData)
 
 void ParseResponse(char *responsePackageLine, MeasureData* retData)
 {
+	retData->zreal = HUGE_VALF;											//Impedance data NAN as default
+	retData->zimag = HUGE_VALF;											//Impedance data NAN as default
 	char *P = strchr(responsePackageLine, 'P');							//Identifies the beginning of the response package
 	char *packageLine = P+1;
-	const char delimiters[] = " ;\n";
+	const char delimiters[] = ";\n";									//a space (" ") is used as prefix token thus part of parameter
 	char* running = packageLine;										//Initial index of the line to be tokenized
 	char* param = strtokenize(&running, delimiters);					//Pulls out the parameters separated by the delimiters
 	do
@@ -148,13 +152,25 @@ void ParseParam(char* param, MeasureData* retData)
 	strncpy(paramValue, param+ 2, 8);									//Splits the parameter value string
 	paramValue[9]= '\0';
 	parameterValue = (float)GetParameterValue(paramValue);				//Retrieves the actual parameter value
-	if(strcmp(paramIdentifier, "da") == 0)
+	if(strcmp(paramIdentifier, "da") == 0)								//The applied cell-potential (calculated, not read back!)
 	{
 		retData->potential = parameterValue;
 	}
-	else if (strcmp(paramIdentifier, "ba") == 0)
+	else if (strcmp(paramIdentifier, "ba") == 0)						//Measured cell current
 	{
 		retData->current = parameterValue;
+	}
+	else if (strcmp(paramIdentifier, "cc") == 0)						//Real part of complex impedance
+	{
+		retData->zreal = parameterValue;
+	}
+	else if (strcmp(paramIdentifier, "cd") == 0)						//Imaginary part of complex impedance
+	{
+		retData->zimag = parameterValue;
+	}
+	else if (strcmp(paramIdentifier, "dc") == 0)						//Applied cell frequency
+	{
+		retData->frequency = parameterValue;
 	}
 	ParseMetaDataValues(param + 10, retData);							//Rest of the parameter is further parsed to get meta data values
 }

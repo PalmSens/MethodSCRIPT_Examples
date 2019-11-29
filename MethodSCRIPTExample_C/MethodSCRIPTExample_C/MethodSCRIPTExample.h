@@ -38,6 +38,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <math.h>
+
 #include "MethodScriptComm/MSComm.h"
 
 //////////////////////////////////////////////////////////////////////////////
@@ -88,6 +90,24 @@ int ReadFromDevice();
 /// Prints the parsed values on the console
 ///
 int DisplayResults(RetCode code);
+
+
+
+///
+/// Write a datapoint result to a CSV File
+///
+void ResultsToCsv(RetCode code);
+
+///
+/// Opens a CSV File
+///
+void OpenCSVFile(const char *pFilename,FILE **fp);
+
+///
+/// Write data to (append) a CSV File
+///
+void WriteDataToCSVFile(FILE *fp, MeasureData resultdata);
+void WriteHeaderToCSVFile(FILE *fp);
 
 #endif //ESPICOCODEEXAMPLE_H
 
