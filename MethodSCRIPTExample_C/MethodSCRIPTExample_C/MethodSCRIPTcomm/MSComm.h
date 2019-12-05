@@ -188,7 +188,7 @@ char* strtokenize(char** stringp, const char* delim);
 ///
 /// Returns: The corresponding string for the input enum status
 ///
-char* StatusToString(Status status);
+const char* StatusToString(Status status);
 
 ///
 /// Parses a parameter and calls the function to parse meta data values if any

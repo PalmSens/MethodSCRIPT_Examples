@@ -56,6 +56,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "MSCommon.h"
 
@@ -94,10 +95,10 @@ typedef enum _Status
 ///
 typedef enum _Reply
 {
-	REPLY_VERSION_RESPONSE = 't',
-	REPLY_MEASURING = 'M',
-	REPLY_MEASURE_DP	= 'P',
-	REPLY_ENDOFMEASLOOP	= '*'
+	REPLY_VERSION_RESPONSE 	= 't',
+	REPLY_MEASURING 		= 'M',
+	REPLY_MEASURE_DP		= 'P',
+	REPLY_ENDOFMEASLOOP		= '*'
 } Reply;
 
 ///
@@ -120,6 +121,13 @@ typedef struct _MeasureData
 	float potential;
 	/// Current in Ampere
 	float current;
+	/// Real part of complex impedance
+	float zreal;
+	/// Imaginary part of complex impedance
+	float zimag;
+	/// Applied frewquency
+	float frequency;
+
 	/// Reading status
 	const char* status;
 	/// Current range

@@ -89,14 +89,14 @@ int ReadFromDevice();
 ///
 /// Prints the parsed values on the console
 ///
-int DisplayResults(RetCode code);
+int DisplayResults(RetCode code,MeasureData result);
 
 
 
 ///
 /// Write a datapoint result to a CSV File
 ///
-void ResultsToCsv(RetCode code);
+void ResultsToCsv(RetCode code,MeasureData result);
 
 ///
 /// Opens a CSV File

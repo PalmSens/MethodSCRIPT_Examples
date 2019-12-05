@@ -31,6 +31,8 @@
  */
 #include "MethodScriptExample.h"
 
+#define MS_MAX_LINECHARS	128
+
 HANDLE hCom;
 DWORD dwBytesWritten = 0;
 DWORD dwBytesRead;
@@ -39,14 +41,14 @@ MeasureData data;		//data point holding the parsed results
 int nDataPoints;		//number of parsed datapoints
 FILE *pFCsv;			//CSV File pointer
 
-//const char* METHODSCRIPT_FILEPATHNAME = "\\ScriptFiles\\LSV_on_10kOhm.txt"; 	  // "SWV_on_10kOhm.txt"
-const char* METHODSCRIPT_FILEPATHNAME = "\\ScriptFiles\\MSExampleEIS.mscr"; 	  // "MSExampleEIS.mscr";
+//const char* METHODSCRIPT_FILEPATHNAME = "\\ScriptFiles\\LSV_on_10kOhm.txt"; 	  // LSV demo
+const char* METHODSCRIPT_FILEPATHNAME = "\\ScriptFiles\\MSExampleEIS.mscr"; 	  // EIS demo
 
 //const char* RESULT_FILEPATHNAME = ".\\Results\\LSV_on_10kOhm.csv";
 const char* RESULT_FILEPATHNAME = ".\\Results\\MSExampleEIS.csv";
 
 
-const char* PORT_NAME = "\\\\.\\COM4";									   // The name of the port - to be changed, by looking up the device manager
+const char* PORT_NAME = "\\\\.\\COM7";									   // The name of the port - to be changed, by looking up the device manager
 const DWORD BAUD_RATE = 230400;											   // The baud rate for EmStat Pico
 
 int main(int argc, char *argv[])
@@ -74,8 +76,8 @@ int main(int argc, char *argv[])
 					do
 					{
 						code = ReceivePackage(&msComm, &data);			// Receives the response and stores the parsed values in the struct 'data'
-						ResultsToCsv(code);								// Write result data-point to a CSV file
-						continueParsing = DisplayResults(code);			// Displays the results based on the returned code
+						ResultsToCsv(code,data);								// Write result data-point to a CSV file
+						continueParsing = DisplayResults(code,data);			// Displays the results based on the returned code
 					}while(continueParsing == 1);
 				}
 			}
@@ -163,7 +165,7 @@ BOOL VerifyEmStatPico()
 			isConnected = 1;
 		else if(strstr(versionString, "*\n") != NULL)								 // Reads until end of response and break
 			break;
-	}while(1);
+	}while(1);											//Note: this example expects a connected Emstat Pico and hangs otherwise!
 	return isConnected;
 }
 
@@ -188,21 +190,22 @@ int ReadFromDevice()
 			NULL);
 	//Check for timeout
 	if(noBytesRead != sizeof(tempChar))
-		return -1;
+		return -1;							//Return -1 on timeout
 	return (int)tempChar;
 }
 
 int SendScriptFile(char* fileName)
 {
 	FILE *fp;
-	char str[100];
+	char str[MS_MAX_LINECHARS+1];	//Plus the string termination character (0)
 
 	fp = fopen(fileName, "r");
 	if (fp == NULL) {
 		printf("Could not open file %s", fileName);
-		return 1;
+		return 0;
 	}
-	while (fgets(str, 100, fp) != NULL)		// Reads a single line from the script file and sends it to the device.
+	// Reads a single line from the script file and sends it to the device.
+	while (fgets(str, MS_MAX_LINECHARS, fp) != NULL)
 	{
 		WriteStr(&msComm, str);
 	}
@@ -210,7 +213,7 @@ int SendScriptFile(char* fileName)
 	return 1;
 }
 
-int DisplayResults(RetCode code)
+int DisplayResults(RetCode code,MeasureData result)
 {
 	int continueParsing = 1;
 	switch(code)
@@ -225,22 +228,22 @@ int DisplayResults(RetCode code)
 		if(nDataPoints == 0)
 			printf("\nReceiving measurement response:\n");
 		printf("\n %d \t", ++nDataPoints);
-		if (data.zreal != HUGE_VALF)
+		if (data.zreal != HUGE_VALF)		//Check if it is EIS data
 		{
-			printf("frequency(Hz): %8.1f \t", data.frequency);
-			printf("Zreal(Ohm): %16.3f \t", data.zreal);
-			printf("Zimag(Ohm): %16.3f \t", data.zimag);
+			printf("frequency(Hz): %8.1f \t", result.frequency);
+			printf("Zreal(Ohm): %16.3f \t", result.zreal);
+			printf("Zimag(Ohm): %16.3f \t", result.zimag);
 			fflush(stdout);
 
 		}
 		else
 		{
-			printf("E(V): %6.3f \t", data.potential);
-			printf("i(A) : %11.3E \t", data.current);
+			printf("E(V): %6.3f \t", result.potential);
+			printf("i(A) : %11.3E \t", result.current);
 			fflush(stdout);
 		}
-		printf("Status: %-15s  ", data.status);
-		printf("CR: %s ", data.cr);
+		printf("Status: %-15s  ", result.status);
+		printf("CR: %s ", result.cr);
 		fflush(stdout);
 		break;
 	case CODE_MEASUREMENT_DONE:			    // Measurement loop complete
@@ -258,7 +261,7 @@ int DisplayResults(RetCode code)
 	return continueParsing;
 }
 
-void ResultsToCsv(RetCode code)
+void ResultsToCsv(RetCode code,MeasureData result)
 {
 	switch(code)
 	{
@@ -272,7 +275,7 @@ void ResultsToCsv(RetCode code)
 		{
 			WriteHeaderToCSVFile(pFCsv);
 		}
-		WriteDataToCSVFile(pFCsv,data);
+		WriteDataToCSVFile(pFCsv,result);
 		break;
 	case CODE_MEASUREMENT_DONE:			    	// Measurement loop complete
 		fclose(pFCsv);
@@ -286,8 +289,6 @@ void ResultsToCsv(RetCode code)
 
 void OpenCSVFile(const char *pFilename,FILE **fp)
 {
-	//char str[100];
-
 	*fp = fopen(pFilename, "w");		//Open file for writing (overwrite existing)
 	if (*fp == NULL)
 	{

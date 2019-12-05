@@ -243,7 +243,7 @@ void ParseMetaDataValues(char *metaDataParams, MeasureData* retData)
 	}while ((metaData = strtokenize(&running, delimiters)) != NULL);
 }
 
-char* StatusToString(Status status)
+const char* StatusToString(Status status)
 {
 	switch(status){
 		 case STATUS_OK:
@@ -261,8 +261,9 @@ char* StatusToString(Status status)
 
 const char* GetReadingStatusFromPackage(char* metaDataStatus)
 {
-	char* status;
-	long statusBits = strtol(&metaDataStatus[1], NULL, 16);				//Fetches the status bit from the package
+	const char* status;
+	status = "Undefined status";									//Default return value
+	long statusBits = strtol(&metaDataStatus[1], NULL, 16);			//Fetches the status bit from the package
 	if ((statusBits) == STATUS_OK)
 		status = StatusToString(STATUS_OK);
 	if ((statusBits & 0x2) == STATUS_OVERLOAD)

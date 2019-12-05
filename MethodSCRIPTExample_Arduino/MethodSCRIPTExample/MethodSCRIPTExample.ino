@@ -53,9 +53,11 @@
 extern "C" {
   #include <MSComm.h>
   #include <MathHelpers.h>
+
 };
 #include <Arduino.h>
 #include "wiring_private.h"
+
 
 int _nDataPoints = 0;
 char _versionString[30];
@@ -101,6 +103,34 @@ const char* SWV_ON_10KOHM = "e\n"
                             "pck_end\n"
                             "endloop\n"
                             "cell_off\n\n";
+
+//EIS MethodSCRIPT                   
+const char* EIS_ON_WE_C =   "e\n"
+                            "#declare variables for freq, real,imaginary parts of complex result\n"
+                            "var f\n"
+                            "var r\n"
+                            "var j\n"
+                            "#set to channel 0 (Lemo)\n"
+                            "set_pgstat_chan 0\n"
+                            "#set mode to High speed\n"
+                            "set_pgstat_mode 3\n"
+                            "#Set to 1mA cr\n"
+                            "set_cr 50u\n"
+                            "set_autoranging 50u 500u\n"
+                            "cell_on\n"
+                            "#call the EIS loop with 15mV amplitude,fstart=200kHz,fend=100Hz,nrOfPoints=51, 0mV DC\n"
+                            "meas_loop_eis f r j 15m 200k 100 51 0m\n"
+                            "#add the returned variables to the data package\n"
+                            "pck_start\n"
+                            "pck_add f\n"
+                            "pck_add r\n"
+                            "pck_add j\n"
+                            "pck_end\n"
+                            "endloop\n"
+                            "on_finished:\n"
+                            "cell_off\n\n";
+
+
 
 
 //The MethodSCRIPT communication object.
@@ -193,6 +223,7 @@ void setup()
   {
     if(VerifyESPico())
     {
+      //SendScriptToDevice(EIS_ON_WE_C);                //Sends the MethodSCRIPT to the device with input parameters
       SendScriptToDevice(LSV_ON_10KOHM);                //Sends the MethodSCRIPT to the device with input parameters
       //SendScriptToDevice(SWV_ON_10KOHM);
     }
@@ -222,10 +253,22 @@ void loop()
           Serial.println("\nReceiving measurement response:");
         Serial.print("\n");
         Serial.print(++_nDataPoints);
-        Serial.print("\tE (V): ");
-        Serial.print(data.potential, 3);
-        Serial.print("\t\ti (A): ");
-        Serial.print(sci(data.current, 3));
+        if (data.zreal != HUGE_VALF)
+        {
+          Serial.print("\tFrequency(Hz): ");
+          Serial.print(sci(data.frequency, 3));
+          Serial.print("\tZreal(Ohm): ");
+          Serial.print(sci(data.zreal, 3));
+          Serial.print("\tZimag(Ohm): ");
+          Serial.print(sci(data.zimag, 3));
+       }
+        else
+        {
+          Serial.print("\tE (V): ");
+          Serial.print(data.potential, 3);
+          Serial.print("\t\ti (A): ");
+          Serial.print(sci(data.current, 3));
+        }
         Serial.print("\tStatus: ");
         sprintf(readingStatus, "%-15s", data.status);
         Serial.print(readingStatus);
