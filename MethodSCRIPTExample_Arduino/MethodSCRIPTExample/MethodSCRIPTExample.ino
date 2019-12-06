@@ -56,14 +56,13 @@ extern "C" {
 
 };
 #include <Arduino.h>
-#include "wiring_private.h"
 
 
 int _nDataPoints = 0;
 char _versionString[30];
 
-bool _printSent = false;
-bool _printReceived = false;
+static bool s_printSent = false;
+static bool s_printReceived = false;
 const char* CMD_VERSION_STRING = "t\n";
 
 //LSV MethodSCRIPT
@@ -142,9 +141,9 @@ MSComm _msComm;
 //We are using Serial and Serial1 here, but you can use any serial port.
 int write_wrapper(char c)
 {
-  if(_printSent == true)
+  if(s_printSent == true)
   {
-    Serial.write(c);               //Sends all data to PC, if required for debugging purposes (_printReceived to be set to true)
+    Serial.write(c);               //Sends all data to PC, if required for debugging purposes (s_printReceived to be set to true)
   }
   return Serial1.write(c);        //Writes a character to the device
 }
@@ -153,9 +152,10 @@ int read_wrapper()
 {
   int c = Serial1.read();         //Reads a character from the device
   
-  if(_printReceived == true && c != -1) //-1 means no data
+  if((s_printReceived == true) && (c != -1)) //-1 means no data
   {
-    //Serial.write(c);            //Sends all received data to PC, if required for debugging purposes (_printReceived to be set to true)
+    Serial.println("s_printReceived");
+    Serial.write(c);            //Sends all received data to PC, if required for debugging purposes (s_printReceived to be set to true)
   }
   return c;
 }
@@ -210,12 +210,17 @@ void setup()
 {
   // put your setup code here, to run once:
   //Init serial ports
-  Serial.begin(230400);                                 //Serial is the Arduino serial port communicating with the PC
-  Serial1.begin(230400);                                //Serial1 is the port on EmStat Pico dev board communicating with the Arduino 
-  while(!Serial);                                       //Waits until the Serial port is active
+  //Serial is the Arduino serial port communicating with the PC
+  Serial.begin(230400);    
+  //Serial1 is the port on EmStat Pico dev board communicating with the Arduino 
+  Serial1.begin(230400);   
+  //Waits until the Serial port is active
+  while(!Serial);          
 
-  pinPeripheral(13, PIO_SERCOM_ALT);			              //Assigns SDA function to pin 13
-  pinPeripheral(14, PIO_SERCOM_ALT); 			              //Assigns SCL function to pin 14
+  if(s_printReceived == true) 
+  {
+    Serial.println("s_printReceived");
+  }
 
   //Init MSComm struct (one for every EmStat Pico).
   RetCode code = MSCommInit(&_msComm, &write_wrapper, &read_wrapper);
@@ -223,9 +228,9 @@ void setup()
   {
     if(VerifyESPico())
     {
-      //SendScriptToDevice(EIS_ON_WE_C);                //Sends the MethodSCRIPT to the device with input parameters
-      SendScriptToDevice(LSV_ON_10KOHM);                //Sends the MethodSCRIPT to the device with input parameters
-      //SendScriptToDevice(SWV_ON_10KOHM);
+      //SendScriptToDevice(EIS_ON_WE_C);    //Sends the "EIS_ON_WE_C" MethodSCRIPT to the device 
+      SendScriptToDevice(LSV_ON_10KOHM);    //Sends the "LSV_ON_10KOHM" MethodSCRIPT to the device 
+      //SendScriptToDevice(SWV_ON_10KOHM);	//Sends the "SWV_ON_10KOHM" MethodSCRIPT to the device 
     }
   }
 }
