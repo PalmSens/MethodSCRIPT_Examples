@@ -33,29 +33,42 @@
 
 #define MS_MAX_LINECHARS	128
 
-HANDLE hCom;
-DWORD dwBytesWritten = 0;
-DWORD dwBytesRead;
-MSComm msComm;
-MeasureData data;		//data point holding the parsed results
-int nDataPoints;		//number of parsed datapoints
-FILE *pFCsv;			//CSV File pointer
-
-//const char* METHODSCRIPT_FILEPATHNAME = "\\ScriptFiles\\LSV_on_10kOhm.txt"; 	  // LSV demo
-const char* METHODSCRIPT_FILEPATHNAME = "\\ScriptFiles\\MSExampleEIS.mscr"; 	  // EIS demo
-
-//const char* RESULT_FILEPATHNAME = ".\\Results\\LSV_on_10kOhm.csv";
-const char* RESULT_FILEPATHNAME = ".\\Results\\MSExampleEIS.csv";
+HANDLE hCom;				// Serial port handle
+DWORD dwBytesWritten = 0;	// Number of bytes written variable for serial WriteFile function
+MSComm msComm;				// MethodScript communication interface
+FILE *pFCsv;				// CSV File pointer
 
 
-const char* PORT_NAME = "\\\\.\\COM7";									   // The name of the port - to be changed, by looking up the device manager
+const char* PORT_NAME = "\\\\.\\COM4";									   // The name of the port - to be changed, by looking up the device manager
 const DWORD BAUD_RATE = 230400;											   // The baud rate for EmStat Pico
+
+
+// Select demo
+// 0 = LSV (with 10k Ohm)
+// 1 = EIS
+// 2 = SWV (with 10k Ohm)
+#define DEMO_SELECT	0
+
+#if DEMO_SELECT == 0
+	const char* METHODSCRIPT_FILEPATHNAME = "\\ScriptFiles\\MSExample_LSV_10k.mscr";	// LSV demo
+	const char* RESULT_FILEPATHNAME = 		".\\Results\\MSExample_LSV_10k.csv";
+#elif DEMO_SELECT == 1
+	const char* METHODSCRIPT_FILEPATHNAME = "\\ScriptFiles\\MSExample_EIS.mscr";		// EIS demo
+	const char* RESULT_FILEPATHNAME = 		".\\Results\\MSExample_EIS.csv";
+#elif DEMO_SELECT == 2
+	const char* METHODSCRIPT_FILEPATHNAME = "\\ScriptFiles\\MSExample_SWV_10k.mscr";	// SWV demo
+	const char* RESULT_FILEPATHNAME = 		".\\Results\\MSExample_SWV_10k.csv";
+#endif
+
 
 int main(int argc, char *argv[])
 {
-	RetCode code = MSCommInit(&msComm, &WriteToDevice, &ReadFromDevice);
 	int continueParsing;
-	if (code == CODE_OK)
+	MeasureData data;
+	int nDataPoints;
+	RetCode status_code = MSCommInit(&msComm, &WriteToDevice, &ReadFromDevice);
+
+	if (status_code == CODE_OK)
 	{
 		int isOpen = OpenSerialPort();
 		if(isOpen)
@@ -75,9 +88,9 @@ int main(int argc, char *argv[])
 					nDataPoints = 0;
 					do
 					{
-						code = ReceivePackage(&msComm, &data);			// Receives the response and stores the parsed values in the struct 'data'
-						ResultsToCsv(code,data);								// Write result data-point to a CSV file
-						continueParsing = DisplayResults(code,data);			// Displays the results based on the returned code
+						status_code = ReceivePackage(&msComm, &data);			// Receives the response and stores the parsed values in the struct 'data'
+						ResultsToCsv(status_code, data, nDataPoints);								// Write result data-point to a CSV file
+						continueParsing = DisplayResults(status_code, data, &nDataPoints);			// Displays the results based on the returned code
 					}while(continueParsing == 1);
 				}
 			}
@@ -86,9 +99,14 @@ int main(int argc, char *argv[])
 			}
 			if (hCom != NULL)
 				CloseHandle(hCom);
+		} else {
+			printf("ERROR: Could not open serial port [%s].\r\n", strrchr(PORT_NAME,'\\') + 1);
 		}
+	} else {
+		printf("ERROR: Failed to configure MSComm object.\r\n");
 	}
 }
+
 
 int OpenSerialPort()
 {
@@ -150,9 +168,6 @@ int OpenSerialPort()
 	return 0;
 }
 
-///
-///Sends the command to get version string and verify if port is connected to Emstat pico.
-///
 BOOL VerifyEmStatPico()
 {
 	char versionString[30];
@@ -213,7 +228,7 @@ int SendScriptFile(char* fileName)
 	return 1;
 }
 
-int DisplayResults(RetCode code,MeasureData result)
+int DisplayResults(RetCode code, MeasureData result, int *nDataPoints)
 {
 	int continueParsing = 1;
 	switch(code)
@@ -225,10 +240,10 @@ int DisplayResults(RetCode code,MeasureData result)
 		printf("\nMeasuring... \n");
 		break;
 	case CODE_OK:							// Received valid package, print it.
-		if(nDataPoints == 0)
+		if(*nDataPoints == 0)
 			printf("\nReceiving measurement response:\n");
-		printf("\n %d \t", ++nDataPoints);
-		if (data.zreal != HUGE_VALF)		//Check if it is EIS data
+		printf("\n %d \t", ++*nDataPoints);
+		if (result.zreal != HUGE_VALF)		//Check if it is EIS data
 		{
 			printf("frequency(Hz): %8.1f \t", result.frequency);
 			printf("Zreal(Ohm): %16.3f \t", result.zreal);
@@ -250,7 +265,7 @@ int DisplayResults(RetCode code,MeasureData result)
 		printf("\nMeasurement completed. ");
 		break;
 	case CODE_RESPONSE_END:				    // Measurement response end
-		printf("%d data point(s) received.", nDataPoints);
+		printf("%d data point(s) received.", *nDataPoints);
 	    fflush(stdout);
 	    continueParsing = 0;
 	    break;
@@ -261,12 +276,12 @@ int DisplayResults(RetCode code,MeasureData result)
 	return continueParsing;
 }
 
-void ResultsToCsv(RetCode code,MeasureData result)
+void ResultsToCsv(const RetCode code, const MeasureData result, const int nDataPoints)
 {
 	switch(code)
 	{
 	case CODE_RESPONSE_BEGIN:					// Measurement response begins
-		OpenCSVFile(RESULT_FILEPATHNAME,&pFCsv);
+		OpenCSVFile(RESULT_FILEPATHNAME, &pFCsv);
 		break;
 	case CODE_MEASURING:
 		break;
@@ -275,7 +290,7 @@ void ResultsToCsv(RetCode code,MeasureData result)
 		{
 			WriteHeaderToCSVFile(pFCsv);
 		}
-		WriteDataToCSVFile(pFCsv,result);
+		WriteDataToCSVFile(pFCsv, result, nDataPoints);
 		break;
 	case CODE_MEASUREMENT_DONE:			    	// Measurement loop complete
 		fclose(pFCsv);
@@ -287,7 +302,7 @@ void ResultsToCsv(RetCode code,MeasureData result)
 	}
 }
 
-void OpenCSVFile(const char *pFilename,FILE **fp)
+void OpenCSVFile(const char *pFilename, FILE **fp)
 {
 	*fp = fopen(pFilename, "w");		//Open file for writing (overwrite existing)
 	if (*fp == NULL)
@@ -304,17 +319,20 @@ void WriteHeaderToCSVFile(FILE *fp)
 		fflush(stdout);
 		return;
 	}
+	// Tell MS Excel that we use "," as separator
+	fprintf(fp,"\"sep=,\"\n");
+	// Write table header
 	fprintf(fp,"Index,Potential,Current,Frequency,Zreal,Zimag,CR,Status\n");
 }
 
 
-void WriteDataToCSVFile(FILE *fp, MeasureData resultdata)
+void WriteDataToCSVFile(FILE *fp, MeasureData resultdata, int nDataPoints)
 {
 	if (fp == NULL)
 	{
-		printf("Unable to write to CSV file\r\n");
+		printf("Unable to write to CSV file\n");
 		fflush(stdout);
 		return;
 	}
-	fprintf(fp,"%d,%f,%f,%f,%f,%f,%s,%s\n",nDataPoints+1,resultdata.potential,resultdata.current,resultdata.frequency,resultdata.zreal,resultdata.zimag,resultdata.cr,resultdata.status);
+	fprintf(fp,"%d,%f,%f,%f,%f,%f,%s,%s\n", nDataPoints+1, resultdata.potential, resultdata.current, resultdata.frequency, resultdata.zreal, resultdata.zimag, resultdata.cr, resultdata.status);
 }

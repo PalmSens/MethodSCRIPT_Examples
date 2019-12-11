@@ -70,14 +70,13 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 		if(tempChar > 0)
 		{
 			buf[i++] = tempChar;			//Stores tempchar into buffer
-			//printf("%c", (char)tempChar);	//print incomming character
-			//fflush(stdout);
+
 			if(tempChar == '\n')
 			{
 				buf[i] = '\0';
 				if(buf[0] == REPLY_VERSION_RESPONSE)
 					return CODE_VERSION_RESPONSE;
-				if(buf[0] == REPLY_MEASURING)
+				else if(buf[0] == REPLY_MEASURING)
 					return CODE_MEASURING;
 				else if(strcmp(buf, "e\n") == 0)	//Wdg 20-11-2019 added
 					return CODE_RESPONSE_BEGIN;		//..
@@ -92,6 +91,7 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 			}
 		}
 	} while (i < READ_BUFFER_LENGTH-1);
+
 	buf[i] = '\0';
 	return CODE_NULL;
 }
@@ -350,6 +350,9 @@ const char* GetCurrentRangeFromPackage(char* metaDataCR)
 			break;
 		case 137:
 			currentRangeStr = "5mA (High speed)";
+			break;
+		default:
+			currentRangeStr = "Invalid value";
 			break;
 	}
 	return currentRangeStr;

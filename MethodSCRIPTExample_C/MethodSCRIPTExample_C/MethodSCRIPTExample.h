@@ -87,16 +87,15 @@ int WriteToDevice(char c);
 int ReadFromDevice();
 
 ///
-/// Prints the parsed values on the console
+/// Prints the parsed values on the console or (-1) in case of an error.
 ///
-int DisplayResults(RetCode code,MeasureData result);
-
+int DisplayResults(RetCode code, MeasureData result, int *nDataPoints);
 
 
 ///
 /// Write a datapoint result to a CSV File
 ///
-void ResultsToCsv(RetCode code,MeasureData result);
+void ResultsToCsv(RetCode code, MeasureData result, int nDataPoints);
 
 ///
 /// Opens a CSV File
@@ -106,7 +105,7 @@ void OpenCSVFile(const char *pFilename,FILE **fp);
 ///
 /// Write data to (append) a CSV File
 ///
-void WriteDataToCSVFile(FILE *fp, MeasureData resultdata);
+void WriteDataToCSVFile(FILE *fp, MeasureData resultdata, int nDataPoints);
 void WriteHeaderToCSVFile(FILE *fp);
 
 #endif //ESPICOCODEEXAMPLE_H
