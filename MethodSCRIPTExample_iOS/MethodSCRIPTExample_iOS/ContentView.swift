@@ -81,7 +81,7 @@ struct ContentView: View {
                 Button(action: {
                     //NOTE 1: If you measure to many points SwiftUI's list of measurement points could become very slow.
                     //NOTE 2: Methodscript below was generated using PSTrace
-                    let script = "e\nvar c\nvar p\nset_pgstat_chan 1\nset_pgstat_mode 0\nset_pgstat_chan 0\nset_pgstat_mode 2\nset_max_bandwidth 80\nset_pot_range 500m 500m\nset_cr 590u\nset_autoranging 59n 590u\ncell_on\nmeas_loop_ca p c 500m 50m 3000m\npck_start\npck_add p\npck_add c\npck_end\nendloop\non_finished:\ncell_off\n\n"
+                    let script = "e\nvar c\nvar p\nset_pgstat_chan 1\nset_pgstat_mode 0\nset_pgstat_chan 0\nset_pgstat_mode 2\nset_max_bandwidth 80\nset_pot_range 500m 500m\nset_cr 590u\nset_autoranging 59n 590u\ncell_on\nmeas_loop_ca p c 500m 5m 5000m\npck_start\npck_add p\npck_add c\npck_end\nendloop\non_finished:\ncell_off\n\n"
                     self.bleConnection.sendMethodScript(methodScript: script)
                 }) {
                     Image(systemName: "play.fill")
