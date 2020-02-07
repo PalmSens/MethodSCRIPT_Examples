@@ -627,7 +627,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
             Log.e("Write characteristic not found for UUID: \(BLEConnection.writeToVSPCharacteristicUUID)")
         }
 
-        messages.insert("Successfully red characteristics", at: 0)
+        messages.insert("Successfully read characteristics", at: 0)
         Log.i("Finished reading characteristics")
     }
 
