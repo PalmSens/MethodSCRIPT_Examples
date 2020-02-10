@@ -1,9 +1,9 @@
 # -*- coding: ascii -*-
 """
 /* ----------------------------------------------------------------------------
- *         PalmSens Method SCRIPT SDK
+ *         PalmSens Method SCRIPT SDK V1.2
  * ----------------------------------------------------------------------------
- * Copyright (c) 2016, PalmSens BV
+ * Copyright (c) 2020, PalmSens BV
  *
  * All rights reserved.
  *
@@ -34,8 +34,9 @@ import serial.tools.list_ports
 import datetime
 import os.path
 import numpy as np
+import time
 
-
+PSEsPicoLibVersion = "1.2"
 
 #dictionary list for conversion of the SI prefixes
 sip_factor = [{"si":"a", "factor": 1e-18},      #atto 
@@ -45,6 +46,7 @@ sip_factor = [{"si":"a", "factor": 1e-18},      #atto
               {"si":"u", "factor": 1e-6 },      #micro
               {"si":"m", "factor": 1e-3 },      #mili
               {"si":" ", "factor": 1.0  },      # -
+              {"si":"i", "factor": 1.0  },      #integer
               {"si":"k", "factor": 1e3  },      #kilo
               {"si":"M", "factor": 1e6  },      #Mega
               {"si":"G", "factor": 1e9  },      #Giga
@@ -62,7 +64,8 @@ ms_value_types = [{"vt":"aa", "type": "unknown"             , "unit" : " " },
                   {"vt":"jd", "type": "Misc. generic 4"     , "unit" : " " }]
 
 
-
+def GetLibVersion():
+	return PSEsPicoLibVersion
 
 def GetVarType(vt):
     for i in range(len(ms_value_types)):
@@ -103,13 +106,17 @@ def GetValueMatrix(content):
 def ParseResultFile(resultfile):
     with open(resultfile) as f:
         content = f.readlines()
-        content = [x.strip() for x in content]
+        #content = [x.strip() for x in content]
     values = GetValueMatrix(content)
     return values    
 
 
 def GetColumnFromMatrix(matrix, column):
     value_list = [row[column] for row in matrix]
+    return np.asarray(value_list)
+
+def GetRowFromMatrix(matrix, row):
+    value_list = matrix[row]
     return np.asarray(value_list)
 
 def FindComport(exclude_port):
@@ -162,6 +169,20 @@ def GetVersion(ser):
     version = version[1:]                               #remove first character (echoed 't')
     #print("version=" + version)
     return version
+
+
+def LoadMscriptFromFlash(ser):
+    ser.write(bytes("Lmscr\n",  'ascii'))
+
+def RunMscriptFromFlash(ser):
+    ser.write(bytes("Lmscr\n",  'ascii'))        #load first
+    ser.write(bytes("r\n",  'ascii'))           #run script
+
+def GetMscriptVersion(ser):
+    ser.write(bytes("v\n",  'ascii'))
+    mscript_version = str(ser.readline(),  'ascii')
+    return mscript_version
+
     
 def GetRegister(ser,reg):
     sCmd = "G" + "%02d" % (reg)   
