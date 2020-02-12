@@ -30,23 +30,44 @@
  */
 """
 
+###############################################################################
+# Description
+###############################################################################
+# This example showcases how to perform a simple Cyclic Voltammetry (CV) 
+# measurement and output the results to the console.
+
+###############################################################################
+# Imports
+###############################################################################
 import serial      
 import os.path  
 import PSEsPicoLib 
 
+###############################################################################
+# Configuration
+###############################################################################
 
-#script specific settings
+#Folder where scripts are stored
 MSfilepath = ".\\MethodSCRIPT files"
+#Name of script file to run
 MScriptFile = "MSExampleCV.mscr"
+
+#COM port of the EmStat Pico
+myport = "COM9"
 
 #combine the path and filename 
 MScriptFile = os.path.join(MSfilepath, MScriptFile)
 
+###############################################################################
+# Code
+###############################################################################
 
 #initialization and open the port
 ser = serial.Serial()   #Create an instance of the serial object
 
-myport = "COM55"                            #set the comport
+#Set printing verbosity to false
+PSEsPicoLib.SetPrintVerbose(False)
+
 if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
     print("Succesfuly opened: " + ser.port  )
     try:
@@ -69,9 +90,9 @@ if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
                         str_vt = v[0:2]                  #get the value-type 
                         str_var = v[2:2+8]               #strip out value type, we ignore it for now
                         value = PSEsPicoLib.ParseVarString(str_var)   #Parse the value
-                        var_type = PSEsPicoLib.GetVarType(str_vt)   #Get the variable type  
-                        var_unit = PSEsPicoLib.GetValueUnit(str_vt)   #Get the unit      
-                        print(var_type + "=" +str(value) + " " + str(var_unit) )
+                        var_type = PSEsPicoLib.GetVarTypeName(str_vt)   #Get the variable type  
+                        var_unit = PSEsPicoLib.GetVarTypeUnit(str_vt)   #Get the unit      
+                        print(var_type + " = " +str(value) + " " + str(var_unit) )
                 if (res_line == '\n'):                   #Check on termination of data from the device
                     break                                #exit while loop
 
@@ -83,4 +104,3 @@ if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
        ser.close()                                  #close the comport
 else:
     print("cannot open serial port ")
-    
