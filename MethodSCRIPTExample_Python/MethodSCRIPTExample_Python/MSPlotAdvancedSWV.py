@@ -36,6 +36,9 @@
 # The example runs a script that contains two SWV measurements. It can also be
 # easily converted to parse any MethodSCRIPT output by changing the plotted 
 # columns in the configuration section.
+#
+# To run this example, connect the EmStat Pico to the PalmSens RedOx dummy cell (WE A).
+#
 # The following features are showcased in this example:
 # - Running and plotting a Square Wave Voltammetry (SWV) measurement
 # - Plotting multiple curves or measurements in one plot
@@ -61,6 +64,13 @@ import sys
 MSfilepath = ".\\MethodSCRIPT files"
 #Name of script file to run
 MScriptFile = "MSExampleAdvancedSWV.mscr"
+
+#In this example, columns refer to the separate "pck_add" entries in each MethodSCRIPT data package.
+#For example, in the following script there are two columns per data package (a and b):
+#pck_start
+#pck_add a
+#pck_add b
+#pck_end
 
 #column index to put on the x axis
 xaxis_icol = 0
