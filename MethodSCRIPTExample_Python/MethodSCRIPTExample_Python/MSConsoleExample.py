@@ -55,12 +55,12 @@ MScriptFile = "MSExampleCV.mscr"
 #COM port of the EmStat Pico
 myport = "COM9"
 
-#combine the path and filename 
-MScriptFile = os.path.join(MSfilepath, MScriptFile)
-
 ###############################################################################
 # Code
 ###############################################################################
+
+#combine the path and filename 
+MScriptFile = os.path.join(MSfilepath, MScriptFile)
 
 #initialization and open the port
 ser = serial.Serial()   #Create an instance of the serial object
