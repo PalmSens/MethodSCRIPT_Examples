@@ -282,7 +282,8 @@ def FindComport(exclude_port):
     ports = serial.tools.list_ports.comports(include_links=False)   #Get the available ports
     myport = None
     for port in ports :
-        print(port.device)
+        if(print_verbose == True):
+            print(port.device)
         if (port.device != exclude_port):               #Exclude port from the available ports
             myport = port.device                        #Set the port to the highest availabe port
     return myport   
@@ -406,14 +407,16 @@ def ReadLinesFromFile(filename):
 
 #Send one line of a script
 def SendScriptLine(ser,scriptline):
-    print(scriptline.strip())
+    if(print_verbose == True):
+        print(scriptline.strip())
     ser.write(bytes(scriptline,  'ascii'))
     
 #Send MethodSCRIPT to the EmStat Pico
 def SendScriptFile(ser,scriptfile):
     with open(scriptfile) as f:
         content = f.readlines()
-    print(len(content))
+    if(print_verbose == True):
+        print(len(content))
     for scriptline in content:
         SendScriptLine(ser,scriptline)
         
