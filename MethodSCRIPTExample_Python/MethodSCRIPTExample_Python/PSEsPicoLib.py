@@ -371,7 +371,7 @@ def GetResults(ser):
         if(print_verbose == True):
             print("read data: " + str(response))
         datafile = datafile + str_line
-        if (str_line == '\n'):                          #empty line means end of script
+        if (str_line == '\n' or  '!' in str_line):                          #empty line means end of script
             break
     return datafile
 
