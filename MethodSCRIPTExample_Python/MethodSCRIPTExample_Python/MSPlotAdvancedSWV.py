@@ -32,7 +32,19 @@
 ###############################################################################
 # Description
 ###############################################################################
-# This example showcases how to perform and plot a simple Cyclic Voltammetry (CV) measurement
+# This example showcases some of the more advanced features of the PSEsPicoLib.
+# The example runs a script that contains two SWV measurements. It can also be
+# easily converted to parse any MethodSCRIPT output by changing the plotted 
+# columns in the configuration section.
+#
+# To run this example, connect the EmStat Pico to the PalmSens RedOx dummy cell (WE A).
+#
+# The following features are showcased in this example:
+# - Running and plotting a Square Wave Voltammetry (SWV) measurement
+# - Plotting multiple curves or measurements in one plot
+# - Plotting multiple measured values against on x axis
+# - Extracting the type of measured values from the received data
+# - Exporting measurement data to CSV
 
 ###############################################################################
 # Imports
@@ -51,7 +63,21 @@ import sys
 #Folder where scripts are stored
 MSfilepath = ".\\MethodSCRIPT files"
 #Name of script file to run
-MScriptFile = "MSExampleCV.mscr"
+MScriptFile = "MSExampleAdvancedSWV.mscr"
+
+#In this example, columns refer to the separate "pck_add" entries in each MethodSCRIPT data package.
+#For example, in the following script there are two columns per data package (a and b):
+#pck_start
+#pck_add a
+#pck_add b
+#pck_end
+
+#column index to put on the x axis
+xaxis_icol = 0
+#column indices to put on the y axis, can be multiple but must be same type
+yaxis_icols = [1, 2, 3]
+#names for each column
+yaxis_col_names = ['Potential', 'Current', 'Forward Current', 'Reverse Current']
 
 #COM port of the EmStat Pico
 myport = "COM9"
@@ -113,23 +139,60 @@ if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
        ser.close()                                  #close the comport
 else:
     print("cannot open serial port ")
-
+    
 if(not measurement_succes):
    sys.exit()
    
-value_matrix = PSEsPicoLib.ParseResultFile(ResultFile)  #Parse result file to Value matrix
+#Parse result file to Value matrix and value type matrix
+value_matrix, vts = PSEsPicoLib.ParseResultFileWithVT(ResultFile)
 
-applied_potential=PSEsPicoLib.GetColumnFromMatrix(value_matrix,0)  #Get the applied potentials
-measured_current=PSEsPicoLib.GetColumnFromMatrix(value_matrix,1)   #Get the measured current
+#Convert data to CSV string
+csv = PSEsPicoLib.MatrixToCSV(value_matrix, vts)
 
-plt.figure(1)
-plt.plot(applied_potential,measured_current)
-plt.title("Voltammogram")
-plt.xlabel("Applied Potential (V)")
-plt.ylabel("Measured Current (A)")
-plt.show()
+#Get filepath to save CSV to
+(prefix, sep, suffix) = MScriptFile.rpartition('.')     #split the file-extension and the filename
+CSVFile = prefix + '.csv'                               #change the extension to .csv
+CSVFile = os.path.join(MSfilepath + "\\data", CSVFile)  #join path to data folder and filename
+CSVFile = PSEsPicoLib.CheckFileExistAndRename(CSVFile)  #check that we can save here
+
+#Write CSV to file
+f = open(CSVFile,"w+")      #Open file for writing
+f.write(csv)                #write data to file
+f.close()                   #close file
+           
+#Comment out close to prevent closing previous plot before each run
+plt.close()
+plt.figure()
+plt.title(os.path.basename(MScriptFile))
+#Put specified column of the first curve on x axis
+xvar_type = PSEsPicoLib.GetVarType(vts, xaxis_icol);
+plt.xlabel(PSEsPicoLib.GetVarTypeName(xvar_type) + ' (' + PSEsPicoLib.GetVarTypeUnit(xvar_type) + ')')
+#Put specified column of the first curve on y axis
+yvar_type = PSEsPicoLib.GetVarType(vts, yaxis_icols[0]);
+plt.ylabel(PSEsPicoLib.GetVarTypeName(yvar_type) + ' (' + PSEsPicoLib.GetVarTypeUnit(yvar_type) + ')')
 plt.grid(b=True, which='major')
 plt.grid(b=True, which='minor', color='b', linestyle='-', alpha=0.2)
 plt.minorticks_on()
 
-    
+#Loop through all curves and plot them
+ncurves = PSEsPicoLib.GetCurveCount(value_matrix) #Query amount of curves found
+for icurve in range(ncurves):
+    #Get xaxis for this curve
+    xaxis = PSEsPicoLib.GetColumnFromMatrix(value_matrix, xaxis_icol, icurve)
+    #loop through all yaxis columns and plot one curve per column
+    ncols = PSEsPicoLib.GetVarTypeCols(vts, icurve);
+    for icol in yaxis_icols:
+        #ignore invalid columns
+        if(icol < ncols and PSEsPicoLib.GetVarType(vts, icol, icurve) == yvar_type): 
+            #Get the yaxis for this column
+            yaxis=PSEsPicoLib.GetColumnFromMatrix(value_matrix, icol, icurve)
+            #Plot curve y axis against global x axis
+            #If there are multiple curves, add curve index to label
+            if(ncurves > 1):
+                plt.plot(xaxis, yaxis, label= yaxis_col_names[icol] + ' vs ' + yaxis_col_names[xaxis_icol] + ' ' + str(icurve))
+            else:
+                plt.plot(xaxis, yaxis, label= yaxis_col_names[icol] + ' vs ' + yaxis_col_names[xaxis_icol])
+
+#Generate legend and show plot
+plt.legend()
+plt.show()

@@ -3,7 +3,7 @@
 /* ----------------------------------------------------------------------------
  *         PalmSens Method SCRIPT SDK
  * ----------------------------------------------------------------------------
- * Copyright (c) 2016, PalmSens BV
+ * Copyright (c) 2019-2020, PalmSens BV
  *
  * All rights reserved.
  *
@@ -29,28 +29,55 @@
  * ----------------------------------------------------------------------------
  */
 """
+###############################################################################
+# Description
+###############################################################################
+# This example showcases how to perform and plot a 
+# Electrochemical Impedance Spectroscopy (EIS) measurement.
+
+###############################################################################
+# Imports
+###############################################################################
 
 import serial      
 import os.path  
 import PSEsPicoLib 
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
+###############################################################################
+# Configuration
+###############################################################################
 
-
-
-#script specific settings
+#Folder where scripts are stored
 MSfilepath = ".\\MethodSCRIPT files"
+#Name of script file to run
 MScriptFile = "MSExampleEIS.mscr"
+
+#COM port of the EmStat Pico
+myport = "COM9"
+
+#Set to False to disable printing of raw and parsed data
+verbose_printing = True
+
+###############################################################################
+# Code
+###############################################################################
+
+#Set printing verbosity
+PSEsPicoLib.SetPrintVerbose(verbose_printing)
 
 #combine the path and filename 
 MScriptPathandFile = os.path.join(MSfilepath, MScriptFile)
 
+#used to only parse data once we have succesfully executed the script
+measurement_succes = False
 
 #initialization and open the port
 ser = serial.Serial()   #Create an instance of the serial object
 
-myport = "COM55"                            #set the comport
+myport = "COM9"                            #set the comport
 if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
     print("Succesfuly opened: " + ser.port  )
     try:
@@ -79,6 +106,8 @@ if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
            f = open(ResultFile,"w+")    #Open file for writing
            f.write(datafile)            #write data to file
            f.close()                    #close file
+           
+           measurement_succes = True
        else:
            print("Unable to connected!")                  
        ser.close()                                  #close the comport
@@ -89,9 +118,11 @@ if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
 else:
     print("cannot open serial port ")
 
-
+if(not measurement_succes):
+   sys.exit()
+    
 value_matrix = PSEsPicoLib.ParseResultFile(ResultFile)  #Parse result file to Value matrix
-
+    
 applied_frequency=PSEsPicoLib.GetColumnFromMatrix(value_matrix,0)   #Get the applied frequencies
 measured_zreal=PSEsPicoLib.GetColumnFromMatrix(value_matrix,1)      #Get the measured real part of the complex impedance
 measured_zimag=PSEsPicoLib.GetColumnFromMatrix(value_matrix,2)      #Get the measured imaginary part of the complex impedance
@@ -139,14 +170,4 @@ fig.tight_layout()              # otherwise the right y-label is slightly clippe
 plt.grid(True,which="both")
 plt.title('Bode plot')
 plt.show()
-
-
-
-#Save results as comma seperated values (.csv) file
-(prefix, sep, suffix) = ResultFile.rpartition('.')
-CSVFile = prefix + '.csv'
-print(CSVFile)
-
-np.savetxt(CSVFile,np.transpose([applied_frequency,measured_zreal,measured_zimag,Z,Zphase]) , delimiter=',')
-
     
