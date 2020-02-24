@@ -80,7 +80,7 @@ yaxis_icols = [1, 2, 3]
 yaxis_col_names = ['Potential', 'Current', 'Forward Current', 'Reverse Current']
 
 #COM port of the EmStat Pico
-myport = "COM9"
+myport = "COM4"
 
 #Set to False to disable printing of raw and parsed data
 verbose_printing = True
