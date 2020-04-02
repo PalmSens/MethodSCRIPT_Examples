@@ -104,6 +104,7 @@ ser = serial.Serial()   #Create an instance of the serial object
 if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
     print("Succesfuly opened: " + ser.port  )
     try:
+       PSEsPicoLib.Flush(ser)                       #Flush the EmstatPico parse buffer
        if PSEsPicoLib.IsConnected(ser):             #Check if EmstatPico is connected
            print("Connected!")                  
            

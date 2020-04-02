@@ -53,7 +53,7 @@ MSfilepath = ".\\MethodSCRIPT files"
 MScriptFile = "MSExampleCV.mscr"
 
 #COM port of the EmStat Pico
-myport = "COM9"
+myport = "COM101"
 
 ###############################################################################
 # Code
@@ -71,6 +71,7 @@ PSEsPicoLib.SetPrintVerbose(False)
 if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
     print("Succesfuly opened: " + ser.port  )
     try:
+       PSEsPicoLib.Flush(ser)                       #Flush the EmstatPico parse buffer
        if PSEsPicoLib.IsConnected(ser):             #Check if EmstatPico is connected
            print("Connected!")                  
            print(PSEsPicoLib.GetVersion(ser))       #Print the version 

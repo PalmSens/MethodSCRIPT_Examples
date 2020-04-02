@@ -322,6 +322,14 @@ def IsConnected(ser):
         return False
     return True
 
+#Flush the Pico parse buffer 
+def Flush(ser):
+    prev_timeout = ser.timeout                          #Get the current timeout to restore it later
+    ser.timeout = 4                                     #Set the timeout to 2 seconds
+    ser.write(bytes("\n",  'ascii'))                   	#write a linefeed to flush
+    response =  ser.read_until(bytes("\n", 'ascii'))   	#read until \n to catch the response
+    ser.timeout = prev_timeout                          #restore timeout
+
 #Query the EmStat Pico firmware version
 def GetVersion(ser):
     ser.write(bytes("t\n",  'ascii'))
