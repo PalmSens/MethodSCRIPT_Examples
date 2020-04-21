@@ -56,7 +56,7 @@ MSfilepath = ".\\MethodSCRIPT files"
 MScriptFile = "MSExampleEIS.mscr"
 
 #COM port of the EmStat Pico
-myport = "COM9"
+myport = "COM101"
 
 #Set to False to disable printing of raw and parsed data
 verbose_printing = True
@@ -77,10 +77,10 @@ measurement_succes = False
 #initialization and open the port
 ser = serial.Serial()   #Create an instance of the serial object
 
-myport = "COM9"                            #set the comport
 if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
     print("Succesfuly opened: " + ser.port  )
     try:
+       PSEsPicoLib.Flush(ser)                       #Flush the EmstatPico parse buffer
        if PSEsPicoLib.IsConnected(ser):             #Check if EmstatPico is connected
            print("Connected!")                  
            

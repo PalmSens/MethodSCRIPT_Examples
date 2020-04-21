@@ -75,7 +75,7 @@ sip_factor = [{"si":"a", "factor": 1e-18},      #atto
 ms_var_types = [  {"vt":"aa", "type": "unknown"             , "unit" : " " },
                   {"vt":"ab", "type": "WE vs RE potential"  , "unit" : "V" },
                   {"vt":"ac", "type": "CE potential"        , "unit" : "V" },
-                  {"vt":"ad", "type": "WE potential"        , "unit" : "V" },
+                  #{"vt":"ad", "type": "WE potential"        , "unit" : "V" },
                   {"vt":"ae", "type": "RE potential"        , "unit" : "V" },
                   {"vt":"ag", "type": "WE vs CE potential"  , "unit" : "V" },
                   
@@ -93,6 +93,7 @@ ms_var_types = [  {"vt":"aa", "type": "unknown"             , "unit" : " " },
                   {"vt":"da", "type": "Applied potential"   , "unit" : "V"},
                   {"vt":"db", "type": "Applied current"     , "unit" : "A"},
                   {"vt":"dc", "type": "Applied frequency"   , "unit" : "Hz"},
+                  {"vt":"dd", "type": "Applied AC amplitude", "unit" : "Vrms"},
                   
                   {"vt":"eb", "type": "Time"                , "unit" : "s"},
                   {"vt":"ec", "type": "Pin mask"            , "unit" : " "},
@@ -320,6 +321,14 @@ def IsConnected(ser):
     if start == -1:                                     #return if string is found
         return False
     return True
+
+#Flush the Pico parse buffer 
+def Flush(ser):
+    prev_timeout = ser.timeout                          #Get the current timeout to restore it later
+    ser.timeout = 4                                     #Set the timeout to 2 seconds
+    ser.write(bytes("\n",  'ascii'))                   	#write a linefeed to flush
+    response =  ser.read_until(bytes("\n", 'ascii'))   	#read until \n to catch the response
+    ser.timeout = prev_timeout                          #restore timeout
 
 #Query the EmStat Pico firmware version
 def GetVersion(ser):

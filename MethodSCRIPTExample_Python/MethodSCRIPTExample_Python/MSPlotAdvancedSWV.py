@@ -80,7 +80,7 @@ yaxis_icols = [1, 2, 3]
 yaxis_col_names = ['Potential', 'Current', 'Forward Current', 'Reverse Current']
 
 #COM port of the EmStat Pico
-myport = "COM9"
+myport = "COM4"
 
 #Set to False to disable printing of raw and parsed data
 verbose_printing = True
@@ -104,6 +104,7 @@ ser = serial.Serial()   #Create an instance of the serial object
 if PSEsPicoLib.OpenComport(ser,myport,1):   #open myport with 1 sec timeout
     print("Succesfuly opened: " + ser.port  )
     try:
+       PSEsPicoLib.Flush(ser)                       #Flush the EmstatPico parse buffer
        if PSEsPicoLib.IsConnected(ser):             #Check if EmstatPico is connected
            print("Connected!")                  
            
