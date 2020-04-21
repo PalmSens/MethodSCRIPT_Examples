@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------------
  *         PalmSens MethodSCRIPT SDK Example
  * ----------------------------------------------------------------------------
- * Copyright (c) 2019, PalmSens BV
+ * Copyright (c) 2019-2020, PalmSens BV
  *
  * All rights reserved.
  *
@@ -29,7 +29,7 @@
 /**
  *  Implementation of MethodSCRIPT. See header file and the "Getting started-MethodSCRIPT-Example-C.pdf" for more information.
  */
-#include "MethodScriptExample.h"
+#include "MethodSCRIPTExample.h"
 
 #define MS_MAX_LINECHARS	128
 
@@ -39,7 +39,7 @@ MSComm msComm;				// MethodScript communication interface
 FILE *pFCsv;				// CSV File pointer
 
 
-const char* PORT_NAME = "\\\\.\\COM4";									   // The name of the port - to be changed, by looking up the device manager
+const char* PORT_NAME = "\\\\.\\COM23";									   // The name of the port - to be changed, by looking up the device manager
 const DWORD BAUD_RATE = 230400;											   // The baud rate for EmStat Pico
 
 
@@ -63,7 +63,6 @@ const DWORD BAUD_RATE = 230400;											   // The baud rate for EmStat Pico
 
 int main(int argc, char *argv[])
 {
-	int continueParsing;
 	MeasureData data;
 	int nDataPoints;
 	RetCode status_code = MSCommInit(&msComm, &WriteToDevice, &ReadFromDevice);
@@ -73,19 +72,29 @@ int main(int argc, char *argv[])
 		int isOpen = OpenSerialPort();
 		if(isOpen)
 		{
+			int fSuccess = VerifyEmStatPico();					// Verifies if the connected device is EmStat Pico.
+			if(fSuccess)
+			{
+				printf("Serial port successfully connected to EmStat Pico.\n");
+			} else {
+				printf("Connected device is not EmStat Pico.\n");
+				return -1;
+			}
+
 			char buff[PATH_MAX];
 			char *currentDirectory = getcwd(buff, PATH_MAX);		      // Fetches the current directory
-			const char* filePath = METHODSCRIPT_FILEPATHNAME; 	  			// MethodScript Filename incl. path
-			int combinedFilePathSize = PATH_MAX + 1 + strlen(filePath);	  	// Determines the max size of the combined file path
-			char combinedFilePath[combinedFilePathSize];				  	// An array to hold the combined file path
 			if(currentDirectory != NULL)
 			{
+				const char* filePath = METHODSCRIPT_FILEPATHNAME; 	  			// MethodScript Filename incl. path
+				int combinedFilePathSize = PATH_MAX + 1 + strlen(filePath);	  	// Determines the max size of the combined file path
+				char combinedFilePath[combinedFilePathSize];				  	// An array to hold the combined file path
 				char *combinedPath = strcat(currentDirectory, filePath);  // Concatenates the current directory and file path to generate the combined file path
 				strcpy(combinedFilePath, combinedPath);
 				if(SendScriptFile(combinedFilePath))
 				{
 					printf("\nMethodSCRIPT sent to EmStat Pico.\n");
 					nDataPoints = 0;
+					int continueParsing;
 					do
 					{
 						status_code = ReceivePackage(&msComm, &data);			// Receives the response and stores the parsed values in the struct 'data'
@@ -155,18 +164,13 @@ int OpenSerialPort()
 
 	if (!SetCommTimeouts(hCom, &timeouts)) {
 		printf("SetCommState failed with error %lu.\n", GetLastError());
+		return 0;
 	}
 	fflush(stdout);
 
-	fSuccess = VerifyEmStatPico();					// Verifies if the connected device is EmStat Pico.
-	if(fSuccess)
-	{
-		printf("Serial port successfully connected to EmStat Pico.\n");
-		return 1;
-	}
-	printf("Connected device is not EmStat Pico.\n");
-	return 0;
+	return 1;
 }
+
 
 BOOL VerifyEmStatPico()
 {
@@ -249,7 +253,6 @@ int DisplayResults(RetCode code, MeasureData result, int *nDataPoints)
 			printf("Zreal(Ohm): %16.3f \t", result.zreal);
 			printf("Zimag(Ohm): %16.3f \t", result.zimag);
 			fflush(stdout);
-
 		}
 		else
 		{
@@ -307,7 +310,7 @@ void OpenCSVFile(const char *pFilename, FILE **fp)
 	*fp = fopen(pFilename, "w");		//Open file for writing (overwrite existing)
 	if (*fp == NULL)
 	{
-		printf("Could not open CSV file %s", pFilename);
+		printf("Could not open CSV file %s (hint: make sure the directory exists)", pFilename);
 	}
 }
 

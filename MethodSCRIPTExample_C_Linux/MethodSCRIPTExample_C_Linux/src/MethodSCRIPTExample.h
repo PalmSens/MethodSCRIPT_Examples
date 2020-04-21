@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------------
  *         PalmSens MethodSCRIPT SDK
  * ----------------------------------------------------------------------------
- * Copyright (c) 2019, PalmSens BV
+ * Copyright (c) 2019-2020, PalmSens BV
  *
  * All rights reserved.
  *
@@ -51,7 +51,7 @@
 #ifdef WIN32	// Windows
 	#define PORT_NAME "\\\\.\\COM12"								// The name of the port - to be changed, by looking up the device manager
 	// Note port number to start with "\\\\.\\" to allow for any port number in Windows.
-#else			// Linux
+#else			// Linux. the port name to be changed. Can be found using "dmesg | grep FTDI" in the terminal
 	#define PORT_NAME "/dev/ttyUSB0"
 #endif
 #define BAUD_RATE 230400										   // The baud rate for EmStat Pico
@@ -73,6 +73,7 @@
 ///
 bool VerifyEmStatPico();
 
+
 ///
 /// Reads a line from the script file and writes it to the EmStat Pico
 ///
@@ -91,19 +92,25 @@ int DisplayResults(RetCode code, MeasureData result, int *nDataPoints);
 ///
 void ResultsToCsv(RetCode code, MeasureData result, int nDataPoints);
 
+
 ///
 /// Opens a CSV File
 ///
 void OpenCSVFile(const char *pFilename,FILE **fp);
 
+
 ///
 /// Write data to (append) a CSV File
 ///
 void WriteDataToCSVFile(FILE *fp, MeasureData resultdata, int nDataPoints);
+
+
+///
+/// Write the header line to the CSV file
+///
 void WriteHeaderToCSVFile(FILE *fp);
 
+
 #endif //ESPICOCODEEXAMPLE_H
-
-
 
 

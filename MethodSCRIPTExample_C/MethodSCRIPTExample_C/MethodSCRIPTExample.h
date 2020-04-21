@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------------
- *         PalmSens MethodSCRIPT SDK //TODO: name inconsistent with .c file - DONE
+ *         PalmSens MethodSCRIPT SDK
  * ----------------------------------------------------------------------------
- * Copyright (c) 2019, PalmSens BV
+ * Copyright (c) 2019-2020, PalmSens BV
  *
  * All rights reserved.
  *
@@ -47,11 +47,13 @@
 //////////////////////////////////////////////////////////////////////////////
 const char* CMD_VERSION_STRING = "t\n";
 
+
 //////////////////////////////////////////////////////////////////////////////
 // Normal Functions
 //
 // These functions are used during normal operation.
 //////////////////////////////////////////////////////////////////////////////
+
 
 ///
 /// Opens the serial port to which Emstat pico is connected.
@@ -60,12 +62,14 @@ const char* CMD_VERSION_STRING = "t\n";
 ///
 int OpenSerialPort();
 
+
 ///
 /// Verifies if the connected device is EmStat Pico.
 ///
 /// Returns: 1 if EmStat Pico is detected, 0 in case of failure.
 ///
 BOOL VerifyEmStatPico();
+
 
 ///
 /// Reads a line from the script file and writes it to the EmStat Pico
@@ -74,6 +78,7 @@ BOOL VerifyEmStatPico();
 ///
 int SendScriptFile(char* fileName);
 
+
 ///
 /// Writes the input character to the device
 ///
@@ -81,10 +86,12 @@ int SendScriptFile(char* fileName);
 ///
 int WriteToDevice(char c);
 
+
 ///
 /// Returns a character read from the EmStat Pico
 ///
 int ReadFromDevice();
+
 
 ///
 /// Prints the parsed values on the console or (-1) in case of an error.
@@ -97,19 +104,24 @@ int DisplayResults(RetCode code, MeasureData result, int *nDataPoints);
 ///
 void ResultsToCsv(RetCode code, MeasureData result, int nDataPoints);
 
+
 ///
 /// Opens a CSV File
 ///
 void OpenCSVFile(const char *pFilename,FILE **fp);
 
+
 ///
 /// Write data to (append) a CSV File
 ///
 void WriteDataToCSVFile(FILE *fp, MeasureData resultdata, int nDataPoints);
+
+
+///
+/// Write the header line to the CSV file
+///
 void WriteHeaderToCSVFile(FILE *fp);
 
+
 #endif //ESPICOCODEEXAMPLE_H
-
-
-
 

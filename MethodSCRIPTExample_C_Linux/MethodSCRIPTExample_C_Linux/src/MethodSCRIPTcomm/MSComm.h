@@ -5,7 +5,7 @@
  Name        : MSComm.h
  Copyright   :
  * ----------------------------------------------------------------------------
- * Copyright (c) 2019, PalmSens BV
+ * Copyright (c) 2019-2020, PalmSens BV
  *
  * All rights reserved.
  *

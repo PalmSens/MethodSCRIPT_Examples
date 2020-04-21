@@ -4,7 +4,7 @@
  Name        : MSComm.c
  Copyright   :
  * ----------------------------------------------------------------------------
- * Copyright (c) 2019, PalmSens BV
+ * Copyright (c) 2019-2020, PalmSens BV
  *
  * All rights reserved.
  *
@@ -33,7 +33,7 @@
 #include "MSComm.h"
 
 #define OFFSET_VALUE 0x8000000
-#define READ_BUFFER_LENGTH 100
+#define READ_BUFFER_LENGTH 1000
 
 RetCode MSCommInit(MSComm* msComm,	WriteCharFunc writeCharFunc, ReadCharFunc readCharFunc)
 {
@@ -63,9 +63,9 @@ void WriteChar(MSComm* msComm, char c)
 
 RetCode ReadBuf(MSComm* msComm, char* buf)
 {
-	int tempChar; 							//Temporary character used for reading
 	int i = 0;
 	do {
+		int tempChar; 							//Temporary character used for reading
 		tempChar = msComm->readCharFunc(); //Reads a character from the device
 		if(tempChar > 0)
 		{

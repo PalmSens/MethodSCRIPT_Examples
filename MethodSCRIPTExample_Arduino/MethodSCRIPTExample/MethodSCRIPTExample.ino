@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------------
  *         PalmSens MethodSCRIPT SDK Example
  * ----------------------------------------------------------------------------
- * Copyright (c) 2016, PalmSens BV
+ * Copyright (c) 2016-2020, PalmSens BV
  *
  * All rights reserved.
  *

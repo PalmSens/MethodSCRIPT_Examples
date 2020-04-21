@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------------
  *         PalmSens MethodSCRIPT SDK Example
  * ----------------------------------------------------------------------------
- * Copyright (c) 2020, PalmSens BV
+ * Copyright (c) 2019-2020, PalmSens BV
  *
  * All rights reserved.
  *
@@ -32,6 +32,7 @@
 #include "MethodSCRIPTExample.h"
 #include "SerialPort.h"
 
+// Maximum number of characters one line to the EmStat Pico can contain
 #define MS_MAX_LINECHARS	128
 
 MSComm msComm;				// MethodScript communication interface
@@ -56,9 +57,11 @@ FILE *pFCsv;				// CSV File pointer
 #endif
 
 
+//
+//
+//
 int main(int argc, char *argv[])
 {
-	int continueParsing;
 	MeasureData data;
 	int nDataPoints;
 	RetCode status_code = MSCommInit(&msComm, &WriteToDevice, &ReadFromDevice);
@@ -66,30 +69,32 @@ int main(int argc, char *argv[])
 	if (status_code == CODE_OK)
 	{
 		int isOpen = OpenSerialPort();
-		int fSuccess = VerifyEmStatPico();					// Verifies if the connected device is EmStat Pico.
-		if(fSuccess)
-		{
-			printf("Serial port successfully connected to EmStat Pico.\n");
-		} else {
-			printf("Connected device is not EmStat Pico.\n");
-			return -1;
-		}
 
 		if(isOpen)
 		{
+			int fSuccess = VerifyEmStatPico();					// Verifies if the connected device is EmStat Pico.
+			if(fSuccess)
+			{
+				printf("Serial port successfully connected to EmStat Pico.\n");
+			} else {
+				printf("Connected device is not EmStat Pico.\n");
+				return -1;
+			}
+
 			char buff[PATH_MAX];
 			char *currentDirectory = getcwd(buff, PATH_MAX);		      // Fetches the current directory
-			const char* filePath = METHODSCRIPT_FILEPATHNAME; 	  			// MethodScript Filename incl. path
-			int combinedFilePathSize = PATH_MAX + 1 + strlen(filePath);	  	// Determines the max size of the combined file path
-			char combinedFilePath[combinedFilePathSize];				  	// An array to hold the combined file path
 			if(currentDirectory != NULL)
 			{
+				const char* filePath = METHODSCRIPT_FILEPATHNAME; 	  			// MethodScript Filename incl. path
+				int combinedFilePathSize = PATH_MAX + 1 + strlen(filePath);	  	// Determines the max size of the combined file path
+				char combinedFilePath[combinedFilePathSize];				  	// An array to hold the combined file path
 				char *combinedPath = strcat(currentDirectory, filePath);  // Concatenates the current directory and file path to generate the combined file path
 				strcpy(combinedFilePath, combinedPath);
 				if(SendScriptFile(combinedFilePath))
 				{
 					printf("\nMethodSCRIPT sent to EmStat Pico.\n");
 					nDataPoints = 0;
+					int continueParsing;
 					do
 					{
 						status_code = ReceivePackage(&msComm, &data);			// Receives the response and stores the parsed values in the struct 'data'
@@ -111,6 +116,9 @@ int main(int argc, char *argv[])
 }
 
 
+//
+//
+//
 bool VerifyEmStatPico()
 {
 	char versionString[30];
@@ -127,6 +135,10 @@ bool VerifyEmStatPico()
 	return isConnected;
 }
 
+
+//
+//
+//
 int SendScriptFile(char* fileName)
 {
 	FILE *fp;
@@ -146,6 +158,10 @@ int SendScriptFile(char* fileName)
 	return SUCCESS;
 }
 
+
+//
+//
+//
 int DisplayResults(RetCode code, MeasureData result, int *nDataPoints)
 {
 	int continueParsing = 1;
@@ -193,6 +209,10 @@ int DisplayResults(RetCode code, MeasureData result, int *nDataPoints)
 	return continueParsing;
 }
 
+
+//
+//
+//
 void ResultsToCsv(const RetCode code, const MeasureData result, const int nDataPoints)
 {
 	switch(code)
@@ -219,6 +239,10 @@ void ResultsToCsv(const RetCode code, const MeasureData result, const int nDataP
 	}
 }
 
+
+//
+//
+//
 void OpenCSVFile(const char *pFilename, FILE **fp)
 {
 	*fp = fopen(pFilename, "w");		//Open file for writing (overwrite existing)
@@ -228,11 +252,15 @@ void OpenCSVFile(const char *pFilename, FILE **fp)
 	}
 }
 
+
+//
+//
+//
 void WriteHeaderToCSVFile(FILE *fp)
 {
 	if (fp == NULL)
 	{
-		printf("Unable to write header to CSV file");
+		printf("Unable to write header to CSV file\n");
 		fflush(stdout);
 		return;
 	}
@@ -243,6 +271,9 @@ void WriteHeaderToCSVFile(FILE *fp)
 }
 
 
+//
+//
+//
 void WriteDataToCSVFile(FILE *fp, MeasureData resultdata, int nDataPoints)
 {
 	if (fp == NULL)
