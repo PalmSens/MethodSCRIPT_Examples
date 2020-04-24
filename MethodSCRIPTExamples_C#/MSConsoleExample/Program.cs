@@ -26,14 +26,18 @@ namespace EmStatConsoleExample
         static string RawData;
         static int NDataPointsReceived = 0;                                                          //The number of data points received from the measurement
 
-        readonly static Dictionary<string, double> SI_Prefix_Factor = new Dictionary<string, double> //The SI unit of the prefixes and their corresponding factors
+        /// <summary>
+        /// The SI unit of the prefixes and their corresponding factors
+        /// </summary>
+        readonly static Dictionary<string, double> SI_Prefix_Factor = new Dictionary<string, double>
                                                           { { "a", 1e-18 },
                                                             { "f", 1e-15 },
                                                             { "p", 1e-12 },
                                                             { "n", 1e-9 },
                                                             { "u", 1e-6 },
                                                             { "m", 1e-3 },
-                                                            { " ", 1 },
+                                                            { " ", 1.0 },
+                                                            { "i", 1.0 },
                                                             { "k", 1e3 },
                                                             { "M", 1e6 },
                                                             { "G", 1e9 },
@@ -41,12 +45,47 @@ namespace EmStatConsoleExample
                                                             { "P", 1e15 },
                                                             { "E", 1e18 }};
 
-        readonly static Dictionary<string, string> MeasurementVariables = new Dictionary<string, string>  //Variable types and their corresponding labels
-                                                                            { { "da", "E (V)" },
-                                                                              { "ba", "i (A)" },
-                                                                              { "dc", "Frequency (Hz)" },
-                                                                              { "cc", "Z' (Ohm)" },
-                                                                              { "cd", "Z'' (Ohm)" } };
+        /// <summary>
+        /// Variable types and their corresponding labels
+        /// </summary>
+        readonly static Dictionary<string, string> MeasurementVariables = new Dictionary<string, string>
+        {
+            {"aa", " " },
+            {"ab", "E (V)" }, //WE vs RE potential
+            {"ac", "E CE (V)" }, //Versus GND
+            {"ad", "E WE/SE (V)" }, //Versus GND
+            {"ae", "E RE (V)" }, //Versus GND
+            {"ag", "E WE/SE vs CE (V)" },
+
+            {"as", "E AIN0 (V)" },
+            {"at", "E AIN1 (V)" },
+            {"au", "E AIN2 (V)" },
+
+
+            {"ba", "i (A)" }, //WE current
+
+            {"ca", "Phase (Degrees)" },
+            {"cb", "Z (Ohm)" },
+            {"cc", "Z' (Ohm)" },
+            {"cd", "Z'' (Ohm)" },
+
+
+            {"da", "E (V)" }, //Applied WE vs RE setpoint
+            {"db", "i (A)" }, //Applied WE current setpoint
+            {"dc", "Frequency (Hz)" }, //Applied frequency
+            {"dd", "E AC (Vrms)" }, //Applied ac RMS amplitude
+
+
+            {"eb", "Time (s)"},
+            {"ec", "Pin mask"},
+
+            {"ja", "Misc. generic 1" },
+            {"jb", "Misc. generic 2" },
+            {"jc", "Misc. generic 3" },
+
+            {"jd", " " }
+        };
+
         /// <summary>
         /// All possible current ranges, the current ranges
         /// that are supported by EmStat pico.
