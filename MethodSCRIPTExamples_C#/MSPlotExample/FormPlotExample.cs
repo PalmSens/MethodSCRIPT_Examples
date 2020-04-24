@@ -32,27 +32,104 @@ namespace EmStatPicoPlotExample
         private PlotModel plotModel = new PlotModel();
         private LineSeries plotData;
 
-        readonly static Dictionary<string, double> SI_Prefix_Factor = new Dictionary<string, double> //The SI unit of the prefixes and their corresponding factors
-                                                                   { { "a", 1e-18 },
-                                                                     { "f", 1e-15 },
-                                                                     { "p", 1e-12 },
-                                                                     { "n", 1e-9 },
-                                                                     { "u", 1e-6 },
-                                                                     { "m", 1e-3 },
-                                                                     { " ", 1 },
-                                                                     { "k", 1e3 },
-                                                                     { "M", 1e6 },
-                                                                     { "G", 1e9 },
-                                                                     { "T", 1e12 },
-                                                                     { "P", 1e15 },
-                                                                     { "E", 1e18 }};
+        /// <summary>
+        /// The SI unit of the prefixes and their corresponding factors
+        /// </summary>
+        readonly static Dictionary<string, double> SI_Prefix_Factor = new Dictionary<string, double>
+                                                          { { "a", 1e-18 },
+                                                            { "f", 1e-15 },
+                                                            { "p", 1e-12 },
+                                                            { "n", 1e-9 },
+                                                            { "u", 1e-6 },
+                                                            { "m", 1e-3 },
+                                                            { " ", 1.0 },
+                                                            { "i", 1.0 },
+                                                            { "k", 1e3 },
+                                                            { "M", 1e6 },
+                                                            { "G", 1e9 },
+                                                            { "T", 1e12 },
+                                                            { "P", 1e15 },
+                                                            { "E", 1e18 }};
 
-        readonly static Dictionary<string, string> MeasurementVariables = new Dictionary<string, string>  //Variable types and their corresponding labels
-                                                                            { { "da", "E (V)" },
-                                                                              { "ba", "I (A)" },
-                                                                              { "dc", "Frequency" },
-                                                                              { "cc", "Z'" },
-                                                                              { "cd", "Z''" } };
+        /// <summary>
+        /// Variable types and their corresponding labels
+        /// </summary>
+        readonly static Dictionary<string, string> MeasurementVariables = new Dictionary<string, string>
+        {
+            {"aa", " " },
+            {"ab", "E (V)" }, //WE vs RE potential
+            {"ac", "E CE (V)" }, //Versus GND
+            {"ad", "E WE/SE (V)" }, //Versus GND
+            {"ae", "E RE (V)" }, //Versus GND
+            {"ag", "E WE/SE vs CE (V)" },
+
+            {"as", "E AIN0 (V)" },
+            {"at", "E AIN1 (V)" },
+            {"au", "E AIN2 (V)" },
+
+
+            {"ba", "i (A)" }, //WE current
+
+            {"ca", "Phase (Degrees)" },
+            {"cb", "Z (Ohm)" },
+            {"cc", "Z' (Ohm)" },
+            {"cd", "Z'' (Ohm)" },
+
+
+            {"da", "E (V)" }, //Applied WE vs RE setpoint
+            {"db", "i (A)" }, //Applied WE current setpoint
+            {"dc", "Frequency (Hz)" }, //Applied frequency
+            {"dd", "E AC (Vrms)" }, //Applied ac RMS amplitude
+
+
+            {"eb", "Time (s)"},
+            {"ec", "Pin mask"},
+
+            {"ja", "Misc. generic 1" },
+            {"jb", "Misc. generic 2" },
+            {"jc", "Misc. generic 3" },
+
+            {"jd", " " }
+        };
+
+        /// <summary>
+        /// All possible current ranges, the current ranges
+        /// that are supported by EmStat pico.
+        /// </summary>
+        private enum CurrentRanges
+        {
+            cr100nA = 0,
+            cr2uA = 1,
+            cr4uA = 2,
+            cr8uA = 3,
+            cr16uA = 4,
+            cr32uA = 5,
+            cr63uA = 6,
+            cr125uA = 7,
+            cr250uA = 8,
+            cr500uA = 9,
+            cr1mA = 10,
+            cr5mA = 11,
+            hscr100nA = 128,
+            hscr1uA = 129,
+            hscr6uA = 130,
+            hscr13uA = 131,
+            hscr25uA = 132,
+            hscr50uA = 133,
+            hscr100uA = 134,
+            hscr200uA = 135,
+            hscr1mA = 136,
+            hscr5mA = 137,
+        }
+
+        [Flags]
+        private enum ReadingStatus
+        {
+            OK = 0x0,
+            Overload = 0x2,
+            Underload = 0x4,
+            Overload_Warning = 0x8
+        }
 
         public frmPlotExample()
         {
@@ -150,7 +227,7 @@ namespace EmStatPicoPlotExample
             serialPort.DataBits = 8;
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
-            serialPort.BaudRate = 230400;
+            serialPort.BaudRate = BAUD_RATE;
             serialPort.ReadTimeout = 1000;                              //Initial time out set to 1000ms, upon connecting to EmStat Pico, time out reset to READ_TIME_OUT
             serialPort.WriteTimeout = 2;
             return serialPort;

@@ -1,15 +1,23 @@
 e
-var f
+var h
 var r
 var j
+set_pgstat_chan 1
+set_pgstat_mode 0
+set_pgstat_chan 0
 set_pgstat_mode 3
-set_cr 10m
-meas_loop_eis f r j 15m 200k 500 11 0
-pck_start
-pck_add f
-pck_add r
-pck_add j
-pck_end
+set_max_bandwidth 200k
+set_pot_range 0 0
+set_cr 3m
+set_autoranging 600n 3m
+cell_on
+meas_loop_eis h r j 10m 100k 100 41 0
+	pck_start
+	pck_add h
+	pck_add r
+	pck_add j
+	pck_end
 endloop
 on_finished:
+cell_off
 

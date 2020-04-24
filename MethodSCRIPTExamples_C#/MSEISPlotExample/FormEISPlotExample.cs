@@ -43,25 +43,65 @@ namespace EmStatPicoEISPlotExample
         private LineSeries BodePlotDataMagnitude;
         private LineSeries BodePlotDataPhase;
 
-        readonly static Dictionary<string, double> SI_Prefix_Factor = new Dictionary<string, double> //The SI unit of the prefixes and their corresponding factors
-                                                                   { { "a", 1e-18 },
-                                                                     { "f", 1e-15 },
-                                                                     { "p", 1e-12 },
-                                                                     { "n", 1e-9 },
-                                                                     { "u", 1e-6 },
-                                                                     { "m", 1e-3 },
-                                                                     { " ", 1 },
-                                                                     { "k", 1e3 },
-                                                                     { "M", 1e6 },
-                                                                     { "G", 1e9 },
-                                                                     { "T", 1e12 },
-                                                                     { "P", 1e15 },
-                                                                     { "E", 1e18 }};
+        /// <summary>
+        /// The SI unit of the prefixes and their corresponding factors
+        /// </summary>
+        readonly static Dictionary<string, double> SI_Prefix_Factor = new Dictionary<string, double>
+                                                          { { "a", 1e-18 },
+                                                            { "f", 1e-15 },
+                                                            { "p", 1e-12 },
+                                                            { "n", 1e-9 },
+                                                            { "u", 1e-6 },
+                                                            { "m", 1e-3 },
+                                                            { " ", 1.0 },
+                                                            { "i", 1.0 },
+                                                            { "k", 1e3 },
+                                                            { "M", 1e6 },
+                                                            { "G", 1e9 },
+                                                            { "T", 1e12 },
+                                                            { "P", 1e15 },
+                                                            { "E", 1e18 }};
 
-        readonly static Dictionary<string, string> MeasurementVariables = new Dictionary<string, string>  //Variable types and their corresponding labels
-                                                                            { { "dc", "Frequency (Hz)" },
-                                                                              { "cc", "Z' (Ohm)" },
-                                                                              { "cd", "Z'' (Ohm)" } };
+        /// <summary>
+        /// Variable types and their corresponding labels
+        /// </summary>
+        readonly static Dictionary<string, string> MeasurementVariables = new Dictionary<string, string>
+        {
+            {"aa", " " },
+            {"ab", "E (V)" }, //WE vs RE potential
+            {"ac", "E CE (V)" }, //Versus GND
+            {"ad", "E WE/SE (V)" }, //Versus GND
+            {"ae", "E RE (V)" }, //Versus GND
+            {"ag", "E WE/SE vs CE (V)" },
+
+            {"as", "E AIN0 (V)" },
+            {"at", "E AIN1 (V)" },
+            {"au", "E AIN2 (V)" },
+
+
+            {"ba", "i (A)" }, //WE current
+
+            {"ca", "Phase (Degrees)" },
+            {"cb", "Z (Ohm)" },
+            {"cc", "Z' (Ohm)" },
+            {"cd", "Z'' (Ohm)" },
+
+
+            {"da", "E (V)" }, //Applied WE vs RE setpoint
+            {"db", "i (A)" }, //Applied WE current setpoint
+            {"dc", "Frequency (Hz)" }, //Applied frequency
+            {"dd", "E AC (Vrms)" }, //Applied ac RMS amplitude
+
+
+            {"eb", "Time (s)"},
+            {"ec", "Pin mask"},
+
+            {"ja", "Misc. generic 1" },
+            {"jb", "Misc. generic 2" },
+            {"jc", "Misc. generic 3" },
+
+            {"jd", " " }
+        };
 
         public frmEISPlotExample()
         {
@@ -129,7 +169,6 @@ namespace EmStatPicoEISPlotExample
             LineSeries lineSeries = new LineSeries()
             {
                 Color = color,
-                Smooth = true,
                 MarkerType = markerType,
                 MarkerSize = 5,
                 MarkerStroke = OxyColors.White,
@@ -162,8 +201,8 @@ namespace EmStatPicoEISPlotExample
         /// </summary>
         private void SetAxesNyquistPlot()
         {
-            var xAxisNyquistPlot = GetLinearAxis("Z (Ohm)", AxisPosition.Bottom);
-            var yAxisNyquistPlot = GetLinearAxis("-Z'' (Ohm)", AxisPosition.Left);
+            var xAxisNyquistPlot = GetLinearAxis("ZReal", "Z' (Ohm)", AxisPosition.Bottom, OxyColors.Black);
+            var yAxisNyquistPlot = GetLinearAxis("ZImag", "-Z'' (Ohm)", AxisPosition.Left, OxyColors.Black);
 
             //Add the axes to the Nyquist plot model
             NyquistPlotModel.Axes.Add(xAxisNyquistPlot);
@@ -176,15 +215,17 @@ namespace EmStatPicoEISPlotExample
         /// <param name="title">The axis label</param>
         /// <param name="position">The axis position</param>
         /// <returns></returns>
-        private LinearAxis GetLinearAxis(string title, AxisPosition position)
+        private LinearAxis GetLinearAxis(string key, string title, AxisPosition position, OxyColor color)
         {
             var linearAxis = new LinearAxis()
             {
-                Position = position,
                 MajorGridlineStyle = LineStyle.Dash,
+                Key = key,
+                Position = position,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
-                Title = title
+                Title = title,
+                TitleColor = color
             };
             return linearAxis;
         }
@@ -196,7 +237,7 @@ namespace EmStatPicoEISPlotExample
         {
             var xAxisBodePlot = GetLogAxis("Frequency", "Frequency (Hz)", AxisPosition.Bottom, OxyColors.Black);
             var yAxisBodePlot = GetLogAxis("Z", "Z (Ohm)", AxisPosition.Left, OxyColors.Blue);
-            var yAxisSecondaryBodePlot = GetLogAxis("Phase", "-Phase (deg)", AxisPosition.Right, OxyColors.Red);
+            var yAxisSecondaryBodePlot = GetLinearAxis("Phase", "-Phase (deg)", AxisPosition.Right, OxyColors.Red);
 
             //Add the axes to the Bode plot model
             BodePlotModel.Axes.Add(xAxisBodePlot);
