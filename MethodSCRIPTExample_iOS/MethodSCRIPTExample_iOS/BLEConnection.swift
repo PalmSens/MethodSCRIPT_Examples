@@ -38,6 +38,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
         "n": 1e-9,
         "u": 1e-6,
         "m": 1e-3,
+        "i": 1.0, //NOTE: In essence this is a SI unit denoting an integer. It is not a conversion factor.
         " ": 1.0,
         "k": 1e3,
         "M": 1e6,
