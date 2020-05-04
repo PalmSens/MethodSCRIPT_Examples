@@ -146,39 +146,51 @@ namespace ESPicoEISConsoleExample
         }
 
         /// <summary>
-        /// Opens the serial ports and identifies the port connected to EmStat Pico
+        /// Opens the serial ports and identifies the port connected to EmStat Pico 
         /// </summary>
         /// <returns> The serial port connected to EmStat Pico</returns>
         private static SerialPort OpenSerialPort()
         {
-            SerialPort serialPort = null;
             string[] ports = SerialPort.GetPortNames();
             for (int i = 0; i < ports.Length; i++)
             {
-                serialPort = GetSerialPort(ports[i]);
+                SerialPort serialPort = GetSerialPort(ports[i]);                   //Fetches a new instance of the serial port with the port name
                 try
                 {
-                    serialPort.Open();                                   //Opens the serial port 
+                    serialPort.Open();                                  //Opens serial port 
                     if (serialPort.IsOpen)
                     {
-                        serialPort.Write(CMD_VERSION);                  //Writes the version command             
-                        while (true)
+                        serialPort.Write("\n"); //If any unfinished command was sent to the pico, this will clear it.
+                        serialPort.Write(CMD_VERSION);                  //Writes the version command  
+
+                        //Reads until "*\n" is found
+                        string response = "";
+                        while (!response.Contains("*\n"))
                         {
-                            string response = serialPort.ReadLine();
-                            response += "\n";
-                            if (response.Contains("espico"))            //Verifies if the device connected is EmStat Pico
-                                serialPort.ReadTimeout = READ_TIME_OUT; //Sets the read time out for the device
-                            if (response.Contains("*\n"))
-                                return serialPort;                      //Reads until "*\n" is found and breaks
+                            response += serialPort.ReadLine();    //Reads the response
+                            response += "\n"; //ReadLine removes \n
                         }
+
+                        if (response.Contains("espico"))
+                        {
+                            serialPort.ReadTimeout = READ_TIME_OUT; //Sets the read time out for the device
+                            return serialPort;
+                        }
+
+                        //Not a valid device
+                        serialPort.Close();
                     }
                 }
                 catch (Exception exception)
                 {
-                    serialPort.Close();                                 //Closes the serial port in case of exception
+                    //Probably timeout or could not open serial port
+                    if (serialPort.IsOpen)
+                        serialPort.Close();
                 }
             }
-            return serialPort;
+
+            //Not found
+            return null;
         }
 
         /// <summary>
