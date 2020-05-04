@@ -14,8 +14,10 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.ParcelUuid;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
@@ -46,8 +48,18 @@ import java.util.UUID;
 
 public class MSBluetoothActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
+    private enum AppState
+    {
+        Idle,
+        Scanning,
+        Connecting,
+        IdleConnected,
+        ScriptRunning,
+    }
+
     private static final String TAG = "MSBluetoothActivity";
 
+    //Version command, has added '\n' in front of version command to clear pico CMD buffer
     private static final String CMD_VERSION = "t\n";
     private static final String CMD_ABORT = "Z\n";
     private static final String SCRIPT_FILE_NAME = "LSV_on_10kOhm.txt"; //"SWV_on_10kOhm.txt"
@@ -85,11 +97,9 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
     private ArrayList<BluetoothDevice> mBTDevices = new ArrayList<>();
     private ArrayAdapter<String> mAdapterConnectedDevices;
 
-    private boolean mIsVersionCmdSent = false;
-    private boolean mIsConnected = false;
-    private boolean mIsDeviceVerified = false;
-    private boolean mIsScriptActive = false;
-    private boolean mIsScanning;
+    private AppState mAppState;
+    private String mVersionResp = "";
+
     private final CallBackHandler mHandler = new CallBackHandler(this);
 
     /**
@@ -102,6 +112,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         put('n', 1e-9);
         put('u', 1e-6);
         put('m', 1e-3);
+        put('i', 1.0);
         put(' ', 1.0);
         put('k', 1e3);
         put('M', 1e6);
@@ -245,7 +256,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
                 if(mBluetoothAdapter.isDiscovering())
                     mBluetoothAdapter.cancelDiscovery();                                                 //Cancels discovery when discovery is finished
-                if (mIsScanning) {
+                if (mAppState == AppState.Scanning) {
                     Toast.makeText(context, "Bluetooth devices scan complete.", Toast.LENGTH_SHORT).show();
                     onScanStopped();
                 }
@@ -268,7 +279,6 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         if(mBluetoothAdapter.isDiscovering())
             mBluetoothAdapter.cancelDiscovery();
-        if (mIsScanning) onScanStopped();
         mSelectedDevice = mBTDevices.get(position);
     }
 
@@ -307,7 +317,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
                         readBuff = (byte[]) msg.obj;
                         readMessage = new String(readBuff);
                         Toast.makeText(activity, readMessage, Toast.LENGTH_SHORT).show();   //Shows a toast message if socket is closed and connection fails
-                        activity.updateView();
+                        activity.setAppState(AppState.Idle);
                         break;
 
                     case MESSAGE_SOCKET_CONNECTED:
@@ -318,7 +328,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
                         readBuff = (byte[]) msg.obj;
                         readMessage = new String(readBuff);
                         Toast.makeText(activity, readMessage, Toast.LENGTH_SHORT).show();
-                        activity.updateView();
+                        //activity.updateView();
                         break;
                 }//end switch
             }
@@ -340,7 +350,6 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         btnSend = findViewById(R.id.btnSend);
         btnAbort = findViewById(R.id.btnAbort);
 
-        btnConnect.setEnabled(false);
         txtResponse.setMovementMethod(new ScrollingMovementMethod());
         spinnerConnectedDevices.setOnItemSelectedListener(this);                                //Spinner click listener
 
@@ -355,7 +364,8 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         registerReceiver(mBroadcastReceiverDiscovery, discoverDevicesIntent);
 
         enableBluetooth();                                                                     //Method call to turn on Bluetooth
-        updateView();
+
+        setAppState(AppState.Idle);
     }
 
     /**
@@ -400,9 +410,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         Toast.makeText(this, "Lost connection. Bluetooth is disabled.", Toast.LENGTH_SHORT).show();
         mBTDevices.clear();
         spinnerConnectedDevices.setAdapter(null);
-        mIsConnected = false;
-        mIsScriptActive = false;
-        updateView();
+        setAppState(AppState.Idle);
     }
 
     /**
@@ -464,7 +472,6 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      */
     private void discover() {
         mBTDevices.clear();                                                                     //Clears the connected devices list to remove devices not in range
-        mProgressScan.setVisibility(View.VISIBLE);
         mBluetoothAdapter.startDiscovery();                                                     //Starts discovering nearby Bluetooth devices
     }
 
@@ -574,21 +581,82 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         }
     }
 
+    private void setAppState(AppState state)
+    {
+        mAppState = state;
+        updateView();
+    }
+
     /**
      * <Summary>
      *      Enables/disables the buttons and updates the UI
      * </Summary>
      */
     private void updateView() {
-        btnConnect.setEnabled(mBluetoothAdapter.isEnabled() &&
-                (spinnerConnectedDevices.getAdapter() != null && !spinnerConnectedDevices.getAdapter().isEmpty()));
-        btnConnect.setText(mIsConnected ? "Disconnect" : "Connect");
-        btnScan.setText(mIsScanning ? "Cancel" : "Scan");
-        btnSend.setEnabled(mIsConnected && !mIsScriptActive);
-        spinnerConnectedDevices.setEnabled(!mIsConnected);
-        btnAbort.setEnabled(mIsScriptActive);
-        btnScan.setEnabled(!mIsConnected);
-        mProgressConnect.setVisibility(View.INVISIBLE);
+        switch(mAppState)
+        {
+            case Idle:
+                btnConnect.setText("Connect");
+                btnConnect.setEnabled(mBluetoothAdapter.isEnabled() &&
+                        spinnerConnectedDevices.getAdapter() != null &&
+                        !spinnerConnectedDevices.getAdapter().isEmpty());
+                btnSend.setEnabled(false);
+                btnAbort.setEnabled(false);
+                btnScan.setText("Scan");
+                btnScan.setEnabled(true);
+                mProgressScan.setVisibility(View.INVISIBLE);
+                mProgressConnect.setVisibility(View.INVISIBLE);
+                spinnerConnectedDevices.setEnabled(true);
+                break;
+
+            case Scanning:
+                btnConnect.setText("Connect");
+                btnConnect.setEnabled(false);
+                btnSend.setEnabled(false);
+                btnAbort.setEnabled(false);
+                btnScan.setText("Cancel");
+                btnScan.setEnabled(true);
+                mProgressScan.setVisibility(View.VISIBLE);
+                mProgressConnect.setVisibility(View.INVISIBLE);
+                spinnerConnectedDevices.setEnabled(false);
+                break;
+
+            case Connecting:
+                btnConnect.setText("Connect");
+                btnConnect.setEnabled(false);
+                btnSend.setEnabled(false);
+                btnAbort.setEnabled(false);
+                btnScan.setText("Scan");
+                btnScan.setEnabled(false);
+                mProgressScan.setVisibility(View.INVISIBLE);
+                mProgressConnect.setVisibility(View.VISIBLE);
+                spinnerConnectedDevices.setEnabled(false);
+                break;
+
+            case IdleConnected:
+                btnConnect.setText("Disconnect");
+                btnConnect.setEnabled(true);
+                btnSend.setEnabled(true);
+                btnAbort.setEnabled(false);
+                btnScan.setText("Scan");
+                btnScan.setEnabled(false);
+                mProgressScan.setVisibility(View.INVISIBLE);
+                mProgressConnect.setVisibility(View.INVISIBLE);
+                spinnerConnectedDevices.setEnabled(false);
+                break;
+
+            case ScriptRunning:
+                btnConnect.setText("Disconnect");
+                btnConnect.setEnabled(true);
+                btnSend.setEnabled(false);
+                btnAbort.setEnabled(true);
+                btnScan.setText("Scan");
+                btnScan.setEnabled(false);
+                mProgressScan.setVisibility(View.INVISIBLE);
+                mProgressConnect.setVisibility(View.INVISIBLE);
+                spinnerConnectedDevices.setEnabled(false);
+                break;
+        }
     }
 
     /**
@@ -602,7 +670,6 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
         mSelectedUUID = uuid != null ? uuid[0].getUuid() : DEFAULT_UUID;
         if(mBluetoothConnection != null && mBluetoothConnection.mIsDeviceConnected)
             return;
-        mProgressConnect.setVisibility(View.VISIBLE);
         mBluetoothConnection = new BluetoothConnectionService(MSBluetoothActivity.this, mHandler);
         startBTConnection();       //Device pairing is handled while creating the Bluetooth RFComm socket
     }
@@ -622,31 +689,50 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      *      Sends the version command to verify if the connected device is EmStat Pico.
      * </Summary>
      */
+    private void clearBuffer() {
+        mBluetoothConnection.write(new byte[] {'\n'});
+    }
+
+    /**
+     * <Summary>
+     *      Sends the version command to verify if the connected device is EmStat Pico.
+     * </Summary>
+     */
     private void sendVersionCmd() {
-        btnSend.setEnabled(false);
-        byte[] bytes = CMD_VERSION.getBytes();
-        mBluetoothConnection.write(bytes);
-        mIsVersionCmdSent = true;
+
+        //Send newline to clear command buf on pico, in case there was invalid data in it
+        mBluetoothConnection.write(new byte[] {'\n'});
+
+        //After some time, send version command (needed if the EmStat Pico had received an invalid command)
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                mVersionResp = "";
+                byte[] bytes = CMD_VERSION.getBytes();
+                mBluetoothConnection.write(bytes);
+            }
+        }, 200);
     }
 
     /**
      * <Summary>
      *      Verifies if the device connected is EmStat Pico by checking if the version response contains "esp"
      * </Summary>
-     * @param versionString The response string to be verified.
+     * @param versionStringLine The response string to be verified.
      */
-    private void verifyEmstatPico(String versionString) {
-        if (versionString.contains("espico")) {
-            Toast.makeText(this, "Connected to EmStatPico.", Toast.LENGTH_SHORT).show();
-            spinnerConnectedDevices.setEnabled(false);
-            mIsConnected = true;
-        } else {
-            Toast.makeText(this, "Failed to connect.", Toast.LENGTH_SHORT).show();
-            mIsConnected = false;
-            disconnect();
+    private void verifyEmstatPico(String versionStringLine) {
+        mVersionResp += versionStringLine;
+        if (mVersionResp.contains("*\n")) {
+            if(mVersionResp.contains("tespico")) {
+                Toast.makeText(this, "Connected to EmStatPico.", Toast.LENGTH_SHORT).show();
+                setAppState(AppState.IdleConnected);
+            }
+            else
+            {
+                Toast.makeText(this, "Failed to connect.", Toast.LENGTH_SHORT).show();
+                disconnect();
+            }
         }
-        mIsDeviceVerified = true;
-        updateView();
     }
 
     /**
@@ -657,7 +743,6 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      */
     public boolean sendScriptFile() {
         boolean isScriptSent = false;
-        mIsVersionCmdSent = false;
         String line;
         BufferedReader bufferedReader = null;
         try {
@@ -690,8 +775,7 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      */
     private void abortScript() {
         mBluetoothConnection.write(CMD_ABORT.getBytes());
-        mIsScriptActive = false;
-        btnSend.setEnabled(mIsConnected);
+        setAppState(AppState.IdleConnected);
     }
 
     /**
@@ -701,13 +785,11 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      * </Summary>
      */
     private void onScanStopped() {
-        mIsScanning = false;
         if (mBluetoothAdapter.isDiscovering())
             mBluetoothAdapter.cancelDiscovery();                  // Cancels discovery if still discovering
         mAdapterConnectedDevices = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, GetDeviceNames(mBTDevices));
         spinnerConnectedDevices.setAdapter(mAdapterConnectedDevices);
-        mProgressScan.setVisibility(View.INVISIBLE);
-        updateView();
+        setAppState(AppState.Idle);
     }
 
     /**
@@ -718,16 +800,13 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      * </Summary>
      */
     private void disconnect() {
-        mIsConnected = false;
-        if (mIsScriptActive)
-            abortScript();                                              //Aborts any running script upon disconnection
         if(mBluetoothConnection != null)
         {
             mBluetoothConnection.disconnect();                          //Disconnects the device
             mBluetoothConnection = null;
         }
-        spinnerConnectedDevices.setEnabled(true);
-        updateView();                                                   //Updates the UI (enable/disable buttons)
+
+        setAppState(AppState.Idle);
     }
 
     /**
@@ -737,18 +816,15 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      * @param line A complete line of response read from the device.
      */
     private void processResponse(String line) {
-        char beginChar = line.charAt(0);
-        if (mIsVersionCmdSent)                                         //Identifies if it is the response to version command
+
+        switch(mAppState)
         {
-            if (line.contains("*\n"))
-                return;
-            if(!mIsDeviceVerified) verifyEmstatPico(line);             //Calls the verifyEmStatPico method to verify if the device is EmStat Pico
-        } else {
-            if (mIsConnected && processReceivedPackage(line)) {        //Calls the method to process the received measurement package
-                btnSend.setEnabled(true);                              //Updates the UI upon completion of parsing and displaying of the response
-                mIsScriptActive = false;
-                btnAbort.setEnabled(false);
-            }
+            case Connecting:
+                verifyEmstatPico(line);          //Calls the verifyEmStatPico method to verify if the device is EmStat Pico
+                break;
+            case ScriptRunning:
+                processReceivedPackage(line);   //Calls the method to process the received measurement package
+                break;
         }
     }
 
@@ -759,16 +835,14 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      * @param readLine A measurement package read from the device.
      * @return A boolean to indicate if measurement is complete.
      */
-    private boolean processReceivedPackage(String readLine) {
-        boolean isComplete = false;
+    private void processReceivedPackage(String readLine) {
         Reply beginChar = Reply.getReply(readLine.charAt(0));
         switch (beginChar) {
             case REPLY_EMPTY_LINE:
-                isComplete = true;
+                setAppState(AppState.IdleConnected);
                 break;
             case REPLY_END_MEAS_LOOP:
                 txtResponse.append(String.format(Locale.getDefault(), "%n%nMeasurement completed. %d data points received.", mNDataPointsReceived));
-                isComplete = true;
                 break;
             case REPLY_MEASURING:
                 txtResponse.append(String.format(Locale.getDefault(), "%nReceiving measurement response...%n"));
@@ -783,7 +857,6 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
             default:
                 break;
         }
-        return isComplete;
     }
 
     /**
@@ -1003,15 +1076,12 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      * @param view btnSend
      */
     public void onClickSendScript(View view) {
-        mIsScriptActive = sendScriptFile();
-        if (mIsScriptActive) {
-            btnSend.setEnabled(false);
-            btnAbort.setEnabled(true);
+        if (sendScriptFile()) {
             mNDataPointsReceived = 0;
             txtResponse.setText("");
+            setAppState(AppState.ScriptRunning);
         } else {
             Toast.makeText(this, "Error sending MethodSCRIPT", Toast.LENGTH_SHORT).show();
-            btnSend.setEnabled(true);
         }
     }
 
@@ -1034,11 +1104,8 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      */
     @RequiresApi(api = Build.VERSION_CODES.M)
     public void onClickScan(View view) {
-        if (!mIsScanning) {
-            btnConnect.setEnabled(false);
-            spinnerConnectedDevices.setEnabled(false);
-            mIsScanning = true;
-            btnScan.setText("Cancel");
+        if (mAppState == AppState.Idle) {
+            setAppState(AppState.Scanning);
             if (!mBluetoothAdapter.isEnabled()) {
                 Log.d(TAG, "enableBluetooth: enabling BT.");             //Starts the activity to request turning on Bluetooth
                 BluetoothAdapter.getDefaultAdapter().enable();
@@ -1057,15 +1124,18 @@ public class MSBluetoothActivity extends AppCompatActivity implements AdapterVie
      */
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void onClickConnect(View view) {
-        mIsDeviceVerified = false;
-        btnConnect.setEnabled(false);
-        btnScan.setEnabled(false);
-        spinnerConnectedDevices.setEnabled(false);
-        if (!mIsConnected) {
-                createBluetoothConnection();                                 //Creates a new Bluetooth connection service object
-        } else {
-            disconnect();                                                    //Disconnects the device
-            Toast.makeText(this, "Device is disconnected.", Toast.LENGTH_SHORT).show();
+
+        switch(mAppState)
+        {
+            case Idle:
+                setAppState(AppState.Connecting);
+                createBluetoothConnection();
+                break;
+            case IdleConnected:
+            case ScriptRunning:
+                disconnect();                                                    //Disconnects the device
+                Toast.makeText(this, "Device is disconnected.", Toast.LENGTH_SHORT).show();
+                break;
         }
     }
     //endregion

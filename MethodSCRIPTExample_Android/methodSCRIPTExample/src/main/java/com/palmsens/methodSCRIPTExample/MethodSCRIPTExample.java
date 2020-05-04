@@ -33,6 +33,14 @@ import java.util.Map;
 
 public class MethodSCRIPTExample extends AppCompatActivity {
 
+    private enum AppState
+    {
+        Idle,
+        Connecting,
+        IdleConnected,
+        ScriptRunning,
+    }
+
     private static final String TAG = "MethodSCRIPT Activity";
 
     private static final String CMD_VERSION_STRING = "t\n";
@@ -52,6 +60,7 @@ public class MethodSCRIPTExample extends AppCompatActivity {
         put('n', 1e-9);
         put('u', 1e-6);
         put('m', 1e-3);
+        put('i', 1.0);
         put(' ', 1.0);
         put('k', 1e3);
         put('M', 1e6);
@@ -73,10 +82,9 @@ public class MethodSCRIPTExample extends AppCompatActivity {
     private Button btnAbort;
 
     private int mNDataPointsReceived = 0;
-    private boolean mIsConnected = false;
-    private boolean mIsScriptActive = false;
+    private String mVersionResp = "";
+    private AppState mAppState;
     private boolean mThreadIsStopped = true;
-    private boolean mIsVersionCmdSent = false;
 
     /**
      * The beginning characters of the measurement response packages to help parsing the response
@@ -175,7 +183,7 @@ public class MethodSCRIPTExample extends AppCompatActivity {
             String action = intent.getAction();
             if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {                             //When device is attached
                 if (discoverDevice())
-                    Toast.makeText(context, "Found one device", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Found device", Toast.LENGTH_SHORT).show();
             } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {                      //When device is detached
                 synchronized (ftDevice) {
                     ftDevice.close();
@@ -264,7 +272,7 @@ public class MethodSCRIPTExample extends AppCompatActivity {
             return;
         }
         discoverDevice();
-        updateView();
+        setAppState(AppState.Idle);
     }
 
     @Override
@@ -310,9 +318,54 @@ public class MethodSCRIPTExample extends AppCompatActivity {
         return isDeviceFound;
     }
 
+    private void setAppState(AppState state)
+    {
+        mAppState = state;
+        updateView();
+    }
+
+    /**
+     * <Summary>
+     *      Enables/disables the buttons and updates the UI
+     * </Summary>
+     */
+    private void updateView() {
+        switch(mAppState)
+        {
+            case Idle:
+                btnConnect.setText("Connect");
+                btnConnect.setEnabled(discoverDevice());
+                btnSend.setEnabled(false);
+                btnAbort.setEnabled(false);
+                break;
+
+            case Connecting:
+                btnConnect.setText("Connect");
+                btnConnect.setEnabled(false);
+                btnSend.setEnabled(false);
+                btnAbort.setEnabled(false);
+                break;
+
+            case IdleConnected:
+                btnConnect.setText("Disconnect");
+                btnConnect.setEnabled(true);
+                btnSend.setEnabled(true);
+                btnAbort.setEnabled(false);
+                break;
+
+            case ScriptRunning:
+                btnConnect.setText("Disconnect");
+                btnConnect.setEnabled(true);
+                btnSend.setEnabled(false);
+                btnAbort.setEnabled(true);
+                break;
+        }
+    }
+
     /**
      * <Summary>
      *  Opens the device and calls the method to set the device configurations.
+     *  Also starts a runnable thread (mLoop) that keeps listening to the response until device is disconnected.
      * </Summary>
      * @return A boolean to indicate if the device was opened and configured.
      */
@@ -326,10 +379,10 @@ public class MethodSCRIPTExample extends AppCompatActivity {
         boolean isConfigured = false;
         if (ftDevice.isOpen()) {
             if (mThreadIsStopped) {
-                updateView();
                 SetConfig();                                                                        //Configures the port with necessary parameters
                 ftDevice.purge((byte) (D2xxManager.FT_PURGE_TX | D2xxManager.FT_PURGE_RX));         //Purges data from the device's TX/RX buffer
                 ftDevice.restartInTask();                                                           //Resumes the driver issuing USB in requests
+                new Thread(mLoop).start();                                                          //Start parsing thread
                 Log.d(TAG, "Device configured. ");
                 isConfigured = true;
             }
@@ -361,41 +414,41 @@ public class MethodSCRIPTExample extends AppCompatActivity {
     /**
      * <Summary>
      *      Sends the version command to verify if the connected device is EmStat Pico.
-     *      Also starts a runnable thread (mLoop) that keeps listening to the response untill device is disconnected.
      * </Summary>
      */
     private void sendVersionCmd() {
-        btnSend.setEnabled(false);
-        mIsVersionCmdSent = writeToDevice(CMD_VERSION_STRING);
-        new Thread(mLoop).start();
+        //Send newline to clear command buf on pico, in case there was invalid data in it
+        writeToDevice("\n");
+
+        //After some time, send version command (needed if the EmStat Pico had received an invalid command)
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                mVersionResp = "";
+                writeToDevice(CMD_VERSION_STRING);
+            }
+        }, 200);
     }
 
     /**
      * <Summary>
-     *      Checks for the string "esp" in the version response to confirm if the device is EmStat Pico.
+     *      Verifies if the device connected is EmStat Pico by checking if the version response contains "esp"
      * </Summary>
-     * @param versionString The response string to be verified
+     * @param versionStringLine The response string to be verified.
      */
-    private void verifyEmstatPico(String versionString) {
-        if (versionString.contains("espico")) {
-            Toast.makeText(this, "Connected to EmStatPico", Toast.LENGTH_SHORT).show();
-            mIsConnected = true;
-        } else {
-            Toast.makeText(this, "Not connected to EmStatPico", Toast.LENGTH_SHORT).show();
-            mIsConnected = false;
+    private void verifyEmstatPico(String versionStringLine) {
+        mVersionResp += versionStringLine;
+        if (mVersionResp.contains("*\n")) {
+            if(mVersionResp.contains("tespico")) {
+                Toast.makeText(this, "Connected to EmStatPico.", Toast.LENGTH_SHORT).show();
+                setAppState(AppState.IdleConnected);
+            }
+            else
+            {
+                Toast.makeText(this, "Failed to connect.", Toast.LENGTH_SHORT).show();
+                closeDevice();
+            }
         }
-        updateView();
-    }
-
-    /**
-     * <Summary>
-     *      Enables/Disables buttons based on the connection/MethodSCRIPT status.
-     * </Summary>
-     */
-    private void updateView() {
-        btnConnect.setText(mIsConnected ? "Disconnect" : "Connect");
-        btnSend.setEnabled(mIsConnected && !mIsScriptActive);
-        btnAbort.setEnabled(mIsScriptActive);
     }
 
     /**
@@ -436,7 +489,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
         String line;
         BufferedReader bufferedReader = null;
         try {
-            mIsVersionCmdSent = false;
             bufferedReader = new BufferedReader(new InputStreamReader(getAssets().open(SCRIPT_FILE_NAME)));
             while ((line = bufferedReader.readLine()) != null) {
                 line += "\n";
@@ -466,7 +518,7 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      */
     private void abortScript() {
         if (writeToDevice(CMD_ABORT_STRING)) {
-            btnSend.setEnabled(mIsConnected);
+            setAppState(AppState.IdleConnected);
             Toast.makeText(this, "Method Script aborted", Toast.LENGTH_SHORT).show();
         }
     }
@@ -480,56 +532,48 @@ public class MethodSCRIPTExample extends AppCompatActivity {
     private void closeDevice() {
         mThreadIsStopped = true;
         if (ftDevice != null && ftDevice.isOpen()) {
-            if (mIsScriptActive) {
+            if (mAppState == AppState.ScriptRunning) {
                 abortScript();
             }
             ftDevice.close();
-            btnConnect.setEnabled(discoverDevice());                            //Calls the method discoverDevice() and updates the connect button
         }
-        mIsScriptActive = false;
-        mIsConnected = false;
-        updateView();
+        setAppState(AppState.Idle);
     }
 
     /**
      * <Summary>
      *      Processes the measurement packages from the device.
      * </Summary>
-     * @param line A measurement package read from the device.
+     * @param line A complete line of response read from the device.
      */
     private void processResponse(String line) {
-        char beginChar = line.charAt(0);
-        if (mIsVersionCmdSent)                                          //Identifies if it is the response to version command
+
+        switch(mAppState)
         {
-            if (line.contains("*\n"))
-                return;
-            verifyEmstatPico(line);                                    //Calls the verifyEmStatPico method to verify if the device is EmStat Pico
-        } else {
-            if (mIsConnected && processReceivedPackage(line)) {       //Calls the method to process the received response package
-                btnSend.setEnabled(true);                             //Updates the UI upon completion of parsing and displaying of the response
-                mIsScriptActive = false;
-                btnAbort.setEnabled(false);
-            }
+            case Connecting:
+                verifyEmstatPico(line);          //Calls the verifyEmStatPico method to verify if the device is EmStat Pico
+                break;
+            case ScriptRunning:
+                processReceivedPackage(line);   //Calls the method to process the received measurement package
+                break;
         }
     }
 
     /**
      * <Summary>
-     *      Processes the measurement packages from the EmStat Pico and stores the response in RawData.
+     *      Processes the measurement package from the EmStat Pico and stores the response in RawData.
      * </Summary>
      * @param readLine A measurement package read from the device.
      * @return A boolean to indicate if measurement is complete.
      */
-    private boolean processReceivedPackage(String readLine) {
-        boolean isComplete = false;
+    private void processReceivedPackage(String readLine) {
         Reply beginChar = Reply.getReply(readLine.charAt(0));
         switch (beginChar) {
             case REPLY_EMPTY_LINE:
-                isComplete = true;
+                setAppState(AppState.IdleConnected);
                 break;
             case REPLY_END_MEAS_LOOP:
                 txtResponse.append(String.format(Locale.getDefault(), "%n%nMeasurement completed. %d data points received.", mNDataPointsReceived));
-                isComplete = true;
                 break;
             case REPLY_MEASURING:
                 txtResponse.append(String.format(Locale.getDefault(), "%nReceiving measurement response...%n"));
@@ -544,7 +588,6 @@ public class MethodSCRIPTExample extends AppCompatActivity {
             default:
                 break;
         }
-        return isComplete;
     }
 
     /**
@@ -763,19 +806,24 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      * @param view btnConnect
      */
     public void onClickConnect(View view) {
-        if (!mIsConnected) {
-            if (openDevice())
-                sendVersionCmd();                                       //Sends the version command if device is opened
-            else
-                Toast.makeText(this, "Cannot open device", Toast.LENGTH_SHORT).show();
-        } else {
-            closeDevice();                                              //Closes the device upon disconnecting it
+        switch(mAppState)
+        {
+            case Idle:
+                setAppState(AppState.Connecting);
+                if(openDevice())
+                    sendVersionCmd();
+                break;
+            case IdleConnected:
+            case ScriptRunning:
+                closeDevice();                                                    //Disconnects the device
+                Toast.makeText(this, "Device is disconnected.", Toast.LENGTH_SHORT).show();
+                break;
         }
     }
 
     /**
      * <Summary>
-     *      Aborts the MethodSCRIPT on click of Abort button.
+     *      Calls the method to abort the MethodSCRIPT.
      * </Summary>
      * @param view btnAbort
      */
@@ -785,21 +833,19 @@ public class MethodSCRIPTExample extends AppCompatActivity {
 
     /**
      * <Summary>
-     *      Sends the MethodSCRIPT on click of Send button.
+     *      Calls the method to send the MethodSCRIPT.
      * </Summary>
      * @param view btnSend
      */
     public void onClickSend(View view) {
-        mIsScriptActive = sendScriptFile();
-        if (mIsScriptActive) {
-            btnSend.setEnabled(false);
-            btnAbort.setEnabled(true);
+        if (sendScriptFile()) {
             mNDataPointsReceived = 0;
             txtResponse.setText("");
+            setAppState(AppState.ScriptRunning);
         } else {
-            Toast.makeText(this, "Error sending script", Toast.LENGTH_SHORT).show();
-            btnSend.setEnabled(true);
+            Toast.makeText(this, "Error sending MethodSCRIPT", Toast.LENGTH_SHORT).show();
         }
     }
+
     //endregion
 }
