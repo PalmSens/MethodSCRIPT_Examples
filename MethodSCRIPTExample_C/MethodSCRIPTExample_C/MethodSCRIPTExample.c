@@ -39,7 +39,7 @@ MSComm msComm;				// MethodScript communication interface
 FILE *pFCsv;				// CSV File pointer
 
 
-const char* PORT_NAME = "\\\\.\\COM23";									   // The name of the port - to be changed, by looking up the device manager
+const char* PORT_NAME = "\\\\.\\COM18";									   // The name of the port - to be changed, by looking up the device manager
 const DWORD BAUD_RATE = 230400;											   // The baud rate for EmStat Pico
 
 
@@ -72,6 +72,15 @@ int main(int argc, char *argv[])
 		int isOpen = OpenSerialPort();
 		if(isOpen)
 		{
+			printf("Connecting to EmStat Pico...\n");
+			// Flush any previous communication (required for bluetooth on older dev-boards)
+			for (int i = 0 ; i < 3; i++)
+			{
+				WriteStr(&msComm, "\n");
+				Sleep(100);
+				while(ReadFromDevice() > 0);
+			}
+
 			int fSuccess = VerifyEmStatPico();					// Verifies if the connected device is EmStat Pico.
 			if(fSuccess)
 			{

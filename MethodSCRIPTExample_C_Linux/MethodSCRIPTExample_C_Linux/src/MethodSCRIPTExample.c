@@ -72,6 +72,15 @@ int main(int argc, char *argv[])
 
 		if(isOpen)
 		{
+			printf("Connecting to EmStat Pico...\n");
+			// Flush any previous communication (required for bluetooth on older dev-boards)
+			for (int i = 0 ; i < 3; i++)
+			{
+				WriteStr(&msComm, "\n");
+				usleep(100 * 1000);
+				while(ReadFromDevice() > 0);
+			}
+			
 			int fSuccess = VerifyEmStatPico();					// Verifies if the connected device is EmStat Pico.
 			if(fSuccess)
 			{
