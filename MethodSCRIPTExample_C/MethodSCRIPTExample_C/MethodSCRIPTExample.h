@@ -34,94 +34,31 @@
 #ifndef ESPICOCODEEXAMPLE_H
 #define ESPICOCODEEXAMPLE_H
 
-#include <windows.h>
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
 #include <math.h>
+#include <stdbool.h>
 
-#include "MethodScriptComm/MSComm.h"
-
-//////////////////////////////////////////////////////////////////////////////
-// Constants
-//////////////////////////////////////////////////////////////////////////////
-const char* CMD_VERSION_STRING = "t\n";
-
+#include "MethodSCRIPTcomm/MSComm.h"
+#include "MethodSCRIPTcomm/MSCommon.h"
 
 //////////////////////////////////////////////////////////////////////////////
-// Normal Functions
-//
-// These functions are used during normal operation.
+// Constants and defines
 //////////////////////////////////////////////////////////////////////////////
+#define CMD_VERSION_STRING "t\n"
 
+// Serial port configuration
+#ifdef WIN32	// Windows
+	#define SERIAL_PORT_NAME "\\\\.\\COM12"								// The name of the port - to be changed, by looking up the device manager
+	// Note port number to start with "\\\\.\\" to allow for any port number in Windows.
+#else			// Linux. the port name to be changed. Can be found using "dmesg | grep FTDI" in the terminal
+	#define SERIAL_PORT_NAME "/dev/ttyUSB0"
+#endif
+#define BAUD_RATE 230400										   // The baud rate for EmStat Pico
 
-///
-/// Opens the serial port to which Emstat pico is connected.
-///
-/// Returns: 1 on successful connection, 0 in case of failure.
-///
-int OpenSerialPort();
-
-
-///
-/// Verifies if the connected device is EmStat Pico.
-///
-/// Returns: 1 if EmStat Pico is detected, 0 in case of failure.
-///
-BOOL VerifyEmStatPico();
-
-
-///
-/// Reads a line from the script file and writes it to the EmStat Pico
-///
-/// Returns: 1 if data is read from file and written successfully to the device, 0 in case of failure.
-///
-int SendScriptFile(char* fileName);
-
-
-///
-/// Writes the input character to the device
-///
-/// Returns: 1 if data is written successfully, 0 in case of failure.
-///
-int WriteToDevice(char c);
-
-
-///
-/// Returns a character read from the EmStat Pico
-///
-int ReadFromDevice();
-
-
-///
-/// Prints the parsed values on the console or (-1) in case of an error.
-///
-int DisplayResults(RetCode code, MeasureData result, int *nDataPoints);
-
-
-///
-/// Write a datapoint result to a CSV File
-///
-void ResultsToCsv(RetCode code, MeasureData result, int nDataPoints);
-
-
-///
-/// Opens a CSV File
-///
-void OpenCSVFile(const char *pFilename,FILE **fp);
-
-
-///
-/// Write data to (append) a CSV File
-///
-void WriteDataToCSVFile(FILE *fp, MeasureData resultdata, int nDataPoints);
-
-
-///
-/// Write the header line to the CSV file
-///
-void WriteHeaderToCSVFile(FILE *fp);
 
 
 #endif //ESPICOCODEEXAMPLE_H
+
 

@@ -26,11 +26,11 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * ----------------------------------------------------------------------------
  */
- 
+
 /**
  *  Contains commonly used stuff.
  */
- 
+
 #ifndef PSCOMMON_H
 #define PSCOMMON_H
 
@@ -52,17 +52,18 @@ typedef int (*ReadCharFunc)();
 ///
 typedef enum _RetCode
 {
-	CODE_VERSION_RESPONSE   = 5,
-	CODE_RESPONSE_BEGIN 	= 4,
-	CODE_MEASURING			= 3,
-	CODE_MEASUREMENT_DONE	= 2,
-	CODE_RESPONSE_END		= 1,
-	CODE_OK 				= 0,
-	CODE_NULL 				= -1,
-	CODE_TIMEOUT			= -2,
-	CODE_OUT_OF_RANGE		= -3,
-	CODE_UNEXPECTED_DATA	= -4,
-	CODE_NOT_IMPLEMENTED 	= -5,
+   CODE_VERSION_RESPONSE = 5,
+   CODE_RESPONSE_BEGIN   = 4,
+   CODE_MEASURING        = 3,
+   CODE_MEASUREMENT_DONE = 2,
+   CODE_RESPONSE_END     = 1,
+   CODE_OK               = 0,
+   CODE_NULL             = -1,
+   CODE_TIMEOUT          = -2,
+   CODE_OUT_OF_RANGE     = -3,
+   CODE_UNEXPECTED_DATA  = -4,
+   CODE_NOT_IMPLEMENTED  = -5,
+   CODE_ERROR            = -1024,
 } RetCode;
 
 #endif //PSCOMMON_H

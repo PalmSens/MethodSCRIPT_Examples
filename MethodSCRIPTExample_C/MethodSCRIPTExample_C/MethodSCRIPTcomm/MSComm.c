@@ -32,13 +32,21 @@
 
 #include "MSComm.h"
 
-#define OFFSET_VALUE 0x8000000
-#define READ_BUFFER_LENGTH 100
 
+/// Offset value for MethodSCRIPT parameters (see the MethodSCRIPT documentation paragraph 'Measurement data package variables')
+#define MSCR_PARAM_OFFSET_VALUE 0x8000000
+
+/// The size of the serial read buffer in bytes. This is also the maximum length of a package
+#define READ_BUFFER_LENGTH 1000
+
+
+///
+///
+///
 RetCode MSCommInit(MSComm* msComm,	WriteCharFunc writeCharFunc, ReadCharFunc readCharFunc)
 {
-	msComm->writeCharFunc = writeCharFunc;			//Initialises the msComm with the function pointer to its write function
-	msComm->readCharFunc = readCharFunc;			//Initialises the msComm with the function pointer to its read function
+	msComm->writeCharFunc = writeCharFunc;			//Initializes the msComm with the function pointer to its write function
+	msComm->readCharFunc = readCharFunc;			//Initializes the msComm with the function pointer to its read function
 
 	if(writeCharFunc == NULL || readCharFunc == NULL)
 	{
@@ -47,6 +55,10 @@ RetCode MSCommInit(MSComm* msComm,	WriteCharFunc writeCharFunc, ReadCharFunc rea
 	return CODE_OK;
 }
 
+
+///
+///
+///
 void WriteStr(MSComm* msComm, const char* buf)
 {
 	while(*buf != 0)
@@ -56,11 +68,19 @@ void WriteStr(MSComm* msComm, const char* buf)
 	}
 }
 
+
+///
+///
+///
 void WriteChar(MSComm* msComm, char c)
 {
 	msComm->writeCharFunc(c);
 }
 
+
+///
+///
+///
 RetCode ReadBuf(MSComm* msComm, char* buf)
 {
 	int i = 0;
@@ -96,6 +116,10 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 	return CODE_NULL;
 }
 
+
+///
+///
+///
 RetCode ReceivePackage(MSComm* msComm, MeasureData* retData)
 {
 	char bufferLine[READ_BUFFER_LENGTH];
@@ -106,6 +130,10 @@ RetCode ReceivePackage(MSComm* msComm, MeasureData* retData)
 	return ret;
 }
 
+
+///
+///
+///
 void ParseResponse(char *responsePackageLine, MeasureData* retData)
 {
 	retData->zreal = HUGE_VALF;											//Impedance data NAN as default
@@ -122,6 +150,10 @@ void ParseResponse(char *responsePackageLine, MeasureData* retData)
 	}while ((param = strtokenize(&running, delimiters)) != NULL);		//Continues parsing the response line until end of line
 }
 
+
+///
+///
+///
 char* strtokenize(char** stringp, const char* delim)
 {
   char* start = *stringp;
@@ -141,6 +173,10 @@ char* strtokenize(char** stringp, const char* delim)
   return start;															//Returns the current token found
 }
 
+
+///
+///
+///
 void ParseParam(char* param, MeasureData* retData)
 {
 	char paramIdentifier[3];
@@ -175,6 +211,10 @@ void ParseParam(char* param, MeasureData* retData)
 	ParseMetaDataValues(param + 10, retData);							//Rest of the parameter is further parsed to get meta data values
 }
 
+
+///
+///
+///
 float GetParameterValue(char* paramValue)
 {
 	char charUnitPrefix = paramValue[7]; 								//Identifies the SI unit prefix from the package at position 8
@@ -183,10 +223,14 @@ float GetParameterValue(char* paramValue)
 	strValue[7] = '\0';
 	char *ptr;
 	int value =	strtol(strValue, &ptr , 16);
-	float parameterValue = value - OFFSET_VALUE; 						//Values offset to receive only positive values
+	float parameterValue = value - MSCR_PARAM_OFFSET_VALUE; 						//Values offset to receive only positive values
 	return (parameterValue * GetUnitPrefixValue(charUnitPrefix));		//Returns the value of the parameter after appending the SI unit prefix
 }
 
+
+///
+///
+///
 const double GetUnitPrefixValue(char charPrefix)
 {
 	switch(charPrefix)
@@ -221,6 +265,10 @@ const double GetUnitPrefixValue(char charPrefix)
 	return 0;
 }
 
+
+///
+///
+///
 void ParseMetaDataValues(char *metaDataParams, MeasureData* retData)
 {
 	const char delimiters[] = ",\n";
@@ -243,6 +291,10 @@ void ParseMetaDataValues(char *metaDataParams, MeasureData* retData)
 	}while ((metaData = strtokenize(&running, delimiters)) != NULL);
 }
 
+
+///
+///
+///
 const char* StatusToString(Status status)
 {
 	switch(status){
@@ -259,6 +311,10 @@ const char* StatusToString(Status status)
     }
 }
 
+
+///
+///
+///
 const char* GetReadingStatusFromPackage(char* metaDataStatus)
 {
 	const char* status;
@@ -276,6 +332,9 @@ const char* GetReadingStatusFromPackage(char* metaDataStatus)
 }
 
 
+///
+///
+///
 const char* GetCurrentRangeFromPackage(char* metaDataCR)
 {
 	char* currentRangeStr;

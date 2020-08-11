@@ -14,6 +14,8 @@ if /I "%AREYOUSURE%" NEQ "Y" goto END
 
 git clean -f -x -d
 
+rmdir /Q /S "./%FOLDER%"
+
 ::rd /s /q "./%FOLDER%"
 echo.
 echo Creating folder...
@@ -25,8 +27,20 @@ echo Copying files...
 @echo on
 xcopy /Q /S /I /E "./MethodSCRIPTExample_Android" "./%FOLDER%/MethodSCRIPTExample_Android"
 xcopy /Q /S /I /E "./MethodSCRIPTExample_Arduino" "./%FOLDER%/MethodSCRIPTExample_Arduino"
-xcopy /Q /S /I /E "./MethodSCRIPTExample_C" "./%FOLDER%/MethodSCRIPTExample_C"
-xcopy /Q /S /I /E "./MethodSCRIPTExample_C_Linux" "./%FOLDER%/MethodSCRIPTExample_C_Linux"
+
+REM the C example contains both Windows and Linux implementation. 
+REM To make things clear for customers we separate them in different directories
+xcopy /Q /S /I /E "./MethodSCRIPTExample_C" "./%FOLDER%/MethodSCRIPTExample_C_Linux"
+xcopy /Q /S /I /E "./MethodSCRIPTExample_C" "./%FOLDER%/MethodSCRIPTExample_C_Windows"
+rename "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C" "MethodSCRIPTExample_C_Windows" 
+rename "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C"     "MethodSCRIPTExample_C_Linux" 
+rmdir /Q /S "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C_Windows/_Linux"
+rmdir /Q /S "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C_Linux/_Windows"
+rename "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C_Windows/_Windows" "project" 
+rename "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C_Linux/_Linux"     "project" 
+del /Q "./%FOLDER%\MethodSCRIPTExample_C_Linux\MethodSCRIPTExample_C_Linux\SerialPort\SerialPortWindows.c"
+del /Q "./%FOLDER%\MethodSCRIPTExample_C_Windows\MethodSCRIPTExample_C_Windows\SerialPort\SerialPortLinux.c"
+
 xcopy /Q /S /I /E "./MethodSCRIPTExample_iOS" "./%FOLDER%/MethodSCRIPTExample_iOS"
 xcopy /Q /S /I /E "./MethodSCRIPTExample_Python" "./%FOLDER%/MethodSCRIPTExample_Python"
 xcopy /Q /S /I /E "./MethodSCRIPTExamples_C#" "./%FOLDER%/MethodSCRIPTExamples_C#"
