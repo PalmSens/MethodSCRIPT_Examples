@@ -49,8 +49,8 @@
 #define CMD_VERSION_STRING "t\n"
 
 // Serial port configuration
-#ifdef WIN32	// Windows
-	#define SERIAL_PORT_NAME "\\\\.\\COM12"								// The name of the port - to be changed, by looking up the device manager
+#ifdef __WIN32	// Windows
+	#define SERIAL_PORT_NAME "\\\\.\\COM8"							// The name of the port - to be changed, by looking up the device manager
 	// Note port number to start with "\\\\.\\" to allow for any port number in Windows.
 #else			// Linux. the port name to be changed. Can be found using "dmesg | grep FTDI" in the terminal
 	#define SERIAL_PORT_NAME "/dev/ttyUSB0"

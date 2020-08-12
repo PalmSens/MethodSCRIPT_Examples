@@ -31,7 +31,7 @@
  * ----------------------------------------------------------------------------
  Description :
  * ----------------------------------------------------------------------------
- *  MSComm handles the communication with the EmStat pico.
+ *  MSComm handles the communication with the EmStat Pico.
  *	Only this file needs to be included in your software.
  *	To communicate with an EmStat Pico, create a MSComm struct and call MSCommInit() on it.
  *	If communication with multiple EmStat Picos is required, create a separate MSComm with different
@@ -67,7 +67,7 @@
 
 // Converts a MethodSCRIPT `variable type` string to an integer
 // For example "aa" = 0, "ab = 1, "ba" = 26 and "zz" = 675)
-#define MSCR_STR_TO_VT(str) ((str[0] - 'a') * 26 + (str[1] - 'a')
+#define MSCR_STR_TO_VT(str) ((str[0] - 'a') * 26 + (str[1] - 'a'))
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -75,6 +75,75 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #define VERSION_STR_LENGTH	28
+
+#define MSCR_SUBPACKAGES_PER_LINE	100
+#define VARTYPE_TO_UINT8(ch1, ch2) (((ch1)-'a') * 26 + (ch2 - 'a'))
+
+
+//NOTE: Stored in uint8, so highest possible var type is 255, which is "jv"
+typedef enum _VarType
+{
+	//Measured types
+	//'a' category is potential
+	MSCR_VT_UNKNOWN          	= VARTYPE_TO_UINT8('a', 'a'),    //Value is unset
+	MSCR_VT_POTENTIAL	   		= VARTYPE_TO_UINT8('a', 'b'),		//WE / SE vs RE
+	MSCR_VT_POTENTIAL_CE      	= VARTYPE_TO_UINT8('a', 'c'), 	//CE vs GND
+	MSCR_VT_POTENTIAL_SE      	= VARTYPE_TO_UINT8('a', 'd'),		//SE vs GND
+	MSCR_VT_POTENTIAL_RE      	= VARTYPE_TO_UINT8('a', 'e'),		//RE vs GND
+	//MSCR_VT_POTENTIAL_WE      	= VARTYPE_TO_UINT8('a', 'f'),		//WE vs GND //Not sure this makes sense?
+	MSCR_VT_POTENTIAL_WE_VS_CE	= VARTYPE_TO_UINT8('a', 'g'),		//WE / SE vs CE
+
+	MSCR_VT_POTENTIAL_AIN0 		= VARTYPE_TO_UINT8('a', 's'),
+	MSCR_VT_POTENTIAL_AIN1 		= VARTYPE_TO_UINT8('a', 't'),
+	MSCR_VT_POTENTIAL_AIN2 		= VARTYPE_TO_UINT8('a', 'u'),
+	MSCR_VT_POTENTIAL_AIN3 		= VARTYPE_TO_UINT8('a', 'v'),
+	MSCR_VT_POTENTIAL_AIN4		= VARTYPE_TO_UINT8('a', 'w'),
+	MSCR_VT_POTENTIAL_AIN5 		= VARTYPE_TO_UINT8('a', 'x'),
+	MSCR_VT_POTENTIAL_AIN6 		= VARTYPE_TO_UINT8('a', 'y'),
+	MSCR_VT_POTENTIAL_AIN7 		= VARTYPE_TO_UINT8('a', 'z'),
+
+	//'b' category is current
+	MSCR_VT_CURRENT       		= VARTYPE_TO_UINT8('b', 'a'), //WE current
+
+	//'c' category is impedance
+	MSCR_VT_PHASE             	= VARTYPE_TO_UINT8('c', 'a'),
+	MSCR_VT_IMP               	= VARTYPE_TO_UINT8('c', 'b'),
+	MSCR_VT_ZREAL             	= VARTYPE_TO_UINT8('c', 'c'),
+	MSCR_VT_ZIMAG             	= VARTYPE_TO_UINT8('c', 'd'),
+
+	//Applied types
+	MSCR_VT_CELL_SET_POTENTIAL = VARTYPE_TO_UINT8('d', 'a'),
+	MSCR_VT_CELL_SET_CURRENT   = VARTYPE_TO_UINT8('d', 'b'),
+	MSCR_VT_CELL_SET_FREQUENCY = VARTYPE_TO_UINT8('d', 'c'),
+	MSCR_VT_CELL_SET_AMPLITUDE = VARTYPE_TO_UINT8('d', 'd'),
+
+	//Other types
+	MSCR_VT_CHANNEL           	= VARTYPE_TO_UINT8('e', 'a'),
+	MSCR_VT_TIME					= VARTYPE_TO_UINT8('e', 'b'),
+	MSCR_VT_PIN_MSK				= VARTYPE_TO_UINT8('e', 'c'),
+
+	//Internal (device specific) types for diagnostic purposes
+	MSCR_VT_DEV_ADC_OFFSET 		= VARTYPE_TO_UINT8('g', 'a'),
+	MSCR_VT_DEV_HS_EX 			= VARTYPE_TO_UINT8('g', 'b'),
+
+	//Generic types (reserved but not implemented)
+	MSCR_VT_CURRENT_GENERIC1  	= VARTYPE_TO_UINT8('h', 'a'),
+	MSCR_VT_CURRENT_GENERIC2  	= VARTYPE_TO_UINT8('h', 'b'),
+	MSCR_VT_CURRENT_GENERIC3  	= VARTYPE_TO_UINT8('h', 'c'),
+	MSCR_VT_CURRENT_GENERIC4  	= VARTYPE_TO_UINT8('h', 'd'),
+	MSCR_VT_POTENTIAL_GENERIC1 = VARTYPE_TO_UINT8('i', 'a'),
+	MSCR_VT_POTENTIAL_GENERIC2 = VARTYPE_TO_UINT8('i', 'b'),
+	MSCR_VT_POTENTIAL_GENERIC3 = VARTYPE_TO_UINT8('i', 'c'),
+	MSCR_VT_POTENTIAL_GENERIC4 = VARTYPE_TO_UINT8('i', 'd'),
+	MSCR_VT_MISC_GENERIC1      = VARTYPE_TO_UINT8('j', 'a'),
+	MSCR_VT_MISC_GENERIC2     	= VARTYPE_TO_UINT8('j', 'b'),
+	MSCR_VT_MISC_GENERIC3     	= VARTYPE_TO_UINT8('j', 'c'),
+	MSCR_VT_MISC_GENERIC4     	= VARTYPE_TO_UINT8('j', 'd'),
+
+	MSCR_VT_NONE 						= 255,
+	MSCR_VT_CNT 						= 256,
+} VarType;
+
 
 ///
 /// Whether the cell should be on or off.
@@ -85,8 +154,10 @@ typedef enum _CellOnOff
 	CELL_OFF = 0x05,
 } CellOnOff;
 
+
 ///
-/// Current status, if there is a underload or overload
+/// Measurement Status, e.g. underload or overload
+/// Uses a bitmask
 ///
 typedef enum _Status
 {
@@ -100,6 +171,7 @@ typedef enum _Status
 	STATUS_OVERLOAD_WARNING = 0x8
 } Status;
 
+
 ///
 /// Possible replies from the EmStat Pico
 ///
@@ -110,6 +182,7 @@ typedef enum _Reply
 	REPLY_MEASURE_DP		= 'P',
 	REPLY_ENDOFMEASLOOP		= '*'
 } Reply;
+
 
 ///
 /// The communication object for one EmStat Pico
@@ -122,27 +195,37 @@ typedef struct _MSComm
 	ReadCharFunc readCharFunc;
 } MSComm;
 
-///
-/// Encapsulates the data packages received from the EmStat Pico for measurement package
-///
-typedef struct _MeasureData
-{
-	/// Potential in Volts
-	float potential;
-	/// Current in Ampere
-	float current;
-	/// Real part of complex impedance
-	float zreal;
-	/// Imaginary part of complex impedance
-	float zimag;
-	/// Applied frequency
-	float frequency;
 
-	/// Reading status
-	const char* status;
-	/// Current range
-	const char* cr;
-} MeasureData;
+///
+/// MethodSCRIPT subpackage metadata. This is part of a subpackage.
+/// Metadata fields that are not given should be set to -1.
+/// One subpackage can contain any combination of metadata fields
+///
+typedef struct _MscrMetadata {
+	int status;          //
+	int current_range;   //
+} MscrMetadata;
+
+
+///
+/// Structure to store one MethodSCRIPT sub-package
+///
+typedef struct _MscrSubPackage {
+	float        value;			 // The MethodSCRIPT value parsed from the sub-package string
+	int          variable_type; // As converted by `MSCR_STR_TO_VT`
+	MscrMetadata metadata;		 // The meta-data parsed from the sub-package string
+} MscrSubPackage;
+
+
+///
+/// Structure to store one MethodScript package (line).
+/// One line can contain N sub-packages.
+///
+typedef struct _MscrPackage {
+	int nr_of_subpackages; // The number of currently used packages
+	MscrSubPackage subpackages[MSCR_SUBPACKAGES_PER_LINE];
+} MscrPackage;
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Normal Functions
@@ -161,6 +244,7 @@ typedef struct _MeasureData
 ///
 RetCode MSCommInit(MSComm* MSComm,	WriteCharFunc write_char_func, ReadCharFunc read_char_func);
 
+
 ///
 /// Receives a package and parses it
 /// Currents are expressed in the Ampere, potentials are expressed in Volts
@@ -170,7 +254,8 @@ RetCode MSCommInit(MSComm* MSComm,	WriteCharFunc write_char_func, ReadCharFunc r
 ///
 /// Returns: CODE_OK if successful, CODE_MEASUREMENT_DONE if measurement is completed
 ///
-RetCode ReceivePackage(MSComm* MSComm, MeasureData* retData);
+RetCode ReceivePackage(MSComm* MSComm, MscrPackage* retData);
+
 
 ///
 /// Parses a line of response and passes the meta data values for further parsing
@@ -178,7 +263,8 @@ RetCode ReceivePackage(MSComm* MSComm, MeasureData* retData);
 /// responseLine: The line of response to be parsed
 /// retData: 	  The struct in which the parsed values are stored
 ///
-void ParseResponse(char *responseLine, MeasureData* retData);
+void ParseResponse(char *responseLine, MscrPackage* retData);
+
 
 ///
 /// Splits the input string in to tokens based on the delimiters set (delim) and stores the pointer to the successive token in *stringp
@@ -191,6 +277,7 @@ void ParseResponse(char *responseLine, MeasureData* retData);
 ///
 char* strtokenize(char** stringp, const char* delim);
 
+
 ///
 /// Fetches the string to be displayed for the input status
 ///
@@ -200,13 +287,15 @@ char* strtokenize(char** stringp, const char* delim);
 ///
 const char* StatusToString(Status status);
 
+
 ///
 /// Parses a parameter and calls the function to parse meta data values if any
 ///
 /// param: 	 The parameter value to be parsed
 /// retData: The struct in which the parsed values are stored
 ///
-void ParseParam(char* param, MeasureData* retData);
+void ParseParam(char* param, MscrSubPackage* retData);
+
 
 ///
 /// Retrieves the parameter value by parsing the input value and appending the SI unit prefix to it
@@ -215,13 +304,15 @@ void ParseParam(char* param, MeasureData* retData);
 ///
 float GetParameterValue(char* paramValue);
 
+
 ///
 /// Parses the meta data values and calls the corresponding functions based on the meta data type (status, current range, noise)
 ///
 /// metaDataParams: The meta data parameter values to be parsed
 /// retData: 		The struct in which the parsed values are stored
 ///
-void ParseMetaDataValues(char *metaDataParams, MeasureData* retData);
+void ParseMetaDataValues(char *metaDataParams, MscrSubPackage* retData);
+
 
 ///
 /// Parses the bytes corresponding to the status of the package(OK, Overload, Underload, Overload_warning)
@@ -230,7 +321,8 @@ void ParseMetaDataValues(char *metaDataParams, MeasureData* retData);
 ///
 /// Returns: A string corresponding to the parsed status
 
-const char* GetReadingStatusFromPackage(char* metaDataStatus);
+int GetStatusFromPackage(char* metaDataStatus);
+
 
 ///
 /// Parses the bytes corresponding to current range of the parameter
@@ -239,12 +331,32 @@ const char* GetReadingStatusFromPackage(char* metaDataStatus);
 ///
 /// Returns: A string corresponding to the parsed current range value
 ///
-const char* GetCurrentRangeFromPackage(char* metaDataCR);
+int GetCurrentRangeFromPackage(char* metaDataCR);
+
 
 ///
 /// Returns the double value corresponding to the input unit prefix char
 ///
 const double GetUnitPrefixValue(char charPrefix);
+
+
+///
+/// Look up function to translate the current range value to a string.
+///
+/// parameters:
+///   current_range The current range value from the MethodSCRIPT package
+///
+/// return:
+///   Pointer to constant string containing the current range text
+///
+const char* current_range_to_string(int current_range);
+
+
+///
+/// Look up function to convert a MethodSCRIPT `variable type` value to a string
+///
+const char *VartypeToString(int variable_type);
+
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -253,6 +365,7 @@ const double GetUnitPrefixValue(char charPrefix);
 // These functions are used by the SDK internally to communicate with the EmStat Pico.
 // You probably don't need to use these directly, but they're here so you can if you want.
 //////////////////////////////////////////////////////////////////////////////
+
 
 ///
 /// Reads a character buffer using the supplied read_char_func
@@ -264,6 +377,7 @@ const double GetUnitPrefixValue(char charPrefix);
 ///
 RetCode ReadBuf(MSComm* MSComm, char* buf);
 
+
 ///
 /// Reads a character using the supplied read_char_func
 ///
@@ -274,6 +388,7 @@ RetCode ReadBuf(MSComm* MSComm, char* buf);
 ///
 RetCode ReadChar(MSComm* MSComm, char* c);
 
+
 ///
 /// Writes a character using the supplied write_char_func
 ///
@@ -282,6 +397,7 @@ RetCode ReadChar(MSComm* MSComm, char* c);
 ///
 void WriteChar(MSComm* MSComm, char c);
 
+
 ///
 /// Writes a 0 terminated string using the supplied write_char_func
 ///
@@ -289,5 +405,7 @@ void WriteChar(MSComm* MSComm, char c);
 /// buf:	The data to be written
 ///
 void WriteStr(MSComm* MSComm, const char* buf);
+
+
 
 #endif //MSComm_H

@@ -41,6 +41,35 @@
 
 
 ///
+/// Reset a MscrSubPackage to a predefined state. Sets all metadata fields to -1 to indicate it is not written yet
+///
+void reset_mscr_subpackage(MscrSubPackage *subpackage)
+{
+	subpackage->value = 0;
+	subpackage->variable_type = MSCR_STR_TO_VT("aa");
+
+	// Clear metadata
+	subpackage->metadata.status        = -1;
+	subpackage->metadata.current_range = -1;
+
+}
+
+
+///
+/// Rests a MscrPackage variable to a defined state
+///
+void reset_mscr_package(MscrPackage *package)
+{
+	package->nr_of_subpackages = 0;
+
+	for (int i = 0; i < MSCR_SUBPACKAGES_PER_LINE; i++)
+	{
+		reset_mscr_subpackage(&package->subpackages[i]);
+	}
+}
+
+
+///
 ///
 ///
 RetCode MSCommInit(MSComm* msComm,	WriteCharFunc writeCharFunc, ReadCharFunc readCharFunc)
@@ -120,13 +149,13 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 ///
 ///
 ///
-RetCode ReceivePackage(MSComm* msComm, MeasureData* retData)
+RetCode ReceivePackage(MSComm* msComm, MscrPackage* retData)
 {
 	char bufferLine[READ_BUFFER_LENGTH];
-	RetCode ret = ReadBuf(msComm, bufferLine);							// Reads a line of response from the device
+	RetCode ret = ReadBuf(msComm, bufferLine); // Reads a line of response from the device
 	if (ret != CODE_OK)
 		return ret;
-    ParseResponse(bufferLine, retData);									// Parses the response
+	ParseResponse(bufferLine, retData);
 	return ret;
 }
 
@@ -134,20 +163,24 @@ RetCode ReceivePackage(MSComm* msComm, MeasureData* retData)
 ///
 ///
 ///
-void ParseResponse(char *responsePackageLine, MeasureData* retData)
+void ParseResponse(char *responsePackageLine, MscrPackage* retData)
 {
-	retData->zreal = HUGE_VALF;											//Impedance data NAN as default
-	retData->zimag = HUGE_VALF;											//Impedance data NAN as default
-	char *P = strchr(responsePackageLine, 'P');							//Identifies the beginning of the response package
+	reset_mscr_package(retData);
+
+	char *P = strchr(responsePackageLine, 'P');					//Identifies the beginning of the response package
 	char *packageLine = P+1;
 	const char delimiters[] = ";\n";									//a space (" ") is used as prefix token thus part of parameter
 	char* running = packageLine;										//Initial index of the line to be tokenized
-	char* param = strtokenize(&running, delimiters);					//Pulls out the parameters separated by the delimiters
-	do
+	char* param;// = strtokenize(&running, delimiters);					//Pulls out the parameters separated by the delimiters
+	int i = 0;
+	while ((param = strtokenize(&running, delimiters)) != NULL)
 	{
-		ParseParam(param, retData);									    //Parses the parameters further to get the meta data values if any
-
-	}while ((param = strtokenize(&running, delimiters)) != NULL);		//Continues parsing the response line until end of line
+		if (strlen(param) == 0)
+			continue;
+		//Parse the parameters further to get the meta data values if any
+		ParseParam(param, &retData->subpackages[i++]);
+		retData->nr_of_subpackages++;
+	}
 }
 
 
@@ -177,37 +210,18 @@ char* strtokenize(char** stringp, const char* delim)
 ///
 ///
 ///
-void ParseParam(char* param, MeasureData* retData)
+void ParseParam(char* param, MscrSubPackage* retData)
 {
 	char paramIdentifier[3];
 	char paramValue[10];
-	float parameterValue = 0;
 
 	strncpy(paramIdentifier, param, 2);									//Splits the parameter identifier string
 	paramIdentifier[2] = '\0';
 	strncpy(paramValue, param+ 2, 8);									//Splits the parameter value string
 	paramValue[9]= '\0';
-	parameterValue = (float)GetParameterValue(paramValue);				//Retrieves the actual parameter value
-	if(strcmp(paramIdentifier, "da") == 0)								//The applied cell-potential (calculated, not read back!)
-	{
-		retData->potential = parameterValue;
-	}
-	else if (strcmp(paramIdentifier, "ba") == 0)						//Measured cell current
-	{
-		retData->current = parameterValue;
-	}
-	else if (strcmp(paramIdentifier, "cc") == 0)						//Real part of complex impedance
-	{
-		retData->zreal = parameterValue;
-	}
-	else if (strcmp(paramIdentifier, "cd") == 0)						//Imaginary part of complex impedance
-	{
-		retData->zimag = parameterValue;
-	}
-	else if (strcmp(paramIdentifier, "dc") == 0)						//Applied cell frequency
-	{
-		retData->frequency = parameterValue;
-	}
+	retData->value = (float)GetParameterValue(paramValue);				//Retrieves the actual parameter value
+	retData->variable_type = MSCR_STR_TO_VT(paramIdentifier);
+
 	ParseMetaDataValues(param + 10, retData);							//Rest of the parameter is further parsed to get meta data values
 }
 
@@ -269,7 +283,7 @@ const double GetUnitPrefixValue(char charPrefix)
 ///
 ///
 ///
-void ParseMetaDataValues(char *metaDataParams, MeasureData* retData)
+void ParseMetaDataValues(char *metaDataParams, MscrSubPackage* retData)
 {
 	const char delimiters[] = ",\n";
 	char* running = metaDataParams;
@@ -279,141 +293,230 @@ void ParseMetaDataValues(char *metaDataParams, MeasureData* retData)
 		switch (metaData[0])
 		{
 			case '1':
-				retData->status = GetReadingStatusFromPackage(metaData); 	//Retrieves the reading status of the parameter
+				retData->metadata.status = GetStatusFromPackage(metaData); 	//Retrieves the reading status of the parameter
 				break;
 			case '2':
-				retData->cr = GetCurrentRangeFromPackage(metaData);		    //Retrieves the current range of the parameter
-				break;
-			case '4':
-																			//Retrieves the corresponding noise
+				retData->metadata.current_range = GetCurrentRangeFromPackage(metaData);		    //Retrieves the current range of the parameter
 				break;
 		}
-	}while ((metaData = strtokenize(&running, delimiters)) != NULL);
+	} while ((metaData = strtokenize(&running, delimiters)) != NULL);
 }
 
 
 ///
+/// Look up function to convert the status value to a string
+/// Note: only works when at most 1 status flag is set
 ///
+/// parameters:
+///   status   The status value to convert to a string
+///
+/// return:
+///   The string that matches the `status` value. `"Undefined status"` if no exact match was found
 ///
 const char* StatusToString(Status status)
 {
 	switch(status){
-		 case STATUS_OK:
+		case STATUS_OK:
 			return "OK";
-		 case STATUS_OVERLOAD:
+		case STATUS_OVERLOAD:
 			return "Overload";
-		 case STATUS_UNDERLOAD:
+		case STATUS_UNDERLOAD:
 			 return "Underload";
-		 case STATUS_OVERLOAD_WARNING:
+		case STATUS_OVERLOAD_WARNING:
 			 return "Overload warning";
-		 default:
-			return "Invalid status";
-    }
+		default:
+			return "Undefined status";
+	}
 }
 
 
 ///
+/// Read the status bitmask from a package
 ///
+/// parameters:
+///    metaDataStatus string containing (only) the metadata status field
 ///
-const char* GetReadingStatusFromPackage(char* metaDataStatus)
+/// return:
+///    Bitmask value from the package
+///
+int GetStatusFromPackage(char* metaDataStatus)
 {
-	const char* status;
-	status = "Undefined status";									//Default return value
-	long statusBits = strtol(&metaDataStatus[1], NULL, 16);			//Fetches the status bit from the package
-	if ((statusBits) == STATUS_OK)
-		status = StatusToString(STATUS_OK);
-	if ((statusBits & 0x2) == STATUS_OVERLOAD)
-		status = StatusToString(STATUS_OVERLOAD);
-	if ((statusBits & 0x4) == STATUS_UNDERLOAD)
-		status = StatusToString(STATUS_UNDERLOAD);
-	if ((statusBits & 0x8) == STATUS_OVERLOAD_WARNING)
-		status = StatusToString(STATUS_OVERLOAD_WARNING);
-	return status;
+	int statusBits = strtol(&metaDataStatus[1], NULL, 16);
+	return statusBits;
 }
 
 
 ///
+/// Extracts the current range from the MethodSCRIPT package metadata
 ///
+/// parameters:
+///    metaDataCR String containing (only) the metatdata current range field
 ///
-const char* GetCurrentRangeFromPackage(char* metaDataCR)
+/// return:
+///    Bitmask value from the package
+///
+int GetCurrentRangeFromPackage(char* metaDataCR)
 {
-	char* currentRangeStr;
 	char  crBytePackage[3];
-	strncpy(crBytePackage, metaDataCR+1, 2);							//Fetches the current range bits from the package
-	int crByte = strtol(crBytePackage, NULL, 16);
+	strncpy(crBytePackage, metaDataCR + 1, 2);
+	return strtol(crBytePackage, NULL, 16);
+}
 
-	switch (crByte)
+
+///
+/// Look up function to translate the current range value to a string.
+///
+/// parameters:
+///   current_range The current range value from the MethodSCRIPT package
+///
+/// return:
+///   Pointer to constant string containing the current range text
+///
+const char* current_range_to_string(int current_range)
+{
+	switch (current_range)
 	{
 		case 0:
-			currentRangeStr = "100nA";
-			break;
+			return "100nA";
 		case 1:
-			currentRangeStr = "2uA";
-			break;
+			return "2uA";
 		case 2:
-			currentRangeStr = "4uA";
-			break;
+			return "4uA";
 		case 3:
-			currentRangeStr = "8uA";
-			break;
+			return "8uA";
 		case 4:
-			currentRangeStr = "16uA";
-			break;
+			return "16uA";
 		case 5:
-			currentRangeStr = "32uA";
-			break;
+			return "32uA";
 		case 6:
-			currentRangeStr = "63uA";
-			break;
+			return "63uA";
 		case 7:
-			currentRangeStr = "125uA";
-			break;
+			return "125uA";
 		case 8:
-			currentRangeStr = "250uA";
-			break;
+			return "250uA";
 		case 9:
-			currentRangeStr = "500uA";
-			break;
+			return "500uA";
 		case 10:
-			currentRangeStr = "1mA";
-			break;
+			return "1mA";
 		case 11:
-			currentRangeStr = "15mA";
-			break;
+			return "15mA";
 		case 128:
-			currentRangeStr = "100nA (High speed)";
-			break;
+			return "100nA (High speed)";
 		case 129:
-			currentRangeStr = "1uA (High speed)";
-			break;
+			return "1uA (High speed)";
 		case 130:
-			currentRangeStr = "6uA (High speed)";
-			break;
+			return "6uA (High speed)";
 		case 131:
-			currentRangeStr = "13uA (High speed)";
-			break;
+			return "13uA (High speed)";
 		case 132:
-			currentRangeStr = "25uA (High speed)";
-			break;
+			return "25uA (High speed)";
 		case 133:
-			currentRangeStr = "50uA (High speed)";
-			break;
+			return "50uA (High speed)";
 		case 134:
-			currentRangeStr = "100uA (High speed)";
-			break;
+			return "100uA (High speed)";
 		case 135:
-			currentRangeStr = "200uA (High speed)";
-			break;
+			return "200uA (High speed)";
 		case 136:
-			currentRangeStr = "1mA (High speed)";
-			break;
+			return "1mA (High speed)";
 		case 137:
-			currentRangeStr = "5mA (High speed)";
-			break;
+			return "5mA (High speed)";
 		default:
-			currentRangeStr = "Invalid value";
-			break;
+			return "Invalid value";
 	}
-	return currentRangeStr;
 }
 
+
+///
+/// Look up function to convert a MethodSCRIPT `variable type` value to a string
+///
+const char *VartypeToString(int variable_type)
+{
+	switch(variable_type)
+	{
+		case MSCR_VT_UNKNOWN:
+			return "MSCR_VT_UNKNOWN";
+
+		case MSCR_VT_POTENTIAL:
+			return "Potential";
+		case MSCR_VT_POTENTIAL_CE:
+			return "Potential_CE";
+		case MSCR_VT_POTENTIAL_SE:
+			return "Potential_SE";
+		case MSCR_VT_POTENTIAL_RE:
+			return "Potential_RE";
+		case MSCR_VT_POTENTIAL_WE_VS_CE:
+			return "Potential_WE_vs_CE";
+		case MSCR_VT_POTENTIAL_AIN0:
+			return "Potential_AIN0";
+		case MSCR_VT_POTENTIAL_AIN1:
+			return "Potential_AIN1";
+		case MSCR_VT_POTENTIAL_AIN2:
+			return "Potential_AIN2";
+		case MSCR_VT_POTENTIAL_AIN3:
+			return "Potential_AIN3";
+		case MSCR_VT_POTENTIAL_AIN4:
+			return "Potential_AIN4";
+		case MSCR_VT_POTENTIAL_AIN5:
+			return "Potential_AIN5";
+		case MSCR_VT_POTENTIAL_AIN6:
+			return "Potential_AIN6";
+		case MSCR_VT_POTENTIAL_AIN7:
+			return "Potential_AIN7";
+		case MSCR_VT_CURRENT:
+			return "Current";
+		case MSCR_VT_PHASE:
+			return "Phase";
+		case MSCR_VT_IMP:
+			return "Imp";
+		case MSCR_VT_ZREAL:
+			return "Zreal";
+		case MSCR_VT_ZIMAG:
+			return "Zimag";
+		case MSCR_VT_CELL_SET_POTENTIAL:
+			return "Cell_set_potential";
+		case MSCR_VT_CELL_SET_CURRENT:
+			return "Cell_set_current";
+		case MSCR_VT_CELL_SET_FREQUENCY:
+			return "Cell_set_frequency";
+		case MSCR_VT_CELL_SET_AMPLITUDE:
+			return "Cell_set_amplitude";
+		case MSCR_VT_CHANNEL:
+			return "Channel";
+		case MSCR_VT_TIME:
+			return "Time";
+		case MSCR_VT_PIN_MSK:
+			return "Pin_msk";
+		case MSCR_VT_DEV_ADC_OFFSET:
+			return "Dev_adc_offset";
+		case MSCR_VT_DEV_HS_EX:
+			return "Dev_hs_ex";
+		case MSCR_VT_CURRENT_GENERIC1:
+			return "Current_generic1";
+		case MSCR_VT_CURRENT_GENERIC2:
+			return "Current_generic2";
+		case MSCR_VT_CURRENT_GENERIC3:
+			return "Current_generic3";
+		case MSCR_VT_CURRENT_GENERIC4:
+			return "Current_generic4";
+		case MSCR_VT_POTENTIAL_GENERIC1:
+			return "Potential_generic1";
+		case MSCR_VT_POTENTIAL_GENERIC2:
+			return "Potential_generic2";
+		case MSCR_VT_POTENTIAL_GENERIC3:
+			return "Potential_generic3";
+		case MSCR_VT_POTENTIAL_GENERIC4:
+			return "Potential_generic4";
+		case MSCR_VT_MISC_GENERIC1:
+			return "Misc_generic1";
+		case MSCR_VT_MISC_GENERIC2:
+			return "Misc_generic2";
+		case MSCR_VT_MISC_GENERIC3:
+			return "Misc_generic3";
+		case MSCR_VT_MISC_GENERIC4:
+			return "Misc_generic4";
+		case MSCR_VT_NONE:
+			return "None";
+		default:
+			return "Undefined variable type";
+	}
+}
