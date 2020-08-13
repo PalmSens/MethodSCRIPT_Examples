@@ -1,5 +1,6 @@
 @echo off
-set FOLDER=MethodSCRIPTExamples
+set FOLDER=_MethodSCRIPTExamples
+set ZIPNAME=MethodSCRIPTExamples.zip
 set AREYOUSURE=N
 
 echo.
@@ -30,14 +31,16 @@ xcopy /Q /S /I /E "./MethodSCRIPTExample_Arduino" "./%FOLDER%/MethodSCRIPTExampl
 
 REM the C example contains both Windows and Linux implementation. 
 REM To make things clear for customers we separate them in different directories
+rmdir /Q /S "./MethodSCRIPTExample_C\MethodSCRIPTExample_C\Results"
+mkdir "./MethodSCRIPTExample_C\MethodSCRIPTExample_C\Results"
 xcopy /Q /S /I /E "./MethodSCRIPTExample_C" "./%FOLDER%/MethodSCRIPTExample_C_Linux"
 xcopy /Q /S /I /E "./MethodSCRIPTExample_C" "./%FOLDER%/MethodSCRIPTExample_C_Windows"
 rename "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C" "MethodSCRIPTExample_C_Windows" 
 rename "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C"     "MethodSCRIPTExample_C_Linux" 
-rmdir /Q /S "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C_Windows/_Linux"
 rmdir /Q /S "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C_Linux/_Windows"
+rmdir /Q /S "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C_Windows/_Linux/"
 rename "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C_Windows/_Windows" "project" 
-rename "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C_Linux/_Linux"     "project" 
+rename "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C_Linux/_Linux"       "project" 
 del /Q "./%FOLDER%\MethodSCRIPTExample_C_Linux\MethodSCRIPTExample_C_Linux\SerialPort\SerialPortWindows.c"
 del /Q "./%FOLDER%\MethodSCRIPTExample_C_Windows\MethodSCRIPTExample_C_Windows\SerialPort\SerialPortLinux.c"
 
@@ -51,6 +54,11 @@ echo Removing .docx files...
 
 cd "./%FOLDER%"
 del /s "*.docx"
+
+tar -caf "../%ZIPNAME%" "*"
+
+cd ..
+rmdir /Q /S "./%FOLDER%"
 
 :END
 pause
