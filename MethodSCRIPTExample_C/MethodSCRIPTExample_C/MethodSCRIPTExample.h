@@ -43,13 +43,15 @@
 #include "MethodSCRIPTcomm/MSComm.h"
 #include "MethodSCRIPTcomm/MSCommon.h"
 
+
 //////////////////////////////////////////////////////////////////////////////
 // Constants and defines
 //////////////////////////////////////////////////////////////////////////////
 #define CMD_VERSION_STRING "t\n"
 
+
 // Serial port configuration
-#ifdef __WIN32	// Windows
+#ifdef __WIN32	// Windows system
 	#define SERIAL_PORT_NAME "\\\\.\\COM8"							// The name of the port - to be changed, by looking up the device manager
 	// Note port number to start with "\\\\.\\" to allow for any port number in Windows.
 #else			// Linux. the port name to be changed. Can be found using "dmesg | grep FTDI" in the terminal
@@ -57,7 +59,20 @@
 #endif
 #define BAUD_RATE 230400										   // The baud rate for EmStat Pico
 
+// Maximum number of characters that the EmStat Pico can receive in one line
+#define MS_MAX_LINECHARS	128
 
+
+//
+// This file is shared between Windows an Linux examples, so we need to add the missing links.
+//
+#ifdef __WIN32 // Windows system
+	#include <windows.h>
+	#define SET_SEPARATOR_FOR_MS_EXCEL 1 // Set to 0 if NOT using Excel to read the CSV file
+#else // Linux system
+	#define Sleep(time) usleep(time * 1000)
+	#define SET_SEPARATOR_FOR_MS_EXCEL 0
+#endif
 
 #endif //ESPICOCODEEXAMPLE_H
 

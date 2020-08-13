@@ -40,9 +40,9 @@
 #define READ_BUFFER_LENGTH 1000
 
 
-///
-/// Reset a MscrSubPackage to a predefined state. Sets all metadata fields to -1 to indicate it is not written yet
-///
+//
+// See documentation in MSComm.h
+//
 void reset_mscr_subpackage(MscrSubPackage *subpackage)
 {
 	subpackage->value = 0;
@@ -54,10 +54,9 @@ void reset_mscr_subpackage(MscrSubPackage *subpackage)
 
 }
 
-
-///
-/// Rests a MscrPackage variable to a defined state
-///
+//
+// See documentation in MSComm.h
+//
 void reset_mscr_package(MscrPackage *package)
 {
 	package->nr_of_subpackages = 0;
@@ -69,9 +68,9 @@ void reset_mscr_package(MscrPackage *package)
 }
 
 
-///
-///
-///
+//
+// See documentation in MSComm.h
+//
 RetCode MSCommInit(MSComm* msComm,	WriteCharFunc writeCharFunc, ReadCharFunc readCharFunc)
 {
 	msComm->writeCharFunc = writeCharFunc;			//Initializes the msComm with the function pointer to its write function
@@ -85,9 +84,9 @@ RetCode MSCommInit(MSComm* msComm,	WriteCharFunc writeCharFunc, ReadCharFunc rea
 }
 
 
-///
-///
-///
+//
+// See documentation in MSComm.h
+//
 void WriteStr(MSComm* msComm, const char* buf)
 {
 	while(*buf != 0)
@@ -98,18 +97,18 @@ void WriteStr(MSComm* msComm, const char* buf)
 }
 
 
-///
-///
-///
+//
+// See documentation in MSComm.h
+//
 void WriteChar(MSComm* msComm, char c)
 {
 	msComm->writeCharFunc(c);
 }
 
 
-///
-///
-///
+//
+// See documentation in MSComm.h
+//
 RetCode ReadBuf(MSComm* msComm, char* buf)
 {
 	int i = 0;
@@ -146,9 +145,9 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 }
 
 
-///
-///
-///
+//
+// See documentation in MSComm.h
+//
 RetCode ReceivePackage(MSComm* msComm, MscrPackage* retData)
 {
 	char bufferLine[READ_BUFFER_LENGTH];
@@ -160,19 +159,20 @@ RetCode ReceivePackage(MSComm* msComm, MscrPackage* retData)
 }
 
 
-///
-///
-///
+//
+// See documentation in MSComm.h
+//
 void ParseResponse(char *responsePackageLine, MscrPackage* retData)
 {
 	reset_mscr_package(retData);
 
-	char *P = strchr(responsePackageLine, 'P');					//Identifies the beginning of the response package
-	char *packageLine = P+1;
-	const char delimiters[] = ";\n";									//a space (" ") is used as prefix token thus part of parameter
-	char* running = packageLine;										//Initial index of the line to be tokenized
-	char* param;// = strtokenize(&running, delimiters);					//Pulls out the parameters separated by the delimiters
+	char *P = strchr(responsePackageLine, 'P');     //Identifies the beginning of the response package
+	char *packageLine = P + 1;
+	const char delimiters[] = ";\n";                //a space (" ") is used as prefix token thus part of parameter
+	char* running = packageLine;                    //Initial index of the line to be tokenized
+	char* param;                                    //Pulls out the parameters separated by the delimiters
 	int i = 0;
+
 	while ((param = strtokenize(&running, delimiters)) != NULL)
 	{
 		if (strlen(param) == 0)
@@ -184,9 +184,9 @@ void ParseResponse(char *responsePackageLine, MscrPackage* retData)
 }
 
 
-///
-///
-///
+//
+// See documentation in MSComm.h
+//
 char* strtokenize(char** stringp, const char* delim)
 {
   char* start = *stringp;
@@ -207,9 +207,9 @@ char* strtokenize(char** stringp, const char* delim)
 }
 
 
-///
-///
-///
+//
+// See documentation in MSComm.h
+//
 void ParseParam(char* param, MscrSubPackage* retData)
 {
 	char paramIdentifier[3];
@@ -219,16 +219,16 @@ void ParseParam(char* param, MscrSubPackage* retData)
 	paramIdentifier[2] = '\0';
 	strncpy(paramValue, param+ 2, 8);									//Splits the parameter value string
 	paramValue[9]= '\0';
-	retData->value = (float)GetParameterValue(paramValue);				//Retrieves the actual parameter value
+	retData->value = GetParameterValue(paramValue);				//Retrieves the actual parameter value
 	retData->variable_type = MSCR_STR_TO_VT(paramIdentifier);
 
 	ParseMetaDataValues(param + 10, retData);							//Rest of the parameter is further parsed to get meta data values
 }
 
 
-///
-///
-///
+//
+// See documentation in MSComm.h
+//
 float GetParameterValue(char* paramValue)
 {
 	char charUnitPrefix = paramValue[7]; 								//Identifies the SI unit prefix from the package at position 8
@@ -242,9 +242,9 @@ float GetParameterValue(char* paramValue)
 }
 
 
-///
-///
-///
+//
+// See documentation in MSComm.h
+//
 const double GetUnitPrefixValue(char charPrefix)
 {
 	switch(charPrefix)
@@ -280,9 +280,9 @@ const double GetUnitPrefixValue(char charPrefix)
 }
 
 
-///
-///
-///
+//
+// See documentation in MSComm.h
+//
 void ParseMetaDataValues(char *metaDataParams, MscrSubPackage* retData)
 {
 	const char delimiters[] = ",\n";
@@ -303,16 +303,9 @@ void ParseMetaDataValues(char *metaDataParams, MscrSubPackage* retData)
 }
 
 
-///
-/// Look up function to convert the status value to a string
-/// Note: only works when at most 1 status flag is set
-///
-/// parameters:
-///   status   The status value to convert to a string
-///
-/// return:
-///   The string that matches the `status` value. `"Undefined status"` if no exact match was found
-///
+//
+// See documentation in MSComm.h
+//
 const char* StatusToString(Status status)
 {
 	switch(status){
@@ -330,15 +323,9 @@ const char* StatusToString(Status status)
 }
 
 
-///
-/// Read the status bitmask from a package
-///
-/// parameters:
-///    metaDataStatus string containing (only) the metadata status field
-///
-/// return:
-///    Bitmask value from the package
-///
+//
+// See documentation in MSComm.h
+//
 int GetStatusFromPackage(char* metaDataStatus)
 {
 	int statusBits = strtol(&metaDataStatus[1], NULL, 16);
@@ -346,15 +333,10 @@ int GetStatusFromPackage(char* metaDataStatus)
 }
 
 
-///
-/// Extracts the current range from the MethodSCRIPT package metadata
-///
-/// parameters:
-///    metaDataCR String containing (only) the metatdata current range field
-///
-/// return:
-///    Bitmask value from the package
-///
+
+//
+// See documentation in MSComm.h
+//
 int GetCurrentRangeFromPackage(char* metaDataCR)
 {
 	char  crBytePackage[3];
@@ -363,15 +345,9 @@ int GetCurrentRangeFromPackage(char* metaDataCR)
 }
 
 
-///
-/// Look up function to translate the current range value to a string.
-///
-/// parameters:
-///   current_range The current range value from the MethodSCRIPT package
-///
-/// return:
-///   Pointer to constant string containing the current range text
-///
+//
+// See documentation in MSComm.h
+//
 const char* current_range_to_string(int current_range)
 {
 	switch (current_range)
@@ -426,9 +402,9 @@ const char* current_range_to_string(int current_range)
 }
 
 
-///
-/// Look up function to convert a MethodSCRIPT `variable type` value to a string
-///
+//
+// See documentation in MSComm.h
+//
 const char *VartypeToString(int variable_type)
 {
 	switch(variable_type)

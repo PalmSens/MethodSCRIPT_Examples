@@ -31,7 +31,7 @@
  * ----------------------------------------------------------------------------
  Description :
  * ----------------------------------------------------------------------------
- *  MSComm handles the communication with the EmStat Pico.
+ * MSComm handles the communication with the EmStat Pico.
  *	Only this file needs to be included in your software.
  *	To communicate with an EmStat Pico, create a MSComm struct and call MSCommInit() on it.
  *	If communication with multiple EmStat Picos is required, create a separate MSComm with different
@@ -41,6 +41,10 @@
  *	by reading a script string/script file for a specific measurement type.
  *
  *	To receive data from the EmStat Pico, call ReceivePackage().
+ *
+ *	This library support MethodSCRIPT output packages with a fixed maximum number of subpackages.
+ *	The maximum number is defined by `MSCR_SUBPACKAGES_PER_LINE` and statically allocated in the struct `MscrPackage`.
+ *
  ============================================================================
  */
 
@@ -62,23 +66,19 @@
 
 
 //////////////////////////////////////////////////////////////////////////////
-// Macros
+// Constants and macros
 //////////////////////////////////////////////////////////////////////////////
 
-// Converts a MethodSCRIPT `variable type` string to an integer
-// For example "aa" = 0, "ab = 1, "ba" = 26 and "zz" = 675)
-#define MSCR_STR_TO_VT(str) ((str[0] - 'a') * 26 + (str[1] - 'a'))
-
-
-//////////////////////////////////////////////////////////////////////////////
-// Constants
-//////////////////////////////////////////////////////////////////////////////
 
 #define VERSION_STR_LENGTH	28
 
 #define MSCR_SUBPACKAGES_PER_LINE	100
-#define VARTYPE_TO_UINT8(ch1, ch2) (((ch1)-'a') * 26 + (ch2 - 'a'))
 
+
+#define VARTYPE_TO_UINT8(ch1, ch2) (((ch1)-'a') * 26 + (ch2 - 'a'))
+// Converts a MethodSCRIPT `variable type` string to an integer
+// For example "aa" = 0, "ab = 1, "ba" = 26 and "zz" = 675)
+#define MSCR_STR_TO_VT(str) (VARTYPE_TO_UINT8(str[0], str[1]))
 
 //NOTE: Stored in uint8, so highest possible var type is 255, which is "jv"
 typedef enum _VarType
@@ -236,11 +236,13 @@ typedef struct _MscrPackage {
 ///
 /// Initialises the MSComm object
 ///
-/// MSComm:				The MSComm data struct
-/// write_char_func: 	Function pointer to the write function this MSComm should use
-/// read_char_func: 	Function pointer to the read function this MSComm should use
+/// parameters:
+///   MSComm           - The MSComm data struct
+///   write_char_func  - Function pointer to the write function this MSComm should use
+///   read_char_func   - Function pointer to the read function this MSComm should use
 ///
-/// Returns: CODE_OK if successful, otherwise CODE_NULL.
+/// Returns:
+///   CODE_OK if successful, otherwise CODE_NULL.
 ///
 RetCode MSCommInit(MSComm* MSComm,	WriteCharFunc write_char_func, ReadCharFunc read_char_func);
 
@@ -249,10 +251,12 @@ RetCode MSCommInit(MSComm* MSComm,	WriteCharFunc write_char_func, ReadCharFunc r
 /// Receives a package and parses it
 /// Currents are expressed in the Ampere, potentials are expressed in Volts
 ///
-/// MSComm:		The MSComm data struct
-/// retData: 	The package received is parsed and stored in this struct
+/// parameters:
+///   MSComm 	 - The MSComm data struct
+///   retData   - The package received is parsed and stored in this struct
 ///
-/// Returns: CODE_OK if successful, CODE_MEASUREMENT_DONE if measurement is completed
+/// Returns
+///   CODE_OK if successful, CODE_MEASUREMENT_DONE if measurement is completed
 ///
 RetCode ReceivePackage(MSComm* MSComm, MscrPackage* retData);
 
@@ -260,8 +264,9 @@ RetCode ReceivePackage(MSComm* MSComm, MscrPackage* retData);
 ///
 /// Parses a line of response and passes the meta data values for further parsing
 ///
-/// responseLine: The line of response to be parsed
-/// retData: 	  The struct in which the parsed values are stored
+/// parameters:
+///   responseLine  - The line of response to be parsed
+///   retData       - The struct in which the parsed values are stored
 ///
 void ParseResponse(char *responseLine, MscrPackage* retData);
 
@@ -270,20 +275,25 @@ void ParseResponse(char *responseLine, MscrPackage* retData);
 /// Splits the input string in to tokens based on the delimiters set (delim) and stores the pointer to the successive token in *stringp
 /// This has to be performed repeatedly until end of string or until no further tokens are found
 ///
-/// stringp: The pointer to the next string token
-/// delim:   The array containing a set of delimiters
+/// parameters:
+///   stringp  - The pointer to the next string token
+///   delim    - The array containing a set of delimiters
 ///
-/// Returns: The current token (char* ) found
+/// Returns:
+///   The current token (char* ) found
 ///
 char* strtokenize(char** stringp, const char* delim);
 
 
 ///
-/// Fetches the string to be displayed for the input status
+/// Look up function to convert the status value to a string
+/// Note: only works when at most 1 status flag is set
 ///
-/// status: The enum Status whose string is to be fetched
+/// parameters:
+///   status   The status value to convert to a string
 ///
-/// Returns: The corresponding string for the input enum status
+/// return:
+///   The string that matches the `status` value. `"Undefined status"` if no exact match was found
 ///
 const char* StatusToString(Status status);
 
@@ -291,8 +301,9 @@ const char* StatusToString(Status status);
 ///
 /// Parses a parameter and calls the function to parse meta data values if any
 ///
-/// param: 	 The parameter value to be parsed
-/// retData: The struct in which the parsed values are stored
+/// parameters:
+///   param    - The parameter value to be parsed
+///   retData  - The struct in which the parsed values are stored
 ///
 void ParseParam(char* param, MscrSubPackage* retData);
 
@@ -300,7 +311,8 @@ void ParseParam(char* param, MscrSubPackage* retData);
 ///
 /// Retrieves the parameter value by parsing the input value and appending the SI unit prefix to it
 ///
-/// Returns: The actual parameter value in float (with its SI unit prefix)
+/// Returns:
+///   The actual parameter value in float (with its SI unit prefix)
 ///
 float GetParameterValue(char* paramValue);
 
@@ -308,8 +320,9 @@ float GetParameterValue(char* paramValue);
 ///
 /// Parses the meta data values and calls the corresponding functions based on the meta data type (status, current range, noise)
 ///
-/// metaDataParams: The meta data parameter values to be parsed
-/// retData: 		The struct in which the parsed values are stored
+/// parameters:
+///   metaDataParams   - The meta data parameter values to be parsed
+///   retData          - The struct in which the parsed values are stored
 ///
 void ParseMetaDataValues(char *metaDataParams, MscrSubPackage* retData);
 
@@ -317,25 +330,35 @@ void ParseMetaDataValues(char *metaDataParams, MscrSubPackage* retData);
 ///
 /// Parses the bytes corresponding to the status of the package(OK, Overload, Underload, Overload_warning)
 ///
-/// metaDataStatus: The meta data status value to be parsed
+/// parameters:
+///   metaDataStatus - The meta data status value to be parsed
 ///
-/// Returns: A string corresponding to the parsed status
-
+/// Returns:
+///   A string corresponding to the parsed status
+///
 int GetStatusFromPackage(char* metaDataStatus);
 
 
 ///
-/// Parses the bytes corresponding to current range of the parameter
+/// Extracts the current range from the MethodSCRIPT package metadata
 ///
-/// metaDataCR: The meta data current range value to be parsed
+/// parameters:
+///    metaDataCR - String containing (only) the metatdata current range field
 ///
-/// Returns: A string corresponding to the parsed current range value
+/// return:
+///    Bitmask value from the package
 ///
 int GetCurrentRangeFromPackage(char* metaDataCR);
 
 
 ///
 /// Returns the double value corresponding to the input unit prefix char
+///
+/// parameters:
+///   charPrefix character representing the SI prefix
+///
+/// return:
+///   Value corresponding to the SI prefix
 ///
 const double GetUnitPrefixValue(char charPrefix);
 
@@ -355,6 +378,12 @@ const char* current_range_to_string(int current_range);
 ///
 /// Look up function to convert a MethodSCRIPT `variable type` value to a string
 ///
+/// parameters:
+///   variable_type The type of MethodSCRIP variable to find the sting for
+///
+/// return:
+///   Variable type as (human readable) string
+///
 const char *VartypeToString(int variable_type);
 
 
@@ -370,10 +399,12 @@ const char *VartypeToString(int variable_type);
 ///
 /// Reads a character buffer using the supplied read_char_func
 ///
-/// MSComm:	The MSComm data struct
-/// buf:	The buffer in which the response is stored
+/// parameters:
+///   MSComm  - The MSComm data struct
+///   buf     - The buffer in which the response is stored
 ///
-/// Returns: CODE_OK if successful, otherwise CODE_NULL.
+/// Returns
+///   CODE_OK if successful, otherwise CODE_NULL.
 ///
 RetCode ReadBuf(MSComm* MSComm, char* buf);
 
@@ -381,8 +412,9 @@ RetCode ReadBuf(MSComm* MSComm, char* buf);
 ///
 /// Reads a character using the supplied read_char_func
 ///
-/// MSComm:	The MSComm data struct
-/// c:		The character read is stored in this variable
+/// parameters:
+///   MSComm - The MSComm data struct
+///   c      - The character read is stored in this variable
 ///
 /// Returns: CODE_OK if successful, otherwise CODE_TIMEOUT.
 ///
@@ -392,8 +424,9 @@ RetCode ReadChar(MSComm* MSComm, char* c);
 ///
 /// Writes a character using the supplied write_char_func
 ///
-/// MSComm:	The MSComm data struct
-/// c:		The character to be written
+/// parameters:
+///   MSComm  - The MSComm data struct
+///   c       - The character to be written
 ///
 void WriteChar(MSComm* MSComm, char c);
 
@@ -401,8 +434,9 @@ void WriteChar(MSComm* MSComm, char c);
 ///
 /// Writes a 0 terminated string using the supplied write_char_func
 ///
-/// MSComm:	The MSComm data struct
-/// buf:	The data to be written
+/// parameters:
+///   MSComm   - The MSComm data struct
+///   buf      - The data to be written
 ///
 void WriteStr(MSComm* MSComm, const char* buf);
 

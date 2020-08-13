@@ -36,30 +36,32 @@
  *  This example is shipped with a few demo scripts that can be selected with the value of `SCRIPT_SELECT`
  *  To use this with a custom script, change the value of `SCRIPT_SELECT` to 100 and modify
  *  the appropriate filenames in `METHODSCRIPT_FILEPATHNAME` and `RESULT_FILEPATHNAME`.
+ *
+ *  This example exists of the following files
+ *  MethodSCRIPTExample.c           - Gives a high level overview on how to interact with the Pico
+ *  MethodSCRIPTExample.h           - Some settings and definitions used in this example
+ *  SerialPort.c/h                  - Example on how to implement the serial communication required for MSComm
+ *  METHODSCRIPT_output_processor.c - Example on how to process the MethodSCRIPT output into a human readable format
  */
 
 
 #include "MethodSCRIPTExample.h"
 #include "SerialPort.h"
 
+//
+// Function prototypes from output_formatter.c
+//
+void PrintSubpackage(const MscrSubPackage subpackage);
+void DisplayResults(const RetCode code, const MscrPackage package, const int package_nr);
+void OpenCSVFile(const char *pFilename, FILE **fp);
+void WriteHeaderToCSVFile(FILE *fp, MscrPackage first_package);
+void WriteDataToCSVFile(FILE *fp, const MscrPackage package, int package_nr);
+void ResultsToCsv(const RetCode code, const MscrPackage package, const int package_nr);
+void close_csv_file();
 
-// This file is shared between Windows an Linux examples, so we need to add the missing links.
-#ifdef __WIN32
-	#include <windows.h>
-	#define SET_SEPARATOR_FOR_MS_EXCEL 1 // Set to 0 if NOT using Excel
-#else
-	#define Sleep(time) usleep(time * 1000)
-	#define SET_SEPARATOR_FOR_MS_EXCEL 0
-#endif
-
-
-// Maximum number of characters that the EmStat Pico can receive in one line
-#define MS_MAX_LINECHARS	128
 
 // MethodScript communication interface
 MSComm msComm;
-// CSV File pointer
-FILE *pFCsv;
 
 
 // Script select
@@ -94,11 +96,8 @@ FILE *pFCsv;
 	// Set the paths to a custom script. Replace `INSERT_FILENAME_HERE` with the desired filenames for
 	// the script and output files.
 	//
-	//const char* METHODSCRIPT_FILEPATHNAME = "/../ScriptFiles/INSERT_FILENAME_HERE.mscr";
-	//const char* RESULT_FILEPATHNAME       = "../Results/INSERT_FILENAME_HERE.csv";
-
-	const char* METHODSCRIPT_FILEPATHNAME = "C:\\Users\\RobertPaauw\\Downloads\\OCVthenCAbipot.txt";
-	const char *RESULT_FILEPATHNAME       = "C:\\Users\\RobertPaauw\\Downloads\\result_OCVthenCAbipot.csv";
+	const char* METHODSCRIPT_FILEPATHNAME = "/../ScriptFiles/INSERT_FILENAME_HERE.mscr";
+	const char* RESULT_FILEPATHNAME       = "../Results/INSERT_FILENAME_HERE.csv";
 #endif
 
 
@@ -159,299 +158,6 @@ int SendScriptFile(const char *fileName)
 	return CODE_OK;
 }
 
-
-///
-/// Print one MethodSCRIPToutpu  subpackage on the console.
-///
-void PrintSubpackage(const MscrSubPackage subpackage)
-{
-	// Format and print the subpackage value
-
-	switch(subpackage.variable_type) {
-		case MSCR_VT_POTENTIAL:
-		case MSCR_VT_POTENTIAL_CE:
-		case MSCR_VT_POTENTIAL_SE:
-		case MSCR_VT_POTENTIAL_RE:
-		case MSCR_VT_POTENTIAL_GENERIC1:
-		case MSCR_VT_POTENTIAL_GENERIC2:
-		case MSCR_VT_POTENTIAL_GENERIC3:
-		case MSCR_VT_POTENTIAL_GENERIC4:
-		case MSCR_VT_POTENTIAL_WE_VS_CE:
-			printf("E[V]: %6.3f \t", subpackage.value);
-			break;
-		case MSCR_VT_CURRENT:
-		case MSCR_VT_CURRENT_GENERIC1:
-		case MSCR_VT_CURRENT_GENERIC2:
-		case MSCR_VT_CURRENT_GENERIC3:
-		case MSCR_VT_CURRENT_GENERIC4:
-			printf("I[A]: %11.3E \t", subpackage.value);
-			break;
-		case MSCR_VT_ZREAL:
-			printf("Zreal[Ohm]: %16.3f \t", subpackage.value);
-			break;
-		case MSCR_VT_ZIMAG:
-			printf("Zimag[Ohm]: %16.3f \t", subpackage.value);
-			break;
-		case MSCR_VT_CELL_SET_POTENTIAL:
-			printf("E set[V]: %6.3f \t", subpackage.value);
-			break;
-		case MSCR_VT_CELL_SET_CURRENT:
-			printf("I set[A]: %11.3E \t", subpackage.value);
-			break;
-		case MSCR_VT_CELL_SET_FREQUENCY:
-			printf("F set[Hz]: %6.3E \t", subpackage.value);
-			break;
-		case MSCR_VT_CELL_SET_AMPLITUDE:
-			printf("A set[V]: %6.3f \t", subpackage.value);
-			break;
-		case MSCR_VT_UNKNOWN:
-		default:
-			printf("?%d?[?] %16.3f ", subpackage.variable_type, subpackage.value);
-	}
-
-
-	// Print subpackage metadata
-
-	// Print status field if available
-	if (subpackage.metadata.status >= 0)
-	{
-		const	char *status_str;
-		if (subpackage.metadata.status == 0)
-		{
-			status_str = StatusToString(0);
-		}
-		else
-		{
-			// Find the first status flag that is set.
-			for (int i = 0; i < 31; i++)
-			{
-				if ((subpackage.metadata.status & (1 << i)) != 0)
-				{
-					status_str = StatusToString(1 << i);
-					break;
-				}
-			}
-		}
-
-		printf("status: %-16s \t", status_str);
-	}
-
-	// Print current range if available
-	if (subpackage.metadata.current_range >= 0)
-	{
-		const char *current_range_str = current_range_to_string(subpackage.metadata.current_range);
-
-		printf("CR: %-20s \t", current_range_str);
-	}
-}
-
-
-//
-// Print the processed MethodSCRIPT output on the console.
-//
-// parameters:
-//    code        The status code from the received package
-//    package     The processed MethodSCRIPT package
-//    package_nr  The package number within the current measurement-loop (starts at 0)
-//
-void DisplayResults(const RetCode code, const MscrPackage package, const int package_nr)
-{
-	switch(code)
-	{
-	case CODE_RESPONSE_BEGIN:				// Measurement response begins
-		printf("\nResponse begin\n");
-		break;
-	case CODE_MEASURING:
-		printf("\nMeasuring... \n");
-		break;
-	case CODE_OK:							// Received valid package, print it.
-			if(package_nr == 0)
-	 			printf("\nReceiving measurement response:\n");
-	 		// Print package index (starting at 1 on the console)
-			printf(" %d \t", package_nr + 1);
-
-			// Print all subpackages in
-			for (int i = 0; i < package.nr_of_subpackages; i++)
-				PrintSubpackage(package.subpackages[i]);
-
-			printf("\n");
-		 	fflush(stdout);
-	 	break;
-	case CODE_MEASUREMENT_DONE:			    // Measurement loop complete
-		printf("\nMeasurement completed. ");
-		break;
-	case CODE_RESPONSE_END:				    // Measurement response end
-		printf("%d data point(s) received.", package_nr);
-		fflush(stdout);
-		break;
-	default:                    			// Failed to parse or identify package.
-		printf("\nFailed to parse package: %d\n", code);
-	}
-}
-
-
-//
-// Open a new CSV file for writing. Overwrite if it already exists.
-//
-// parameters:
-//    pFilename    The filename/path for the new CSV file
-//    fp           The pointer to store the created file pointer in.
-//
-void OpenCSVFile(const char *pFilename, FILE **fp)
-{
-	*fp = fopen(pFilename, "w");		//Open file for writing (overwrite existing)
-	if (*fp == NULL)
-	{
-		printf("Could not open CSV file %s (hint: make sure the directory exists)", pFilename);
-	}
-
-	// Add an extra line to tell Microsoft Excel that we use "," as separator
-	if (SET_SEPARATOR_FOR_MS_EXCEL == 1)
-	{
-		fprintf(*fp, "\"sep=,\"\n");
-	}
-}
-
-
-//
-// Write a CSV header to the file. The fields in the header are determined by the `variable types`
-// in the provided package.
-//
-// parameters:
-//    fp               File pointer of the opened CSV file
-//    first_package    The first package in the measurement loop, used to determine the header fields
-//
-//
-void WriteHeaderToCSVFile(FILE *fp, MscrPackage first_package)
-{
-	if (fp == NULL)
-	{
-		printf("Unable to write header to CSV file\n");
-		fflush(stdout);
-		return;
-	}
-
-	// The first field is always the package index
-	fprintf(fp, "\"Index\"");
-
-	// Loop through package to find Variable types
-	for (int i = 0; i < first_package.nr_of_subpackages; i++)
-	{
-		const char *variable_typename_str = VartypeToString(first_package.subpackages[i].variable_type);
-		fprintf(fp, ",\"%s\"", variable_typename_str);
-
-		if(first_package.subpackages[i].metadata.status >= 0)
-			fprintf(fp, ",\"Status\"");
-		if(first_package.subpackages[i].metadata.current_range >= 0)
-			fprintf(fp, ",\"Current Range\"");
-
-	}
-
-	// Terminate the line
-	fprintf(fp, "\n");
-}
-
-
-//
-// Write one data package to the CSV file
-//
-// parameters:
-//    fp          File pointer of the opened CSV file
-//    package     The processed MethodSCRIPT package
-//    package_nr  The package number within the current measurement-loop (starts at 0)
-//
-void WriteDataToCSVFile(FILE *fp, const MscrPackage package, int package_nr)
-{
-	if (fp == NULL)
-	{
-		printf("Unable to write to CSV file\n");
-		fflush(stdout);
-		return;
-	}
-
-	// Start the CSV line with a package index
-	fprintf(fp, "%d", package_nr + 1);
-
-	// Loop through package and add values to the CSV cells
-	for (int i = 0; i < package.nr_of_subpackages; i++)
-	{
-		fprintf(fp, ",\"%f\"", package.subpackages[i].value);
-
-		// Also print metadata if available
-
-		if (package.subpackages[i].metadata.status >= 0)
-		{
-			const	char *status_str;
-			if (package.subpackages[i].metadata.status == 0)
-			{
-				status_str = StatusToString(0);
-			}
-			else
-			{
-				// Find the first status flag that is set.
-				for (int bit = 0; bit < 31; bit++)
-				{
-					if ((package.subpackages[i].metadata.status & (1 << bit)) != 0)
-					{
-						status_str = StatusToString(1 << bit);
-						break;
-					}
-				}
-			}
-			fprintf(fp, ",\"%s\"", status_str, package.subpackages[i].metadata.status);
-		}
-
-		// Print current range if available
-		if (package.subpackages[i].metadata.current_range >= 0)
-		{
-			const char *current_range_str = current_range_to_string(package.subpackages[i].metadata.current_range);
-
-			fprintf(fp, ",\"%s\"", current_range_str);
-		}
-
-	}
-
-	// Terminate the line
-	fprintf(fp, "\n");
-}
-
-
-//
-// Store the parsed MethodSCRIPT output in a CSV file.
-// The first packet in a measurement loop will determine the values in the header field.
-// If the format of consecutive packages differs within a measurement loop they will be printed as is
-// and may in that case not match the header.
-//
-// parameters:
-//    code        The status code from the received package
-//    package     The processed MethodSCRIPT package
-//    package_nr  The package number within the current measurement-loop (starts at 0)
-//
-void ResultsToCsv(const RetCode code, const MscrPackage package, const int package_nr)
-{
-	switch(code)
-	{
-	case CODE_RESPONSE_BEGIN:					// Measurement response begins
-		OpenCSVFile(RESULT_FILEPATHNAME, &pFCsv);
-		break;
-	case CODE_MEASURING:
-		break;
-	case CODE_OK:								// Received valid package, print it.
-		if(package_nr == 0)
-		{
-			WriteHeaderToCSVFile(pFCsv, package);
-		}
-		WriteDataToCSVFile(pFCsv, package, package_nr);
-		break;
-	case CODE_MEASUREMENT_DONE:         // Measurement loop complete
-		fprintf(pFCsv, "\n");            // Add a empty line to create a new section
-		break;
-	case CODE_RESPONSE_END:             // Measurement response end
-	    break;
-	default:                            // Failed to parse or identify package.
-		break;
-	}
-}
 
 
 ///
@@ -534,8 +240,7 @@ int main(int argc, char *argv[])
 				process_emstat_response();
 			}
 
-			// Close CSV file
-			fclose(pFCsv);
+			close_csv_file();
 
 			CloseSerialPort();
 		} else {

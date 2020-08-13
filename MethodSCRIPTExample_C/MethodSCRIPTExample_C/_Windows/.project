@@ -79,6 +79,11 @@
 			<location>C:/Users/RobertPaauw/source_code/espico_examples/MethodSCRIPTExample_C/MethodSCRIPTExample_C/MethodSCRIPTExample.h</location>
 		</link>
 		<link>
+			<name>MethodSCRIPT_output_processor.c</name>
+			<type>1</type>
+			<location>C:/Users/RobertPaauw/source_code/espico_examples/MethodSCRIPTExample_C/MethodSCRIPTExample_C/MethodSCRIPT_output_processor.c</location>
+		</link>
+		<link>
 			<name>MethodSCRIPTcomm</name>
 			<type>2</type>
 			<location>C:/Users/RobertPaauw/source_code/espico_examples/MethodSCRIPTExample_C/MethodSCRIPTExample_C/MethodSCRIPTcomm</location>
