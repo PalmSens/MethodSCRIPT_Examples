@@ -1,5 +1,5 @@
 @echo off
-set FOLDER=_MethodSCRIPTExamples
+set FOLDER=_MethodSCRIPTExamples_BUILD
 set ZIPNAME=MethodSCRIPTExamples.zip
 set AREYOUSURE=N
 
@@ -28,26 +28,35 @@ echo Copying files...
 @echo on
 xcopy /Q /S /I /E "./MethodSCRIPTExample_Android" "./%FOLDER%/MethodSCRIPTExample_Android"
 xcopy /Q /S /I /E "./MethodSCRIPTExample_Arduino" "./%FOLDER%/MethodSCRIPTExample_Arduino"
-
-REM the C example contains both Windows and Linux implementation. 
-REM To make things clear for customers we separate them in different directories
-rmdir /Q /S "./MethodSCRIPTExample_C\MethodSCRIPTExample_C\Results"
-mkdir "./MethodSCRIPTExample_C\MethodSCRIPTExample_C\Results"
-xcopy /Q /S /I /E "./MethodSCRIPTExample_C" "./%FOLDER%/MethodSCRIPTExample_C_Linux"
-xcopy /Q /S /I /E "./MethodSCRIPTExample_C" "./%FOLDER%/MethodSCRIPTExample_C_Windows"
-rename "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C" "MethodSCRIPTExample_C_Windows" 
-rename "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C"     "MethodSCRIPTExample_C_Linux" 
-rmdir /Q /S "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C_Linux/_Windows"
-rmdir /Q /S "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C_Windows/_Linux/"
-rename "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C_Windows/_Windows" "project" 
-rename "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C_Linux/_Linux"       "project" 
-del /Q "./%FOLDER%\MethodSCRIPTExample_C_Linux\MethodSCRIPTExample_C_Linux\SerialPort\SerialPortWindows.c"
-del /Q "./%FOLDER%\MethodSCRIPTExample_C_Windows\MethodSCRIPTExample_C_Windows\SerialPort\SerialPortLinux.c"
-
 xcopy /Q /S /I /E "./MethodSCRIPTExample_iOS" "./%FOLDER%/MethodSCRIPTExample_iOS"
 xcopy /Q /S /I /E "./MethodSCRIPTExample_Python" "./%FOLDER%/MethodSCRIPTExample_Python"
 xcopy /Q /S /I /E "./MethodSCRIPTExamples_C#" "./%FOLDER%/MethodSCRIPTExamples_C#"
+
 @echo off
+
+REM the C example contains both Windows and Linux implementation. 
+REM To make things clear for customers we separate them in different directories
+
+REM Lets start with making a generic base for the Linux and Windows projects
+xcopy /Q /S /I /E "./MethodSCRIPTExample_C/MethodSCRIPTExample_C" "./%FOLDER%/C_example_temp"
+rmdir /Q /S "./%FOLDER%/C_example_temp/.settings"
+rmdir /Q /S "./%FOLDER%/C_example_temp/_Linux"
+rmdir /Q /S "./%FOLDER%/C_example_temp/_Windows"
+mkdir "./%FOLDER%/C_example_temp/Results"
+del /Q "./%FOLDER%\C_example_temp\SerialPort\SerialPortWindows.c"
+del /Q "./%FOLDER%\C_example_temp\SerialPort\SerialPortLinux.c"
+
+REM Add specific Linux files
+xcopy /Q /S /I /E "./%FOLDER%\C_example_temp" "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C_Linux"
+copy "./MethodSCRIPTExample_C\MethodSCRIPTExample_C\SerialPort\SerialPortLinux.c" ".\%FOLDER%\MethodSCRIPTExample_C_Linux\MethodSCRIPTExample_C_Linux\SerialPort\SerialPortLinux.c"
+copy "./MethodSCRIPTExample_C\MethodSCRIPT_Example_C.pdf" ".\%FOLDER%\MethodSCRIPTExample_C_Linux\MethodSCRIPT_Example_C.pdf"
+xcopy /Q "./MethodSCRIPTExample_C/MethodSCRIPTExample_C/_Linux" "./%FOLDER%/MethodSCRIPTExample_C_Linux/MethodSCRIPTExample_C_Linux"
+
+REM Add specific Windows files
+xcopy /Q /S /I /E "./%FOLDER%\C_example_temp" "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C_Windows"
+copy "./MethodSCRIPTExample_C\MethodSCRIPTExample_C\SerialPort\SerialPortWindows.c" ".\%FOLDER%\MethodSCRIPTExample_C_Windows\MethodSCRIPTExample_C_Windows\SerialPort\SerialPortWindows.c"
+copy "./MethodSCRIPTExample_C\MethodSCRIPT_Example_C.pdf" ".\%FOLDER%\MethodSCRIPTExample_C_Windows\MethodSCRIPT_Example_C.pdf"
+xcopy /Q "./MethodSCRIPTExample_C/MethodSCRIPTExample_C/_Windows" "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C_Windows"
 
 echo.
 echo Removing .docx files...
@@ -61,4 +70,5 @@ cd ..
 rmdir /Q /S "./%FOLDER%"
 
 :END
+echo.
 pause

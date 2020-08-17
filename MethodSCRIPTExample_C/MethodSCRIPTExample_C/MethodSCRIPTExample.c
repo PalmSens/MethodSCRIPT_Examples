@@ -69,7 +69,7 @@ MSComm msComm;
 // 1   = DEMO EIS
 // 2   = DEMO SWV (with 10k Ohm)
 // 100 = custom script
-#define SCRIPT_SELECT	100
+#define SCRIPT_SELECT	0
 
 
 // Set the script and output filenames according to the value of SCRIPT_SELECT
@@ -77,27 +77,27 @@ MSComm msComm;
 	//
 	// LSV demo
 	//
-	const char* METHODSCRIPT_FILEPATHNAME = "/../ScriptFiles/MSExample_LSV_10k.mscr";
-	const char* RESULT_FILEPATHNAME = 		"../Results/MSExample_LSV_10k.csv";
+	const char* METHODSCRIPT_FILEPATHNAME = "./ScriptFiles/MSExample_LSV_10k.mscr";
+	const char* RESULT_FILEPATHNAME = 		"./Results/MSExample_LSV_10k.csv";
 #elif SCRIPT_SELECT == 1
 	//
 	// EIS demo
 	//
-	const char* METHODSCRIPT_FILEPATHNAME = "/../ScriptFiles/MSExample_EIS.mscr";
-	const char* RESULT_FILEPATHNAME = 		"../Results/MSExample_EIS.csv";
+	const char* METHODSCRIPT_FILEPATHNAME = "./ScriptFiles/MSExample_EIS.mscr";
+	const char* RESULT_FILEPATHNAME = 		"./Results/MSExample_EIS.csv";
 #elif SCRIPT_SELECT == 2
 	//
 	// SWV demo
 	//
-	const char* METHODSCRIPT_FILEPATHNAME = "/../ScriptFiles/MSExample_SWV_10k.mscr";
-	const char* RESULT_FILEPATHNAME = 		"../Results/MSExample_SWV_10k.csv";
+	const char* METHODSCRIPT_FILEPATHNAME = "./ScriptFiles/MSExample_SWV_10k.mscr";
+	const char* RESULT_FILEPATHNAME = 		"./Results/MSExample_SWV_10k.csv";
 #elif SCRIPT_SELECT == 100
 	//
 	// Set the paths to a custom script. Replace `INSERT_FILENAME_HERE` with the desired filenames for
 	// the script and output files.
 	//
-	const char* METHODSCRIPT_FILEPATHNAME = "/../ScriptFiles/INSERT_FILENAME_HERE.mscr";
-	const char* RESULT_FILEPATHNAME       = "../Results/INSERT_FILENAME_HERE.csv";
+	const char* METHODSCRIPT_FILEPATHNAME = "./ScriptFiles/INSERT_FILENAME_HERE.mscr";
+	const char* RESULT_FILEPATHNAME       = "./Results/INSERT_FILENAME_HERE.csv";
 #endif
 
 

@@ -352,5 +352,6 @@ void ResultsToCsv(const RetCode code, const MscrPackage package, const int packa
 //
 void close_csv_file()
 {
-	fclose(pFCsv);
+	if (pFCsv != NULL)
+		fclose(pFCsv);
 }

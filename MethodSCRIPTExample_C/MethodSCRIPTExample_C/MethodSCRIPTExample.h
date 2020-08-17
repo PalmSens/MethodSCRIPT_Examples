@@ -55,6 +55,8 @@
 	#define SERIAL_PORT_NAME "\\\\.\\COM8"							// The name of the port - to be changed, by looking up the device manager
 	// Note port number to start with "\\\\.\\" to allow for any port number in Windows.
 #else			// Linux. the port name to be changed. Can be found using "dmesg | grep FTDI" in the terminal
+	// Note the user has to be part of the "dialout" group to access the serial port
+	// Use "sudo usermod -a -G dialout $USER" to configure this and reboot the computer.
 	#define SERIAL_PORT_NAME "/dev/ttyUSB0"
 #endif
 #define BAUD_RATE 230400										   // The baud rate for EmStat Pico

@@ -9,6 +9,9 @@
 #include "SerialPort.h"
 
 
+#define FAILURE 0
+#define SUCCESS 1
+
 int fd; // File descriptor for serial port
 
 
@@ -87,7 +90,7 @@ speed_t baud_to_termios(int request_baud)
 //
 int OpenSerialPort()
 {
-	fd = open(PORT_NAME, O_RDWR | O_NOCTTY | O_NDELAY);
+	fd = open(SERIAL_PORT_NAME, O_RDWR | O_NOCTTY | O_NDELAY);
 	if (fd == -1)
 	{
 		printf("Unable to open serial port.\n");
