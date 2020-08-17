@@ -124,18 +124,20 @@ RetCode ReadBuf(MSComm* msComm, char* buf)
 				buf[i] = '\0';
 				if(buf[0] == REPLY_VERSION_RESPONSE)
 					return CODE_VERSION_RESPONSE;
-				else if(buf[0] == REPLY_MEASURING)
+				else if((buf[0] == REPLY_MEASURING) || (buf[0] == REPLY_NSCANS_START))
 					return CODE_MEASURING;
 				else if(strcmp(buf, "e\n") == 0)	//Wdg 20-11-2019 added
 					return CODE_RESPONSE_BEGIN;		//..
-				else if(strcmp(buf, "*\n") == 0)
+				else if((strcmp(buf, "*\n") == 0 || strcmp(buf, "-\n") == 0))
 					return CODE_MEASUREMENT_DONE;
 				else if(strcmp(buf, "\n") == 0)
 					return CODE_RESPONSE_END;
 				else if(buf[0] == REPLY_MEASURE_DP)
 					return CODE_OK;
-				else
+				else{
+					printf("Unexpected response from ES Pico: \"%s\"\n", buf);
 					return CODE_NOT_IMPLEMENTED;
+				}
 			}
 		}
 	} while (i < READ_BUFFER_LENGTH-1);

@@ -180,6 +180,8 @@ typedef enum _Reply
 	REPLY_VERSION_RESPONSE 	= 't',
 	REPLY_MEASURING 		= 'M',
 	REPLY_MEASURE_DP		= 'P',
+	REPLY_NSCANS_START		= 'C',
+	REPLY_NSCANS_DONE		= '-',
 	REPLY_ENDOFMEASLOOP		= '*'
 } Reply;
 
