@@ -58,6 +58,8 @@ copy "./MethodSCRIPTExample_C\MethodSCRIPTExample_C\SerialPort\SerialPortWindows
 copy "./MethodSCRIPTExample_C\MethodSCRIPT_Example_C.pdf" ".\%FOLDER%\MethodSCRIPTExample_C_Windows\MethodSCRIPT_Example_C.pdf"
 xcopy /Q "./MethodSCRIPTExample_C/MethodSCRIPTExample_C/_Windows" "./%FOLDER%/MethodSCRIPTExample_C_Windows/MethodSCRIPTExample_C_Windows"
 
+rmdir /Q /S "./%FOLDER%/C_example_temp/"
+
 echo.
 echo Removing .docx files...
 
