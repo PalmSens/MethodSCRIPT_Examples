@@ -1,5 +1,5 @@
 # EmStat Pico code examples
-This repository contains the following code examples to use with the [EmStat Pico potentiostat module](https://www.emstatpico.com):
+This repository contains the following code examples to use with the [EmStat Pico potentiostat module](http://www.emstatpico.com):
 
 1. MethodSCRIPTExample_Android
 1. MethodSCRIPTExample_Arduino
