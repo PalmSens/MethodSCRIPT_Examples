@@ -49,3 +49,6 @@ This console example demonstrates sending, receiving and parsing data for a simp
 **Example 4: EIS Plot Example (MSEISPlotExample)**
 This example demonstrates the implementation of OxyPlot to show the EIS measurement response on Nyquist and Bode plots.
 
+# Support #
+All support questions should be posted in our [EngineerZone forums](https://ez.analog.com/partnerzone/palmsens/). 
+
