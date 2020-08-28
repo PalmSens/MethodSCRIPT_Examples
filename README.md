@@ -50,5 +50,6 @@ This console example demonstrates sending, receiving and parsing data for a simp
 This example demonstrates the implementation of OxyPlot to show the EIS measurement response on Nyquist and Bode plots.
 
 # Support #
+The EmStat Pico module is a product from PalmSens BV and Analog Devices Inc.
 All support questions should be posted in our [EngineerZone forums](https://ez.analog.com/partnerzone/palmsens/). 
 
