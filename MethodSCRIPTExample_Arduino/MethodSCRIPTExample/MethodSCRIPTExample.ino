@@ -267,7 +267,7 @@ void loop()
 				Serial.println("\nReceiving measurement response:");
 			Serial.print("\n");
 			Serial.print(++_nDataPoints);
-			if (data.zreal != HUGE_VALF)
+			if (data.zreal != INFINITY)
 			{
 				Serial.print("\tFrequency(Hz): ");
 				Serial.print(sci(data.frequency, 3));

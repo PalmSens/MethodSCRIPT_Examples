@@ -108,8 +108,8 @@ RetCode ReceivePackage(MSComm* msComm, MeasureData* retData)
 
 void ParseResponse(char *responsePackageLine, MeasureData* retData)
 {
-	retData->zreal = HUGE_VALF;											//Impedance data NAN as default
-	retData->zimag = HUGE_VALF;											//Impedance data NAN as default
+	retData->zreal = INFINITY;											//Impedance data NAN as default
+	retData->zimag = INFINITY;											//Impedance data NAN as default
 	char *P = strchr(responsePackageLine, 'P');							//Identifies the beginning of the response package
 	char *packageLine = P+1;
 	const char delimiters[] = ";\n";									//a space (" ") is used as prefix token thus part of parameter
