@@ -269,7 +269,7 @@ void WriteDataToCSVFile(FILE *fp, const MscrPackage package, int package_nr)
 	// Loop through package and add values to the CSV cells
 	for (int i = 0; i < package.nr_of_subpackages; i++)
 	{
-		fprintf(fp, ",\"%f\"", package.subpackages[i].value);
+		fprintf(fp, ",\"%.15f\"", package.subpackages[i].value);
 
 		// Also print metadata if available
 

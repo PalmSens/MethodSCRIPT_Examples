@@ -210,6 +210,116 @@ void SendScriptToDevice(const char* scriptText)
 	WriteStr(&_msComm, scriptText);
 }
 
+
+
+
+///
+/// Print one MethodSCRIPT output subpackage on the console.
+///
+/// parameters:
+///   subpackage The subpackage to process
+///
+void PrintSubpackage(const MscrSubPackage subpackage)
+{
+	// Format and print the subpackage value
+	// This is a bit bulky, but does nothing more than call printf with a format that is
+	// sensible for the `variable type` of the subpackage.
+
+	switch(subpackage.variable_type) {
+		case MSCR_VT_POTENTIAL:
+		case MSCR_VT_POTENTIAL_CE:
+		case MSCR_VT_POTENTIAL_SE:
+		case MSCR_VT_POTENTIAL_RE:
+		case MSCR_VT_POTENTIAL_GENERIC1:
+		case MSCR_VT_POTENTIAL_GENERIC2:
+		case MSCR_VT_POTENTIAL_GENERIC3:
+		case MSCR_VT_POTENTIAL_GENERIC4:
+		case MSCR_VT_POTENTIAL_WE_VS_CE:
+			Serial.print("\tE[V]: ");
+			Serial.print(sci(subpackage.value, 3));
+			break;
+		case MSCR_VT_CURRENT:
+		case MSCR_VT_CURRENT_GENERIC1:
+		case MSCR_VT_CURRENT_GENERIC2:
+		case MSCR_VT_CURRENT_GENERIC3:
+		case MSCR_VT_CURRENT_GENERIC4:
+			Serial.print("\tI[A]: ");
+			Serial.print(sci(subpackage.value, 3));
+			break;
+		case MSCR_VT_ZREAL:
+			Serial.print("\tZreal[Ohm]:");
+			Serial.print(sci(subpackage.value, 3));
+			break;
+		case MSCR_VT_ZIMAG:
+			Serial.print("\tZimag[Ohm]");
+			Serial.print(sci(subpackage.value, 3));
+			break;
+		case MSCR_VT_CELL_SET_POTENTIAL:
+			Serial.print("\tE set[V]: ");
+			Serial.print(sci(subpackage.value, 3));
+			break;
+		case MSCR_VT_CELL_SET_CURRENT:
+			Serial.print("\tI set[A]: ");
+				Serial.print(sci(subpackage.value, 3));
+			break;
+		case MSCR_VT_CELL_SET_FREQUENCY:
+			Serial.print("\tF set[Hz]: ");
+			Serial.print(sci(subpackage.value, 3));
+			break;
+		case MSCR_VT_CELL_SET_AMPLITUDE:
+			Serial.print("\tA set[V]: ");
+			Serial.print(sci(subpackage.value, 2));
+			break;
+		case MSCR_VT_UNKNOWN:
+		default:
+			char formatted_srt[64];
+			snprintf(formatted_srt, 64, "\t?%d?[?] %16.3f ", subpackage.variable_type, subpackage.value);
+			Serial.print(formatted_srt);
+	}
+
+
+	// Print metadata
+	// Note a value of <0 indicates it was provided in the MethodSCRIPT output
+
+	// `Status` field metadata
+	if (subpackage.metadata.status >= 0)
+	{
+		const	char *status_str;
+		if (subpackage.metadata.status == 0)
+		{
+			status_str = StatusToString((Status)0);
+		}
+		else
+		{
+			// The `status` field is a bitmask, so we have to check every bit separately.
+			// Only print the first flag that was set to keep the output readable.
+			for (int i = 0; i < 31; i++)
+			{
+				if ((subpackage.metadata.status & (1 << i)) != 0)
+				{
+					status_str = StatusToString((Status)(1 << i));
+					break;
+				}
+			}
+		}
+
+		char formatted_srt[64];
+		snprintf(formatted_srt, 64, "status: %-16s \t", status_str);
+		Serial.print(formatted_srt);
+	}
+
+	// `current range` metadata
+	if (subpackage.metadata.current_range >= 0)
+	{
+		const char *current_range_str = current_range_to_string(subpackage.metadata.current_range);
+
+		char formatted_srt[64];
+		snprintf(formatted_srt, 64, "CR: %-20s \t", current_range_str);
+		Serial.print(formatted_srt);
+	}
+}
+
+
 //The entry point of the Arduino code
 void setup()
 {
@@ -244,62 +354,61 @@ void setup()
 	}
 }
 
+int package_nr = 0;
+
 void loop()
 {
-  // put your main code here, to run repeatedly:
-  MeasureData data;
-  char current[20];
-  char readingStatus[16];
-  //If we have any buffered messages waiting for us
-  while (Serial1.available())
-  {
-		RetCode code = ReceivePackage(&_msComm, &data);     //Reads from the device and parses the response
+	// put your main code here, to run repeatedly:
+	MscrPackage package;
+	char current[20];
+	char readingStatus[16];
+	//If we have any buffered messages waiting for us
+	while (Serial1.available())
+	{
+		RetCode code = ReceivePackage(&_msComm, &package);     //Reads from the device and parses the response
 		switch(code)
 		{
-		case CODE_RESPONSE_BEGIN:                         //Measurement response begins
-			// do nothing
+		case CODE_RESPONSE_BEGIN:				// Measurement response begins
+      Serial.println();
+			Serial.print("Response begin");
+      Serial.println();
 			break;
 		case CODE_MEASURING:
-			Serial.println("\nMeasuring... ");
+      Serial.println();
+			Serial.print("Measuring...");
+      Serial.println();
+      package_nr = 0;
 			break;
-		case CODE_OK:                                     //Received valid package, prints it.
-			if(_nDataPoints == 0)
-				Serial.println("\nReceiving measurement response:");
-			Serial.print("\n");
-			Serial.print(++_nDataPoints);
-			if (data.zreal != INFINITY)
-			{
-				Serial.print("\tFrequency(Hz): ");
-				Serial.print(sci(data.frequency, 3));
-				Serial.print("\tZreal(Ohm): ");
-				Serial.print(sci(data.zreal, 3));
-				Serial.print("\tZimag(Ohm): ");
-				Serial.print(sci(data.zimag, 3));
-			}
-			else
-			{
-				Serial.print("\tE (V): ");
-				Serial.print(data.potential, 3);
-				Serial.print("\t\ti (A): ");
-				Serial.print(sci(data.current, 3));
-			}
-			Serial.print("\tStatus: ");
-			sprintf(readingStatus, "%-15s", data.status);
-			Serial.print(readingStatus);
-			Serial.print("\tCR: ");
-			Serial.print(data.cr);
+		case CODE_OK:							// Received valid package, print it.
+				if(package_nr == 0)
+         {
+            Serial.println();
+		 	  		Serial.print("Receiving measurement response:\n");
+         }
+		 		// Print package index (starting at 1 on the console)
+				Serial.print(package_nr + 1);
+
+				// Print all subpackages in
+				for (int i = 0; i < package.nr_of_subpackages; i++)
+					PrintSubpackage(package.subpackages[i]);
+
+				Serial.println();
+       
+        package_nr++;
+		 	break;
+		case CODE_MEASUREMENT_DONE:			    // Measurement loop complete
+			Serial.print("\nMeasurement completed.");
+      Serial.println();
 			break;
-		case CODE_MEASUREMENT_DONE:                      //Measurement loop complete
-			Serial.println("\n");
-			Serial.print("Measurement completed. ");
+		case CODE_RESPONSE_END:				    // Measurement response end
+			Serial.print(package_nr);
+			Serial.print(" data point(s) received");
 			break;
-		case CODE_RESPONSE_END:                          //Measurement response end
-			Serial.print(_nDataPoints);
-			Serial.print(" data point(s) received.");
-			break;
-		default:                                         //Failed to parse or identify package.
-			Serial.print("\nFailed to parse package: ");
-			break;
-    }
-  }
+		default:                    			// Failed to parse or identify package.
+			Serial.println();
+			Serial.print("Failed to parse package: ");
+			Serial.print(code);
+			Serial.println();
+		}
+	}
 }
