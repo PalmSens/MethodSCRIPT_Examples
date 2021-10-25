@@ -1,4 +1,4 @@
-License : [![License](https://img.shields.io/badge/license-LGPL2-blue.svg)](https://github.com/palmsens/emstatpico/blob/master/LICENSE)
+[License](https://github.com/palmsens/emstatpico/blob/master/LICENSE)
 
 # EmStat Pico code examples
 This repository contains the following code examples to use with the [EmStat Pico potentiostat module](http://www.emstatpico.com):
