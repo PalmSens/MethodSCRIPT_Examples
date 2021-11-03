@@ -1,22 +1,33 @@
-/* ----------------------------------------------------------------------------
- *         PalmSens MethodSCRIPT SDK
- * ----------------------------------------------------------------------------
- ============================================================================
- Name        : MSComm.h
- Copyright   :
- * ----------------------------------------------------------------------------
- * Copyright (c) 2019-2020, PalmSens BV
+/**
+ * PalmSens MethodSCRIPT SDK example for Arduino
  *
- * All rights reserved.
+ * MSComm handles the communication with the PalmSens instrument (e.g. EmStat Pico).
+ * Only this file needs to be included in your software.
+ * To communicate with an EmStat Pico, create a MSComm struct and call MSCommInit() on it.
+ * If communication with multiple instruments is required, create a separate MSComm with different
+ * communication ports (defined by the write_char_func and read_char_func) for each instrument.
+ *
+ * Once a MSComm struct has been successfully created, send the parameters for measurement
+ * by reading a script string/script file for a specific measurement type.
+ *
+ * To receive data from the instrument, call ReceivePackage().
+ *
+ * This library support MethodSCRIPT output packages with a fixed maximum number of subpackages.
+ * The maximum number is defined by `MSCR_SUBPACKAGES_PER_LINE` and statically allocated in the
+ * struct `MscrPackage`.
+ *
+ * ----------------------------------------------------------------------------
+ *
+ * \copyright (c) 2019-2021, PalmSens BV
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- * - Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the disclaimer below.
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
  *
- * PalmSens's name may not be used to endorse or promote products derived from
- * this software without specific prior written permission.
+ *  - The name of PalmSens may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY PALMSENS "AS IS" AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -28,24 +39,8 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  * ----------------------------------------------------------------------------
- Description :
- * ----------------------------------------------------------------------------
- * MSComm handles the communication with the EmStat Pico.
- *	Only this file needs to be included in your software.
- *	To communicate with an EmStat Pico, create a MSComm struct and call MSCommInit() on it.
- *	If communication with multiple EmStat Picos is required, create a separate MSComm with different
- * 	communication ports (defined by the write_char_func and read_char_func) for each EmStat Pico.
- *
- *	Once a MSComm struct has been successfully created, send the parameters for measurement
- *	by reading a script string/script file for a specific measurement type.
- *
- *	To receive data from the EmStat Pico, call ReceivePackage().
- *
- *	This library support MethodSCRIPT output packages with a fixed maximum number of subpackages.
- *	The maximum number is defined by `MSCR_SUBPACKAGES_PER_LINE` and statically allocated in the struct `MscrPackage`.
- *
- ============================================================================
  */
 
 #ifndef MSComm_H
@@ -90,9 +85,8 @@ typedef enum _VarType
 	MSCR_VT_POTENTIAL_CE      	= VARTYPE_TO_UINT8('a', 'c'), 	//CE vs GND
 	MSCR_VT_POTENTIAL_SE      	= VARTYPE_TO_UINT8('a', 'd'),		//SE vs GND
 	MSCR_VT_POTENTIAL_RE      	= VARTYPE_TO_UINT8('a', 'e'),		//RE vs GND
-	//MSCR_VT_POTENTIAL_WE      	= VARTYPE_TO_UINT8('a', 'f'),		//WE vs GND //Not sure this makes sense?
+	MSCR_VT_POTENTIAL_WE      	= VARTYPE_TO_UINT8('a', 'f'),		//WE vs GND
 	MSCR_VT_POTENTIAL_WE_VS_CE	= VARTYPE_TO_UINT8('a', 'g'),		//WE / SE vs CE
-
 	MSCR_VT_POTENTIAL_AIN0 		= VARTYPE_TO_UINT8('a', 's'),
 	MSCR_VT_POTENTIAL_AIN1 		= VARTYPE_TO_UINT8('a', 't'),
 	MSCR_VT_POTENTIAL_AIN2 		= VARTYPE_TO_UINT8('a', 'u'),
@@ -140,8 +134,6 @@ typedef enum _VarType
 	MSCR_VT_MISC_GENERIC3     	= VARTYPE_TO_UINT8('j', 'c'),
 	MSCR_VT_MISC_GENERIC4     	= VARTYPE_TO_UINT8('j', 'd'),
 
-	MSCR_VT_NONE 						= 255,
-	MSCR_VT_CNT 						= 256,
 } VarType;
 
 
@@ -204,8 +196,8 @@ typedef struct _MSComm
 /// One subpackage can contain any combination of metadata fields
 ///
 typedef struct _MscrMetadata {
-	int status;          //
-	int current_range;   //
+	int status;
+	int current_range;
 } MscrMetadata;
 
 
@@ -235,6 +227,10 @@ typedef struct _MscrPackage {
 // These functions are used during normal operation.
 //////////////////////////////////////////////////////////////////////////////
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ///
 /// Initialises the MSComm object
 ///
@@ -246,7 +242,7 @@ typedef struct _MscrPackage {
 /// Returns:
 ///   CODE_OK if successful, otherwise CODE_NULL.
 ///
-RetCode MSCommInit(MSComm* MSComm,	WriteCharFunc write_char_func, ReadCharFunc read_char_func);
+RetCode MSCommInit(MSComm * MSComm, WriteCharFunc write_char_func, ReadCharFunc read_char_func);
 
 
 ///
@@ -260,7 +256,7 @@ RetCode MSCommInit(MSComm* MSComm,	WriteCharFunc write_char_func, ReadCharFunc r
 /// Returns
 ///   CODE_OK if successful, CODE_MEASUREMENT_DONE if measurement is completed
 ///
-RetCode ReceivePackage(MSComm* MSComm, MscrPackage* retData);
+RetCode ReceivePackage(MSComm * MSComm, MscrPackage * retData);
 
 
 ///
@@ -270,7 +266,7 @@ RetCode ReceivePackage(MSComm* MSComm, MscrPackage* retData);
 ///   responseLine  - The line of response to be parsed
 ///   retData       - The struct in which the parsed values are stored
 ///
-void ParseResponse(char *responseLine, MscrPackage* retData);
+void ParseResponse(char * responseLine, MscrPackage * retData);
 
 
 ///
@@ -284,7 +280,7 @@ void ParseResponse(char *responseLine, MscrPackage* retData);
 /// Returns:
 ///   The current token (char* ) found
 ///
-char* strtokenize(char** stringp, const char* delim);
+char * strtokenize(char * * stringp, char const * delim);
 
 
 ///
@@ -297,7 +293,7 @@ char* strtokenize(char** stringp, const char* delim);
 /// return:
 ///   The string that matches the `status` value. `"Undefined status"` if no exact match was found
 ///
-const char* StatusToString(Status status);
+char const * StatusToString(Status status);
 
 
 ///
@@ -307,7 +303,7 @@ const char* StatusToString(Status status);
 ///   param    - The parameter value to be parsed
 ///   retData  - The struct in which the parsed values are stored
 ///
-void ParseParam(char* param, MscrSubPackage* retData);
+void ParseParam(char * param, MscrSubPackage * retData);
 
 
 ///
@@ -316,7 +312,7 @@ void ParseParam(char* param, MscrSubPackage* retData);
 /// Returns:
 ///   The actual parameter value in float (with its SI unit prefix)
 ///
-float GetParameterValue(char* paramValue);
+float GetParameterValue(char * paramValue);
 
 
 ///
@@ -326,7 +322,7 @@ float GetParameterValue(char* paramValue);
 ///   metaDataParams   - The meta data parameter values to be parsed
 ///   retData          - The struct in which the parsed values are stored
 ///
-void ParseMetaDataValues(char *metaDataParams, MscrSubPackage* retData);
+void ParseMetaDataValues(char * metaDataParams, MscrSubPackage * retData);
 
 
 ///
@@ -338,7 +334,7 @@ void ParseMetaDataValues(char *metaDataParams, MscrSubPackage* retData);
 /// Returns:
 ///   A string corresponding to the parsed status
 ///
-int GetStatusFromPackage(char* metaDataStatus);
+int GetStatusFromPackage(char * metaDataStatus);
 
 
 ///
@@ -350,7 +346,7 @@ int GetStatusFromPackage(char* metaDataStatus);
 /// return:
 ///    Bitmask value from the package
 ///
-int GetCurrentRangeFromPackage(char* metaDataCR);
+int GetCurrentRangeFromPackage(char * metaDataCR);
 
 
 ///
@@ -362,7 +358,7 @@ int GetCurrentRangeFromPackage(char* metaDataCR);
 /// return:
 ///   Value corresponding to the SI prefix
 ///
-const double GetUnitPrefixValue(char charPrefix);
+double GetUnitPrefixValue(char charPrefix);
 
 
 ///
@@ -374,7 +370,7 @@ const double GetUnitPrefixValue(char charPrefix);
 /// return:
 ///   Pointer to constant string containing the current range text
 ///
-const char* current_range_to_string(int current_range);
+char const * current_range_to_string(int current_range);
 
 
 ///
@@ -386,7 +382,7 @@ const char* current_range_to_string(int current_range);
 /// return:
 ///   Variable type as (human readable) string
 ///
-const char *VartypeToString(int variable_type);
+char const * VartypeToString(int variable_type);
 
 
 
@@ -408,7 +404,7 @@ const char *VartypeToString(int variable_type);
 /// Returns
 ///   CODE_OK if successful, otherwise CODE_NULL.
 ///
-RetCode ReadBuf(MSComm* MSComm, char* buf);
+RetCode ReadBuf(MSComm * MSComm, char * buf);
 
 
 ///
@@ -420,7 +416,7 @@ RetCode ReadBuf(MSComm* MSComm, char* buf);
 ///
 /// Returns: CODE_OK if successful, otherwise CODE_TIMEOUT.
 ///
-RetCode ReadChar(MSComm* MSComm, char* c);
+RetCode ReadChar(MSComm * MSComm, char * c);
 
 
 ///
@@ -430,7 +426,7 @@ RetCode ReadChar(MSComm* MSComm, char* c);
 ///   MSComm  - The MSComm data struct
 ///   c       - The character to be written
 ///
-void WriteChar(MSComm* MSComm, char c);
+void WriteChar(MSComm * MSComm, char c);
 
 
 ///
@@ -440,8 +436,10 @@ void WriteChar(MSComm* MSComm, char c);
 ///   MSComm   - The MSComm data struct
 ///   buf      - The data to be written
 ///
-void WriteStr(MSComm* MSComm, const char* buf);
+void WriteStr(MSComm * MSComm, char const * buf);
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MSComm_H

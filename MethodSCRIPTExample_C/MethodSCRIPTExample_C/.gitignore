@@ -1,0 +1,17 @@
+# Microsoft Visual Studio output
+#*.vcxproj.user
+#.vs
+#Debug
+#Release
+#x64
+
+# Makefile output (Windows)
+build
+example.exe
+
+# Makefile output (Linux)
+build_linux
+example
+
+# Doxygen output
+doxygen

@@ -1,0 +1,27 @@
+e
+# Declare variables for frequency, and real and imaginary parts of complex result
+var f
+var r
+var j
+# Set to channel 0 (Lemo)
+set_pgstat_chan 0
+# Set mode to high speed
+set_pgstat_mode 3
+# Enable all supported ranges for current autoranging
+set_autoranging ba 1p 1
+# Enable all supported ranges for potential autoranging
+set_autoranging ab 1p 1
+# Turn cell on
+cell_on
+# Call the EIS loop with 15 mV amplitude, f_start = 200 kHz, f_end = 20 Hz, nrOfPoints = 41, 0 mV DC
+meas_loop_eis f r j 15m 200k 20 41 0m
+	# Add the returned variables to the data package
+	pck_start
+	pck_add f
+	pck_add r
+	pck_add j
+	pck_end
+endloop
+on_finished:
+cell_off
+

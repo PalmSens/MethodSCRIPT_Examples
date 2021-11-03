@@ -1,0 +1,24 @@
+SOURCES  = example.c
+SOURCES += palmsens/mscript.c
+SOURCES += palmsens/mscript_serial_port_windows.c
+
+SRCS = $(SOURCES:%.c=src/%.c)
+OBJS = $(SOURCES:%.c=build/%.o)
+DEPS = $(SOURCES:%.c=build/%.d)
+
+example.exe: $(OBJS) Makefile
+	gcc -o $@ $(OBJS)
+
+build/%.o: src/%.c build/palmsens Makefile
+	gcc -c -Wall -Wextra -Werror -MMD -o $@ $<
+	
+build/palmsens:
+	@if not exist build mkdir build
+	@if not exist build\palmsens mkdir build\palmsens
+
+.PHONY: clean
+clean:
+	@if exist example.exe del example.exe
+	@if exist build rmdir /q /s build
+
+-include $(DEPS)

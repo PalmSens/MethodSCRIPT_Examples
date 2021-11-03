@@ -1,18 +1,20 @@
-/* ----------------------------------------------------------------------------
- *         PalmSens MethodSCRIPT SDK
- * ----------------------------------------------------------------------------
- * Copyright (c) 2019-2020, PalmSens BV
+/**
+ * PalmSens MethodSCRIPT SDK example for Arduino
  *
- * All rights reserved.
+ * Commonly used stuff.
+ *
+ * ----------------------------------------------------------------------------
+ *
+ * \copyright (c) 2019-2021, PalmSens BV
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- * - Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the disclaimer below.
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
  *
- * PalmSens's name may not be used to endorse or promote products derived from
- * this software without specific prior written permission.
+ *  - The name of PalmSens may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY PALMSENS "AS IS" AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -24,15 +26,12 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  * ----------------------------------------------------------------------------
  */
 
-/**
- *  Contains commonly used stuff.
- */
-
-#ifndef PSCOMMON_H
-#define PSCOMMON_H
+#ifndef MSCOMMON_H
+#define MSCOMMON_H
 
 #include <stdint.h>
 
@@ -68,4 +67,4 @@ typedef enum _RetCode
 } RetCode;
 
 
-#endif //PSCOMMON_H
+#endif //MSCOMMON_H

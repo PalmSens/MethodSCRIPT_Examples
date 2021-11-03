@@ -1,0 +1,16 @@
+PROJECT_NAME           = "PalmSens MethodSCRIPT C example project"
+OUTPUT_DIRECTORY       = doxygen
+JAVADOC_AUTOBRIEF      = YES
+OPTIMIZE_OUTPUT_FOR_C  = YES
+EXTRACT_STATIC         = YES
+INPUT                  = src
+FILE_PATTERNS          = *.c *.h
+EXCLUDE                = src/esp_serial_port_linux.c
+INLINE_SOURCES         = YES
+VERBATIM_HEADERS       = NO
+GENERATE_HTML          = YES
+SEARCHENGINE           = NO
+GENERATE_LATEX         = NO
+HAVE_DOT               = YES
+CALL_GRAPH             = YES
+DOT_MULTI_TARGETS      = YES

@@ -1,0 +1,17 @@
+ Revision History
+ 1.0:
+ - Initial release
+
+ 1.1:
+ - Added way of enabling verbose printing of data
+ - Added parsing of multiple curves in one measurement
+ - CheckFileExistAndRename now supports any suffix, not just .dat
+ - Added support for parsing integer values
+ - Added option to export to CSV
+ - Added support for more value types
+ - Added more VT support functions:
+     GetVarType, GetVarTypeCols, GetValueMatrixWithVT, ParseResultFileWithVT
+ - Removed hibernate as this is now deprecated. Hibernation is now done through MethodSCRIPT.
+
+ 1.2:
+ - ...

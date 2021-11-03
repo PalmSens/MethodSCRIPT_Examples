@@ -240,18 +240,18 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
-/EmStatPicoExample-Arduino/.metadata/.plugins
-/EmStatPicoExample-Arduino/.metadata/.mylyn
-/EmStatPicoExample-Arduino/.metadata
-/EmStatPicoExample-Arduino/EmStatPicoExample-Arduino/.settings/org.eclipse.cdt.managedbuilder.core.prefs
-/EmStatPicoExample-C/.metadata
+
 /.metadata
-/EmStatPicoExample-C/EmStatPicoCodeExample/.settings/org.eclipse.cdt.managedbuilder.core.prefs
-/MethodScriptExample-Arduino/.metadata
-/MethodScriptExample-C/.metadata
-/MethodSCRIPTExample_C/MethodSCRIPTExample_C/Results
-/MethodSCRIPTExample_C/MethodSCRIPTExample_C/.settings/language.settings.xml
-
-MethodSCRIPTExample_iOS/.DS_Store
-
+/MethodSCRIPTExample_Android/.metadata/.plugins
+/MethodSCRIPTExample_Android/.metadata/.mylyn
+/MethodSCRIPTExample_Android/.metadata
+/MethodSCRIPTExample_Android/methodSCRIPTExample/.settings/org.eclipse.cdt.managedbuilder.core.prefs
+/MethodSCRIPTExample_Arduino/.metadata
+/MethodSCRIPTExample_C/.metadata
+/MethodSCRIPTExample_C/MethodSCRIPTExample_C/**/.settings/language.settings.xml
+/MethodSCRIPTExample_C/MethodSCRIPTExample_C/**/.settings/org.eclipse.cdt.managedbuilder.core.prefs
+/MethodSCRIPTExample_iOS/.DS_Store
+/MethodSCRIPTExample_Python/MethodSCRIPTExample_Python/output
+/MethodSCRIPTExample_Python/MethodSCRIPTExample_Python/venv
 MethodSCRIPTExamples.zip
+/**/workspace/
