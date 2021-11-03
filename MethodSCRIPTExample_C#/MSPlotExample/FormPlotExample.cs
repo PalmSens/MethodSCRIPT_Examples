@@ -359,6 +359,9 @@ namespace EmStatPicoPlotExample
         /// <returns>The actual data value after appending the unit prefix</returns>
         private double ParseParamValues(string paramValueString)
         {
+            if (paramValueString == "     nan")
+                return double.NaN;
+
             char strUnitPrefix = paramValueString[7];                         //Identifies the SI unit prefix from the package at position 8
             string strvalue = paramValueString.Remove(7);                     //Retrieves the value of the variable the package
             int value = Convert.ToInt32(strvalue, 16);                        //Converts the hex value to int
