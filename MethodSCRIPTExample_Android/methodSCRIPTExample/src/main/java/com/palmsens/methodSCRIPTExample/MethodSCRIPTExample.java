@@ -635,6 +635,8 @@ public class MethodSCRIPTExample extends AppCompatActivity {
      * @return The actual data value (double) after appending the unit prefix
      */
     private double parseParamValues(String paramValueString) {
+        if (paramValueString == "     nan")
+            return Double.NaN;
         char strUnitPrefix = paramValueString.charAt(7);                         //Identifies the SI unit prefix from the package at position 8
         String strvalue = paramValueString.substring(0, 7);                      //Retrieves the value of the variable from the package
         int value = Integer.parseInt(strvalue, 16);                        //Converts the hex value to int
