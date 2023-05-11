@@ -182,6 +182,14 @@ typedef enum _Reply
 	REPLY_ENDOFMEASLOOP		= '*'
 } Reply;
 
+///
+/// The type of device we are connected to.
+///
+typedef enum _DeviceType
+{
+	DT_ESPICO,
+	DT_ES4,
+} DeviceType;
 
 ///
 /// The communication object for one EmStat Pico
@@ -202,7 +210,7 @@ typedef struct _MSComm
 ///
 typedef struct _MscrMetadata {
 	int status;
-	int current_range;
+	int range;
 } MscrMetadata;
 
 
@@ -241,13 +249,15 @@ extern "C" {
 ///
 /// parameters:
 ///   MSComm           - The MSComm data struct
+///   dt               - The type of device we are connected to
 ///   write_char_func  - Function pointer to the write function this MSComm should use
 ///   read_char_func   - Function pointer to the read function this MSComm should use
 ///
 /// Returns:
 ///   CODE_OK if successful, otherwise CODE_NULL.
 ///
-RetCode MSCommInit(MSComm * MSComm, WriteCharFunc write_char_func, ReadCharFunc read_char_func);
+RetCode MSCommInit(MSComm * MSComm, DeviceType dt, WriteCharFunc write_char_func, 
+						ReadCharFunc read_char_func);
 
 
 ///
@@ -321,7 +331,7 @@ float GetParameterValue(char * paramValue);
 
 
 ///
-/// Parses the meta data values and calls the corresponding functions based on the meta data type (status, current range, noise)
+/// Parses the meta data values and calls the corresponding functions based on the meta data type (status, range, noise)
 ///
 /// parameters:
 ///   metaDataParams   - The meta data parameter values to be parsed
@@ -343,15 +353,15 @@ int GetStatusFromPackage(char * metaDataStatus);
 
 
 ///
-/// Extracts the current range from the MethodSCRIPT package metadata
+/// Extracts the current or potential range from the MethodSCRIPT package metadata
 ///
 /// parameters:
-///    metaDataCR - String containing (only) the metatdata current range field
+///    metaDataRange - String containing (only) the metatdata range field
 ///
 /// return:
 ///    Bitmask value from the package
 ///
-int GetCurrentRangeFromPackage(char * metaDataCR);
+int GetRangeFromPackage(char * metaDataRange);
 
 
 ///
@@ -367,15 +377,16 @@ double GetUnitPrefixValue(char charPrefix);
 
 
 ///
-/// Look up function to translate the current range value to a string.
+/// Look up function to translate the current or potential range value to a string.
 ///
 /// parameters:
-///   current_range The current range value from the MethodSCRIPT package
+///   range The current or potential range value from the MethodSCRIPT package
+///   vt    The type of value measured
 ///
 /// return:
-///   Pointer to constant string containing the current range text
+///   Pointer to constant string containing the range text
 ///
-char const * current_range_to_string(int current_range);
+char const * range_to_string(int range, VarType vt);
 
 
 ///
