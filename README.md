@@ -1,6 +1,6 @@
 [License](https://github.com/palmsens/emstatpico/blob/master/LICENSE)
 
-# MethodSCRIPT 1.3 code examples
+# Implementing MethodSCRIPT 1.3 - code examples
 This repository contains the following code examples to use with the [EmStat Pico potentiostat module](http://www.emstatpico.com):
 
 1. MethodSCRIPTExample_Android
