@@ -1,0 +1,5 @@
+# This is a comment
+wait 100m # Comments can also be in-line
+if 1 < 2 then
+  send_string "Hello world"
+endif
