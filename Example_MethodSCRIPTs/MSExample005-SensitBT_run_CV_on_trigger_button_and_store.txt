@@ -40,18 +40,18 @@ store_var i 0i aa
 loop i < 3i
 	############# wait for trigger button here #############
 	get_gpio d
-    loop d & 0x80
-       get_gpio d
-    endloop
+	loop d & 0x80
+		get_gpio d
+	endloop
 	#
-    cell_on
-    meas_loop_cv p c -500m -1 1 10m 1
-      pck_start
-        pck_add p
-        pck_add c
-      pck_end
-    endloop
-    cell_off
+	cell_on
+	meas_loop_cv p c -500m -1 1 10m 1
+		pck_start
+		pck_add p
+		pck_add c
+		pck_end
+	endloop
+	cell_off
 	add_var i 1i
 endloop
 on_finished:

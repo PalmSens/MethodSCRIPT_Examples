@@ -41,47 +41,48 @@ cell_on
 ############# Run measurement #############
 # Perform SWV measurement from -300 mV to 300 mV at 5 Hz
 meas_loop_swv p c f g -300m 300m 10m 100m 5
-    # Store measurement data in array
-    array_set a n p
-    array_set b n c
-    add_var n 1i
+	# Store measurement data in array
+	array_set a n p
+	array_set b n c
+	add_var n 1i
 endloop
 ############# Simple peak search algorithm #############
 # As an example, we just determine max and min value
 # Many applications will need a more sophisticated algorithm
 store_var i 0i ja
 loop i < n
-    array_get b i c
-    if c > m
-        copy_var c m
-    endif
-    if c < l
-        copy_var c l
-    endif
-    add_var i 1i
+	array_get b i c
+	if c > m
+		copy_var c m
+	endif
+	if c < l
+		copy_var c l
+	endif
+	add_var i 1i
 endloop
 ############# Send measurement data #############
 store_var i 0i ja
 loop i < n
-    array_get a i p
-    array_get b i c
-    pck_start
-    pck_add p
-    pck_add c
-    pck_add m
-    pck_add l
-    pck_end
-    add_var i 1i
+	array_get a i p
+	array_get b i c
+	pck_start
+		pck_add p
+		pck_add c
+		pck_add m
+		pck_add l
+	pck_end
+	add_var i 1i
 endloop
 ############# Decision time #############
 #subtract "min" value from "max" to get the relative peak height
 sub_var m l
 # Enable red LED if peak > nA, otherwise enable green LED (EmStat4M)
 if m > 2n
-    set_gpio 0x1
+	set_gpio 0x1
 else
-    set_gpio 0x2
+	set_gpio 0x2
 endif
 ############# Turn cell off, even if aborted #############
 on_finished:
 cell_off
+

@@ -27,16 +27,16 @@ set_autoranging ba 2100n 2100u
 set_e 500m
 cell_on
 loop i < 8i
-    set_gpio i
-    timer_start
-    meas_loop_ca p c 500m 100m 60100m
-        timer_get t
-        pck_start
-        pck_add t
-        pck_add c
-        pck_end
-    endloop
-    add_var i 1i
+	set_gpio i
+	timer_start
+	meas_loop_ca p c 500m 100m 60100m
+		timer_get t
+		pck_start
+			pck_add t
+			pck_add c
+		pck_end
+	endloop
+	add_var i 1i
 endloop
 on_finished:
 cell_off
