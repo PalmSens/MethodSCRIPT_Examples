@@ -200,7 +200,7 @@ class Instrument():
     def get_mscript_version(self):
         self.write('v\n')
         response = self.readline()
-        return int(response[1:-1])
+        return response[1:-1]
 
     def get_serial_number(self):
         """Read the EmStat Pico serial number."""
