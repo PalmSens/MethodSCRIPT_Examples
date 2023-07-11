@@ -93,7 +93,7 @@ def auto_detect_port():
         LOG.error('%d candidates found. Auto detect failed.', len(candidates))
         raise Exception('Auto detection of serial port failed.')
 
-    LOG.info('Exactly one candidate found. Using %s.', port.device)
+    LOG.info('Exactly one candidate found. Using %s.', candidates[0].device)
     return candidates[0].device
 
 
