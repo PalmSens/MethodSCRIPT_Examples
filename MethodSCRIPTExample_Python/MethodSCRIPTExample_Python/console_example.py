@@ -27,10 +27,10 @@ modification, are permitted provided that the following conditions are met:
    - Neither the name of PalmSens BV nor the names of its contributors
      may be used to endorse or promote products derived from this software
      without specific prior written permission.
-   - This license does not release you from any requirement to obtain separate 
-	  licenses from 3rd party patent holders to use this software.
-   - Use of the software either in source or binary form must be connected to, 
-	  run on or loaded to an PalmSens BV component.
+   - This license does not release you from any requirement to obtain separate
+     licenses from 3rd party patent holders to use this software.
+   - Use of the software either in source or binary form must be connected to,
+     run on or loaded to an PalmSens BV component.
 
 DISCLAIMER: THIS SOFTWARE IS PROVIDED BY PALMSENS "AS IS" AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
