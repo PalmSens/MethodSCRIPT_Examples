@@ -149,6 +149,7 @@ def main():
     # logging.getLogger('palmsens').setLevel(logging.INFO)
     # Disable excessive logging from matplotlib.
     logging.getLogger('matplotlib').setLevel(logging.INFO)
+    logging.getLogger('PIL.PngImagePlugin').setLevel(logging.INFO)
 
     # Determine unique name for plot and files.
     base_name = datetime.datetime.now().strftime('ms_plot_swv_%Y%m%d-%H%M%S')
@@ -202,8 +203,8 @@ def main():
     # Put specified column of the first curve on y axis.
     yvar = curves[0][0][YAXIS_COLUMN_INDICES[0]]
     plt.ylabel('%s [%s]' % (yvar.type.name, yvar.type.unit))
-    plt.grid(b=True, which='major')
-    plt.grid(b=True, which='minor', color='b', linestyle='-', alpha=0.2)
+    plt.grid(visible=True, which='major')
+    plt.grid(visible=True, which='minor', color='b', linestyle='-', alpha=0.2)
     plt.minorticks_on()
 
     # Loop through all curves and plot them.

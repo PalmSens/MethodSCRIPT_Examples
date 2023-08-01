@@ -91,6 +91,7 @@ def main():
     # logging.getLogger('palmsens').setLevel(logging.INFO)
     # Disable excessive logging from matplotlib.
     logging.getLogger('matplotlib').setLevel(logging.INFO)
+    logging.getLogger('PIL.PngImagePlugin').setLevel(logging.INFO)
 
     port = DEVICE_PORT
     if port is None:

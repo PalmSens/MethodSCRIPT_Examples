@@ -85,6 +85,7 @@ def main():
     # logging.getLogger('palmsens').setLevel(logging.INFO)
     # Disable excessive logging from matplotlib.
     logging.getLogger('matplotlib').setLevel(logging.INFO)
+    logging.getLogger('PIL.PngImagePlugin').setLevel(logging.INFO)
 
     port = DEVICE_PORT
     if port is None:
@@ -130,8 +131,8 @@ def main():
     plt.title('Voltammogram')
     plt.xlabel('Applied Potential (V)')
     plt.ylabel('Measured Current (A)')
-    plt.grid(b=True, which='major')
-    plt.grid(b=True, which='minor', color='b', linestyle='-', alpha=0.2)
+    plt.grid(visible=True, which='major')
+    plt.grid(visible=True, which='minor', color='b', linestyle='-', alpha=0.2)
     plt.minorticks_on()
     plt.show()
 
