@@ -1,12 +1,12 @@
 e
-############# 
-# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com 
-# 
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
 #
-# Description: 	Runs a chronoamperometry measurement on each channel sequentially of a MUX8 multiplexer
-#				The MUX8 inputs d0,d1 and d2 should be connected to d0,d1 and d2 digital outputs of the EmStat4M
-#				
-# 
+#
+# Description:  Runs a chronoamperometry measurement on each channel sequentially of a MUX8 multiplexer
+#               The MUX8 inputs d0,d1 and d2 should be connected to d0,d1 and d2 digital outputs of the EmStat4M
+#
+#
 # MethodSCRIPT version: 1.3
 # Last modified: 17/05/2023
 # Applies to: EmStat4M with a MUX8 multiplexer

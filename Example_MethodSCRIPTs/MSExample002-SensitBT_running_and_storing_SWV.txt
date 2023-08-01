@@ -1,11 +1,11 @@
 e
-############# 
-# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com 
-# 
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
 #
-# Description: 	This example shows how to run an SWV on the Sensit BT 
-#				and save the results on internal storage
-# 
+#
+# Description:  This example shows how to run an SWV on the Sensit BT
+#               and save the results on internal storage
+#
 # MethodSCRIPT version: 1.3
 # Last modified: 22/05/2023
 # Applies to: Sensit BT (with EmStat Pico)
@@ -19,7 +19,7 @@ file_open "/Measurements/14-04-2022/SWV-10-49-16-0.dmeas" 1
 # 3=Output to both normal channel and file storage
 set_script_output 3
 # for potential
-var p	
+var p
 # for measured current
 var c
 # for measured forward current

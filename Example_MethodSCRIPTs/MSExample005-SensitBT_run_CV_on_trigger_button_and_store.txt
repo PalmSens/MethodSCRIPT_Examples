@@ -1,12 +1,12 @@
 e
-############# 
-# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com 
-# 
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
 #
-# Description: 	This example shows how to run three CVs on the Sensit BT
-#				every CV starts at the push of the trigger button
-#				results are stored on the internal storage
-# 
+#
+# Description:  This example shows how to run three CVs on the Sensit BT
+#               every CV starts at the push of the trigger button
+#               results are stored on the internal storage
+#
 # MethodSCRIPT version: 1.3
 # Last modified: 17/05/2023
 # Applies to: Sensit BT (with EmStat Pico)
@@ -55,6 +55,6 @@ loop i < 3i
 	add_var i 1i
 endloop
 on_finished:
-file_close	
+file_close
 cell_off
 

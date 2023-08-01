@@ -1,8 +1,8 @@
 e
-# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com 
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
 #
-# Description: 	Hibernate in low power mode, wake up on WAKE pin event (button push)
-# 
+# Description:  Hibernate in low power mode, wake up on WAKE pin event (button push)
+#
 # MethodSCRIPT version: 1.3
 # Last modified: 22/05/2023
 # Applies to: Sensit BT (with EmStat Pico)
@@ -34,7 +34,7 @@ set_e -300m
 cell_on
 ############# Run measurement #############
 # Perform SWV measurement from -300 mV to 300 mV at 5 Hz
-meas_loop_swv p c f g -300m 300m 10m 100m 5   
+meas_loop_swv p c f g -300m 300m 10m 100m 5
 	pck_start
 		# Sweep potential
 		pck_add p

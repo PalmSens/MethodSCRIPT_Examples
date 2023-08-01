@@ -1,8 +1,8 @@
 e
-# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com 
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
 #
-# Description: 	Run SWV + internal temperature measurement (using ADT7420 inside the EmStat Pico module) with I2C
-# 
+# Description:  Run SWV + internal temperature measurement (using ADT7420 inside the EmStat Pico module) with I2C
+#
 # MethodSCRIPT version: 1.3
 # Last modified: 22/05/2023
 # Applies to: Sensit BT (with EmStat Pico)
