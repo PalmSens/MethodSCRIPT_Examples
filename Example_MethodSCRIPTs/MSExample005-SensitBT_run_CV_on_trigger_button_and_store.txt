@@ -32,7 +32,7 @@ set_pgstat_mode 2
 set_max_bandwidth 400
 set_range_minmax da -1 1
 set_range ba 100u
-set_autoranging ba 1m 1u
+set_autoranging ba 1u 1m
 set_e -500m
 #make sure to start the loop at i=0
 store_var i 0i aa
