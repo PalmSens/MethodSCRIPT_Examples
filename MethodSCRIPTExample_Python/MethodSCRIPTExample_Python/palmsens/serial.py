@@ -51,7 +51,7 @@ def _is_mscript_device(port):
     # NOTES:
     # - Since the EmStat Pico uses a generic FTDI USB-to-Serial chip,
     #   it is identified by Windows as "USB Serial Port". This is the
-    #   text to look for when using the auto detection feature. Note
+    #   text to look for when using the auto-detection feature. Note
     #   that an EmStat Pico or Sensit BT cannot be auto-detected if
     #   there are also other devices connected that use this name.
     # - An EmStat4 device in bootloader mode would be identified as
@@ -71,11 +71,11 @@ def _is_mscript_device(port):
 
 
 def auto_detect_port():
-    """Auto detect serial communication port.
+    """Auto-detect serial communication port.
 
     This works by searching for an available port with the correct name.
     If exactly one port matches, this port will be returned. If there
-    are either no or multiple matches, the auto detection fails and None
+    are either no or multiple matches, the auto-detection fails and None
     is returned instead. In that case, the user must explicitly specify
     which port to connect to (or disconnect unneeded devices with the
     same port name).
@@ -90,8 +90,8 @@ def auto_detect_port():
             candidates.append(port)
 
     if len(candidates) != 1:
-        LOG.error('%d candidates found. Auto detect failed.', len(candidates))
-        raise Exception('Auto detection of serial port failed.')
+        LOG.error('%d candidates found. Auto-detect failed.', len(candidates))
+        raise Exception('Auto-detection of serial port failed.')
 
     LOG.info('Exactly one candidate found. Using %s.', candidates[0].device)
     return candidates[0].device

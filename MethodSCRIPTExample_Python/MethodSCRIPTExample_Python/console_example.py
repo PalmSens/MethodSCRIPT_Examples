@@ -6,7 +6,7 @@ This example demonstrates how to communicate with a MethodSCRIPT capable
 PalmSens instrument, such as the EmStat Pico.
 
 The following features are demonstrated in this example:
-  - Auto detecting the serial port.
+  - Auto-detecting the serial port.
   - Connecting to the device using the serial port.
   - Reading the firmware version and device type.
   - Reading a MethodSCRIPT from file and executing it on the device. The
@@ -58,8 +58,8 @@ import palmsens.serial
 # Start of configuration
 ###############################################################################
 
-# COM port of the MethodSCRIPT device (None = auto detect).
-# In case auto detection does not work or is not wanted, fill in the correct
+# COM port of the MethodSCRIPT device (None = auto-detect).
+# In case auto-detection does not work or is not wanted, fill in the correct
 # port name, e.g. 'COM6' on Windows, or '/dev/ttyUSB0' on Linux.
 # DEVICE_PORT = 'COM6'
 DEVICE_PORT = None
