@@ -21,14 +21,19 @@ array w 2
 array r 2
 # Status register
 var s
-# Configure I2C GPIOs and set it to 100k clock, 7 bit address
+# Configure I2C GPIOs and set it to 100 kHz clock, 7-bit address
 set_gpio_cfg 0x0300i 2
 i2c_config 100k 7
-# Configure the sensor for 16bit mode with continuous conversion
+# Configure the sensor for 16-bit mode with continuous conversion
 store_var a 0i ja
 array_set w 0i 0x03i
 array_set w 1i 0x80i
 i2c_write 0x48i w 2 a
+############# Declare measurement variables variables #############
+var p
+var c
+var f
+var g
 ############# Measurement initialisation #############
 set_pgstat_chan 0
 set_pgstat_mode 2
