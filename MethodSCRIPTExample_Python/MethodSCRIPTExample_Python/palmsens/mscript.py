@@ -190,12 +190,12 @@ MSCRIPT_POTENTIAL_RANGES_EMSTAT4 = {
 }
 
 
-def get_variable_type(id):
+def get_variable_type(var_id):
     """Get the variable type with the specified id."""
-    if id in MSCRIPT_VAR_TYPES_DICT:
-        return MSCRIPT_VAR_TYPES_DICT[id]
-    warnings.warn('Unsupported VarType id "%s"!' % id)
-    return VarType(id, 'unknown', '')
+    if var_id in MSCRIPT_VAR_TYPES_DICT:
+        return MSCRIPT_VAR_TYPES_DICT[var_id]
+    warnings.warn('Unsupported VarType id "%s"!' % var_id)
+    return VarType(var_id, 'unknown', '')
 
 
 def metadata_status_to_text(status):
