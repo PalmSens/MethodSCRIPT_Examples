@@ -159,6 +159,7 @@ def main():
     ax2 = ax1.twinx()
 
     ax1.set_xlabel('Frequency (Hz)')
+    ax1.grid(which='major', axis='x', linestyle='--', linewidth=0.5, alpha=0.5)
     ax1.set_ylabel('Z', color=AX1_COLOR)
     # Make x axis logarithmic.
     ax1.semilogx(applied_frequency, z, color=AX1_COLOR)
@@ -167,16 +168,17 @@ def main():
     # Turn on the minor ticks, which are required for the minor grid.
     ax1.minorticks_on()
     # Customize the major grid.
-    ax1.grid(which='major', linestyle='-', linewidth='0.1', color='black')
+    ax1.grid(which='major', axis='y', linestyle='--', linewidth=0.5, alpha=0.5, color=AX1_COLOR)
 
     # We already set the x label with ax1.
     ax2.set_ylabel('-Phase (degrees)', color=AX2_COLOR)
     ax2.semilogx(applied_frequency, z_phase, color=AX2_COLOR)
     ax2.tick_params(axis='y', labelcolor=AX2_COLOR)
+    ax2.minorticks_on()
+    ax2.grid(which='major', axis='y', linestyle='--', linewidth=0.5, alpha=0.5, color=AX2_COLOR)
 
     # Uncomment the following line if some of the labels are clipped.
     # fig.tight_layout()
-    plt.grid(True, which='both')
     plt.title('Bode plot')
     plt.show()
 

@@ -204,8 +204,8 @@ def main():
     # Put specified column of the first curve on y axis.
     yvar = curves[0][0][YAXIS_COLUMN_INDICES[0]]
     plt.ylabel('%s [%s]' % (yvar.type.name, yvar.type.unit))
-    plt.grid(visible=True, which='major')
-    plt.grid(visible=True, which='minor', color='b', linestyle='-', alpha=0.2)
+    plt.grid(visible=True, which='major', linestyle='-')
+    plt.grid(visible=True, which='minor', linestyle='--', alpha=0.2)
     plt.minorticks_on()
 
     # Loop through all curves and plot them.

@@ -132,8 +132,8 @@ def main():
     plt.title('Voltammogram')
     plt.xlabel('Applied Potential (V)')
     plt.ylabel('Measured Current (A)')
-    plt.grid(visible=True, which='major')
-    plt.grid(visible=True, which='minor', color='b', linestyle='-', alpha=0.2)
+    plt.grid(visible=True, which='major', linestyle='-')
+    plt.grid(visible=True, which='minor', linestyle='--', alpha=0.2)
     plt.minorticks_on()
     plt.show()
 
