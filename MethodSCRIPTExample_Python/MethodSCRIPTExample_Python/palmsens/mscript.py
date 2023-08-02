@@ -114,6 +114,7 @@ MSCRIPT_VAR_TYPES_LIST = [
     VarType('eb', 'Time', 's'),
     VarType('ec', 'Pin mask', ''),
     VarType('ed', 'Temperature', '\u00B0 Celsius'),  # NB: '\u00B0' = degrees symbol
+    VarType('ee', 'Count', ''),
 
     VarType('ha', 'Generic current 1', 'A'),
     VarType('hb', 'Generic current 2', 'A'),
