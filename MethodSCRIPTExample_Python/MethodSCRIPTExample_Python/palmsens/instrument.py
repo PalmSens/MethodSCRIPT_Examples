@@ -172,12 +172,11 @@ class Instrument():
                 raise CommunicationError('Invalid response to firmware version request.')
             self.firmware_version = (line1 + line2).replace('\n', ' ')[1:-1]
         # Then derive the device type from the firmware version string.
+        self.device_type = DeviceType.UNKNOWN
         for device_id, device_type in _FIRMWARE_VERSION_TO_DEVICE_TYPE_MAPPING:
             if self.firmware_version.startswith(device_id):
                 self.device_type = device_type
                 break
-            else:
-                self.device_type = DeviceType.UNKNOWN
 
     def get_firmware_version(self, force=False):
         """Get the device firmware version.

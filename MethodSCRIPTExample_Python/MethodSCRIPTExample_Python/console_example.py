@@ -100,9 +100,9 @@ def main():
         firmware_version = device.get_firmware_version()
         device_type = device.get_device_type()
         LOG.info('Connected to %s.', device_type)
-        LOG.info('Firmware version: %s' % firmware_version)
-        LOG.info('MethodSCRIPT version: %s' % device.get_mscript_version())
-        LOG.info('Serial number = %s' % device.get_serial_number())
+        LOG.info('Firmware version: %s', firmware_version)
+        LOG.info('MethodSCRIPT version: %s', device.get_mscript_version())
+        LOG.info('Serial number = %s', device.get_serial_number())
 
         # Read MethodSCRIPT from file and send to device.
         device.send_script(MSCRIPT_FILE_PATH)

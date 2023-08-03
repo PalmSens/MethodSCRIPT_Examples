@@ -48,7 +48,6 @@ import numpy as np
 
 # Custom types
 VarType = collections.namedtuple('VarType', ['id', 'name', 'unit'])
-MScriptVar = collections.namedtuple('MScriptVar', ['type', 'value', 'value_string', 'metadata'])
 
 # Dictionary for the conversion of the SI prefixes.
 SI_PREFIX_FACTOR = {
@@ -199,14 +198,8 @@ def get_variable_type(var_id: str) -> VarType:
 
 
 def metadata_status_to_text(status: int) -> str:
-    descriptions = []
-    for mask, description in METADATA_STATUS_FLAGS:
-        if status & mask:
-            descriptions.append(description)
-    if descriptions:
-        return ' | '.join(descriptions)
-    else:
-        return 'OK'
+    descriptions = [description for mask, description in METADATA_STATUS_FLAGS if status & mask]
+    return ' | '.join(descriptions) if descriptions else 'OK'
 
 
 def metadata_current_range_to_text(device_type: str, var_type: VarType, cr: int) -> str:
@@ -269,12 +262,9 @@ class MScriptVar:
             if self.si_prefix_factor == 1:
                 if math.isnan(self.value):
                     return 'NaN %s' % (self.type.unit)
-                else:
-                    return '%d %s' % (self.raw_value, self.type.unit)
-            else:
-                return '%d %s%s' % (self.raw_value, self.si_prefix, self.type.unit)
-        else:
-            return '%.9g' % (self.value)
+                return '%d %s' % (self.raw_value, self.type.unit)
+            return '%d %s%s' % (self.raw_value, self.si_prefix, self.type.unit)
+        return '%.9g' % (self.value)
 
     @staticmethod
     def decode_value(var: str):
@@ -318,6 +308,7 @@ def parse_mscript_data_package(line: str) -> list[MScriptVar]:
     """
     if line.startswith('P') and line.endswith('\n'):
         return [MScriptVar(var) for var in line[1:-1].split(';')]
+    return None
 
 
 def parse_result_lines(lines: list[str]) -> list[list[list[MScriptVar]]]:

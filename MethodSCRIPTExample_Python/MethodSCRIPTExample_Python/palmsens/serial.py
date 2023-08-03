@@ -91,7 +91,7 @@ def auto_detect_port():
 
     if len(candidates) != 1:
         LOG.error('%d candidates found. Auto-detect failed.', len(candidates))
-        raise Exception('Auto-detection of serial port failed.')
+        raise RuntimeError('Auto-detection of serial port failed.')
 
     LOG.info('Exactly one candidate found. Using %s.', candidates[0])
     return candidates[0]

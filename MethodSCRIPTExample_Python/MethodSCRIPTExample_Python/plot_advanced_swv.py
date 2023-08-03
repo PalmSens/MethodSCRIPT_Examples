@@ -210,7 +210,7 @@ def main():
     plt.minorticks_on()
 
     # Loop through all curves and plot them.
-    for icurve in range(len(curves)):
+    for icurve, curve in enumerate(curves):
         # Get xaxis column for this curve.
         xvalues = palmsens.mscript.get_values_by_column(
             curves, XAXIS_COLUMN_INDEX, icurve)
@@ -220,7 +220,7 @@ def main():
                 curves, yaxis_column_index, icurve)
 
             # Ignore invalid columns.
-            if curves[icurve][0][yaxis_column_index].type != yvar.type:
+            if curve[0][yaxis_column_index].type != yvar.type:
                 continue
 
             # Make plot label.
