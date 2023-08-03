@@ -153,6 +153,7 @@ def main():
     plt.grid()
     plt.xlabel("Z'")
     plt.ylabel("-Z''")
+    # plt.savefig('nyquist_plot.png')
 
     # Show the Bode plot as dual y axis (sharing the same x axis).
     fig, ax1 = plt.subplots()
@@ -177,9 +178,9 @@ def main():
     ax2.minorticks_on()
     ax2.grid(which='major', axis='y', linestyle='--', linewidth=0.5, alpha=0.5, color=AX2_COLOR)
 
-    # Uncomment the following line if some of the labels are clipped.
-    # fig.tight_layout()
-    plt.title('Bode plot')
+    fig.suptitle('Bode plot')
+    fig.tight_layout()
+    # fig.savefig('bode_plot.png')
     plt.show()
 
 
