@@ -151,6 +151,7 @@ int main(int argc, char * argv[])
 	// Open the serial port on the requested port.
 	SerialPortHandle_t h_device = mscript_serial_port_open(port);
 	if (h_device == BAD_HANDLE) {
+		printf("ERROR: Could not open port.\n");
 		return EXIT_FAILURE;
 	}
 
