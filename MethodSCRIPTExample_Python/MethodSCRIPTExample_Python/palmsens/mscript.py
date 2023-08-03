@@ -193,7 +193,7 @@ def get_variable_type(var_id: str) -> VarType:
     """Get the variable type with the specified id."""
     if var_id in MSCRIPT_VAR_TYPES_DICT:
         return MSCRIPT_VAR_TYPES_DICT[var_id]
-    warnings.warn('Unsupported VarType id "%s"!' % var_id)
+    warnings.warn(f'Unsupported VarType id "{var_id}"!')
     return VarType(var_id, 'unknown', '')
 
 
@@ -239,7 +239,7 @@ class MScriptVar:
         self.metadata = self.parse_metadata(self.raw_metadata)
 
     def __repr__(self):
-        return 'MScriptVar(%r)' % self.data
+        return f'MScriptVar({self.data!r})'
 
     def __str__(self):
         return self.value_string
@@ -261,10 +261,10 @@ class MScriptVar:
         if self.type.unit:
             if self.si_prefix_factor == 1:
                 if math.isnan(self.value):
-                    return 'NaN %s' % (self.type.unit)
-                return '%d %s' % (self.raw_value, self.type.unit)
-            return '%d %s%s' % (self.raw_value, self.si_prefix, self.type.unit)
-        return '%.9g' % (self.value)
+                    return f'NaN {self.type.unit}'
+                return f'{self.raw_value} {self.type.unit}'
+            return f'{self.raw_value} {self.si_prefix}{self.type.unit}'
+        return f'{self.value:.9g}'
 
     @staticmethod
     def decode_value(var: str):

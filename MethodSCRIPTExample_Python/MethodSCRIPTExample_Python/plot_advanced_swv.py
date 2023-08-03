@@ -136,7 +136,7 @@ def write_curves_to_csv(file: typing.IO, curves: list[list[list[palmsens.mscript
     writer = csv.writer(file, delimiter=';')
     for curve in curves:
         # Write header row.
-        writer.writerow(['%s [%s]' % (value.type.name, value.type.unit) for value in curve[0]])
+        writer.writerow([f'{value.type.name} [{value.type.unit}]' for value in curve[0]])
         # Write data rows.
         for package in curve:
             writer.writerow([value.value for value in package])
@@ -201,10 +201,10 @@ def main():
     plt.title(base_name)
     # Put specified column of the first curve on x axis.
     xvar = curves[0][0][XAXIS_COLUMN_INDEX]
-    plt.xlabel('%s [%s]' % (xvar.type.name, xvar.type.unit))
+    plt.xlabel(f'{xvar.type.name} [{xvar.type.unit}]')
     # Put specified column of the first curve on y axis.
     yvar = curves[0][0][YAXIS_COLUMN_INDICES[0]]
-    plt.ylabel('%s [%s]' % (yvar.type.name, yvar.type.unit))
+    plt.ylabel(f'{yvar.type.name} [{yvar.type.unit}]')
     plt.grid(visible=True, which='major', linestyle='-')
     plt.grid(visible=True, which='minor', linestyle='--', alpha=0.2)
     plt.minorticks_on()
@@ -224,13 +224,10 @@ def main():
                 continue
 
             # Make plot label.
+            label = f'{COLUMN_NAMES[yaxis_column_index]} vs {COLUMN_NAMES[XAXIS_COLUMN_INDEX]}'
             # If there are multiple curves, add the curve index to the label.
             if len(curves) > 1:
-                label = '%s vs %s %d' % (COLUMN_NAMES[yaxis_column_index],
-                                         COLUMN_NAMES[XAXIS_COLUMN_INDEX], icurve)
-            else:
-                label = '%s vs %s' % (COLUMN_NAMES[yaxis_column_index],
-                                      COLUMN_NAMES[XAXIS_COLUMN_INDEX])
+                label += f' {icurve}'
 
             # Plot the curve y axis against the global x axis.
             plt.plot(xvalues, yvalues, label=label)

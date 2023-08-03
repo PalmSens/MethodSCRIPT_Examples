@@ -208,7 +208,7 @@ class Instrument():
 
     def get_register(self, register):
         """Get the value of a register."""
-        self.write('G%02d\n' % register)
+        self.write(f'G{register:02d}\n')
         return self.readline()[1:-1]
 
     def load_mscript_from_flash(self):

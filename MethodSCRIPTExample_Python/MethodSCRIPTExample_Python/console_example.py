@@ -126,16 +126,15 @@ def main():
                 # Apparently it was a data package. Print all variables.
                 cols = []
                 for var in variables:
-                    cols.append('%s = %11.4g %s' % (var.type.name, var.value,
-                                                    var.type.unit))
+                    cols.append(f'{var.type.name} = {var.value:11.4g} {var.type.unit}')
                     if 'status' in var.metadata:
                         status_text = palmsens.mscript.metadata_status_to_text(
                             var.metadata['status'])
-                        cols.append('STATUS: %-16s' % status_text)
+                        cols.append(f'STATUS: {status_text:<16s}')
                     if 'cr' in var.metadata:
                         cr_text = palmsens.mscript.metadata_current_range_to_text(
                             device_type, var.type, var.metadata['cr'])
-                        cols.append('CR: %s' % cr_text)
+                        cols.append(f'CR: {cr_text}')
                 print(' | '.join(cols))
 
 
