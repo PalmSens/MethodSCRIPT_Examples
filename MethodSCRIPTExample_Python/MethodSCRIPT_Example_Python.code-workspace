@@ -1,0 +1,23 @@
+// Project file for Visual Studio Code.
+// See https://code.visualstudio.com/
+{
+    "folders": [
+        {
+            "path": "MethodSCRIPTExample_Python"
+        }
+    ],
+    "settings": {
+        "editor.detectIndentation": false,
+        "editor.tabSize": 4,
+        "files.exclude": {
+            "**/__pycache__": true,
+            "**/venv*": true,
+        },
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-python.python",
+            "ms-python.vscode-pylance"
+        ]
+    }
+}
