@@ -5,7 +5,8 @@ var f
 var r
 set_pgstat_mode 2
 set_max_bandwidth 100000
-set_range ba 600u
+set_autoranging ba 5u 60u
+set_range ba 60u
 set_e -500m
 cell_on
 wait 1
