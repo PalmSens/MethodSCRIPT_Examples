@@ -190,7 +190,7 @@ MSCRIPT_POTENTIAL_RANGES_EMSTAT4 = {
 }
 
 
-def get_variable_type(var_id):
+def get_variable_type(var_id: str) -> VarType:
     """Get the variable type with the specified id."""
     if var_id in MSCRIPT_VAR_TYPES_DICT:
         return MSCRIPT_VAR_TYPES_DICT[var_id]
@@ -198,7 +198,7 @@ def get_variable_type(var_id):
     return VarType(var_id, 'unknown', '')
 
 
-def metadata_status_to_text(status):
+def metadata_status_to_text(status: int) -> str:
     descriptions = []
     for mask, description in METADATA_STATUS_FLAGS:
         if status & mask:
@@ -209,7 +209,7 @@ def metadata_status_to_text(status):
         return 'OK'
 
 
-def metadata_current_range_to_text(device_type, var_type, cr):
+def metadata_current_range_to_text(device_type: str, var_type: VarType, cr: int) -> str:
     cr_text = None
     if device_type == 'EmStat Pico':
         cr_text = MSCRIPT_CURRENT_RANGES_EMSTAT_PICO.get(cr)
@@ -226,7 +226,7 @@ def metadata_current_range_to_text(device_type, var_type, cr):
 class MScriptVar:
     """Class to store and parse a received MethodSCRIPT variable."""
 
-    def __init__(self, data):
+    def __init__(self, data: str):
         assert len(data) >= 10
         self.data = data[:]
         # Parse the variable type.
@@ -252,19 +252,19 @@ class MScriptVar:
         return self.value_string
 
     @property
-    def type(self):
+    def type(self) -> VarType:
         return get_variable_type(self.id)
 
     @property
-    def si_prefix_factor(self):
+    def si_prefix_factor(self) -> float:
         return SI_PREFIX_FACTOR[self.si_prefix]
 
     @property
-    def value(self):
+    def value(self) -> float:
         return self.raw_value * self.si_prefix_factor
 
     @property
-    def value_string(self):
+    def value_string(self) -> str:
         if self.type.unit:
             if self.si_prefix_factor == 1:
                 if math.isnan(self.value):
@@ -289,7 +289,7 @@ class MScriptVar:
         return int(var, 16) - (2 ** 27)
 
     @staticmethod
-    def parse_metadata(tokens):
+    def parse_metadata(tokens: list[str]) -> dict[str, int]:
         """Parse the (optional) metadata."""
         metadata = {}
         for token in tokens:
@@ -302,7 +302,7 @@ class MScriptVar:
         return metadata
 
 
-def parse_mscript_data_package(line: str):
+def parse_mscript_data_package(line: str) -> list[MScriptVar]:
     """Parse a MethodSCRIPT data package.
 
     The format of a MethodSCRIPT data package is described in the
@@ -320,7 +320,7 @@ def parse_mscript_data_package(line: str):
         return [MScriptVar(var) for var in line[1:-1].split(';')]
 
 
-def parse_result_lines(lines):
+def parse_result_lines(lines: list[str]) -> list[list[list[MScriptVar]]]:
     """Parse the result of a MethodSCRIPT and return a list of curves.
 
     This method returns a list of curves, where each curve is a list of
@@ -356,7 +356,7 @@ def parse_result_lines(lines):
     return curves
 
 
-def get_values_by_column(curves, column, icurve=None):
+def get_values_by_column(curves: list[list[list[MScriptVar]]], column: int, icurve: int = None):
     """Get all values from the specified column.
 
     `curves` is a list of list of list of variables of type `MScriptVar`, as

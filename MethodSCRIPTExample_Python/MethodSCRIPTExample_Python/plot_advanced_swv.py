@@ -59,6 +59,7 @@ import logging
 import os
 import os.path
 import sys
+import typing
 
 # Third-party imports
 import matplotlib.pyplot as plt
@@ -111,7 +112,7 @@ YAXIS_COLUMN_INDICES = [1, 2, 3]
 LOG = logging.getLogger(__name__)
 
 
-def write_curves_to_csv(file, curves):
+def write_curves_to_csv(file: typing.IO, curves: list[list[list[palmsens.mscript.MScriptVar]]]):
     """Write the curves to file in CSV format.
 
     `file` must be a file-like object in text mode with newlines translation

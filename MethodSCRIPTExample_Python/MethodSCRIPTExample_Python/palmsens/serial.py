@@ -46,7 +46,7 @@ import serial.tools.list_ports
 LOG = logging.getLogger(__name__)
 
 
-def _is_mscript_device(port):
+def _is_mscript_device(port_description: str):
     """Check if the specified port is a known MethodSCRIPT device."""
     # NOTES:
     # - Since the EmStat Pico uses a generic FTDI USB-to-Serial chip,
@@ -57,17 +57,17 @@ def _is_mscript_device(port):
     # - An EmStat4 device in bootloader mode would be identified as
     #   'EmStat4 Bootloader', but we only want to connect to devices
     #   that can run MethodSCRIPTs, so we do not include that here.
-    return (port.description == 'EmStat4' or
-            port.description.startswith('ESPicoDev') or
-            port.description.startswith('SensitBT') or
-            port.description.startswith('SensitSmart') or
+    return (port_description == 'EmStat4' or
+            port_description.startswith('ESPicoDev') or
+            port_description.startswith('SensitBT') or
+            port_description.startswith('SensitSmart') or
             # ^ Above names are used in Linux
             # v Below names are used in Windows
-            port.description.startswith('EmStat4 LR (COM') or
-            port.description.startswith('EmStat4 HR (COM') or
-            port.description.startswith('MultiEmStat4 LR (COM') or
-            port.description.startswith('MultiEmStat4 HR (COM') or
-            port.description.startswith('USB Serial Port'))
+            port_description.startswith('EmStat4 LR (COM') or
+            port_description.startswith('EmStat4 HR (COM') or
+            port_description.startswith('MultiEmStat4 LR (COM') or
+            port_description.startswith('MultiEmStat4 HR (COM') or
+            port_description.startswith('USB Serial Port'))
 
 
 def auto_detect_port():
@@ -86,15 +86,15 @@ def auto_detect_port():
     candidates = []
     for port in ports:
         LOG.debug('Found port: %s', port.description)
-        if _is_mscript_device(port):
-            candidates.append(port)
+        if _is_mscript_device(port.description):
+            candidates.append(port.device)
 
     if len(candidates) != 1:
         LOG.error('%d candidates found. Auto-detect failed.', len(candidates))
         raise Exception('Auto-detection of serial port failed.')
 
-    LOG.info('Exactly one candidate found. Using %s.', candidates[0].device)
-    return candidates[0].device
+    LOG.info('Exactly one candidate found. Using %s.', candidates[0])
+    return candidates[0]
 
 
 class Serial():
