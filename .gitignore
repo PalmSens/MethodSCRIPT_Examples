@@ -241,6 +241,10 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 
+# Python cache files
+*.pyc
+__pycache__/
+
 /.metadata
 /MethodSCRIPTExample_Android/.metadata/.plugins
 /MethodSCRIPTExample_Android/.metadata/.mylyn
