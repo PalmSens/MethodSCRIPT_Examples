@@ -22,8 +22,11 @@ If applicable, add screenshots to help explain your problem.
 **Used example**
 The name of the example that was used.
 
-**(Optional) MethodSCRIPT**
-The custom MethodSCRIPT used.
+**Used device(s)**
+The PalmSens potentiostat device and host system used.
 
 **Additional context**
-Add any other context about the problem here.
+Add any other context about the problem here. It can be helpful to attach the following:
+- Custom MethodSCRIPT's
+- Communication logs
+- Example output logs
