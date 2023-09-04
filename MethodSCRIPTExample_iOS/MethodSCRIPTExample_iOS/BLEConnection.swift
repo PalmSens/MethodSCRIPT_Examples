@@ -97,7 +97,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
     var isReady: Bool {
         get {
             guard self.centralManager != nil else {
-                Log.w("Guard failure")
+                Log.w("Guard failure: self.centralManager == nil")
                 return false
             }
             return centralManager.state == .poweredOn &&
@@ -110,7 +110,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
     var isScanning: Bool {
         get {
             guard self.centralManager != nil else {
-                Log.w("Guard failure")
+                Log.w("Guard failure: self.centralManager == nil")
                 return false
             }
             return self.centralManager.isScanning
@@ -121,7 +121,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
     var isPoweredOn: Bool {
         get {
             guard self.centralManager != nil else {
-                Log.w("Guard failure")
+                Log.w("Guard failure: self.centralManager == nil")
                 return false
             }
             return self.centralManager.state == .poweredOn
@@ -130,7 +130,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
 
     func startScanningForDevices() {
         guard isPoweredOn else {
-            Log.w("Guard failure")
+            Log.w("Guard failure: isPoweredOn == false")
             return
         }
 
@@ -142,7 +142,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
     func stopScanningForDevices() {
         Log.i("Stopping scanning for devices...")
         guard isPoweredOn else {
-            Log.w("Guard failure")
+            Log.w("Guard failure: isPoweredOn == false")
             return
         }
 
@@ -157,12 +157,12 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
         stopScanningForDevices()
 
         guard isPoweredOn else {
-            Log.w("Guard failure")
+            Log.w("Guard failure: isPoweredOn == false")
             return
 
         }
         guard connectedDevice.peripheral != nil else {
-            Log.w("Guard failure")
+            Log.w("Guard failure: connectedDevice.peripheral == nil")
             return
         }
 
@@ -212,7 +212,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
     func sendMessage(_ message: String) {
         Log.i("Sending string message '\(message)' to the device started...")
         guard isReady else {
-            Log.w("Guard failure")
+            Log.w("Guard failure: isReady == false")
             return
         }
 
@@ -226,7 +226,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
         let bytesAsString = String(bytes: bytes, encoding: .ascii)
         Log.i("Sending bytes '\(bytesAsString!)' to the device started...")
         guard isReady else {
-            Log.w("Guard failure")
+            Log.w("Guard failure: isReady == false")
             return
         }
 
@@ -237,7 +237,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
     /// Send data to the device
     private func sendData(_ data: Data) {
         guard isReady else {
-            Log.w("Guard failure")
+            Log.w("Guard failure: isReady == false")
             return
         }
 
@@ -265,7 +265,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
     public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         let data = characteristic.value
         guard data != nil else {
-            Log.w("Guard failure")
+            Log.w("Guard failure: data == nil")
             return
         }
 
@@ -580,7 +580,7 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
     // Handles if we do connect successfully
     public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         guard self.connectedDevice.peripheral != nil else {
-            Log.w("Guard failure")
+            Log.w("Guard failure: self.connectedDevice.peripheral == nil")
             return
         }
 
@@ -599,10 +599,10 @@ open class BLEConnection: NSObject, CBPeripheralDelegate, CBCentralManagerDelega
     public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         connectedDevice.peripheral = nil
         self.scannedDevices.removeAll(where: { $0.id == peripheral.identifier })
-        self.messages.insert("Disconnected device", at: 0)
+        self.messages.insert("Disconnected from device", at: 0)
 
         self.bleState = .idle
-        Log.i("Disconnected device \(String(describing: peripheral.name!))")
+        Log.i("Disconnected from device \(String(describing: peripheral.name!))")
     }
 
     // Handles a connection failure

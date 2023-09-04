@@ -34,44 +34,8 @@ import SwiftUI
 import CoreBluetooth
 import Combine
 
-struct ScanForDevicesView: View {
-    @EnvironmentObject var communicationObject: CommunicationObject
-    @ObservedObject var bleConnection: BLEConnection
-    @Binding var isPresented: Bool
-
-    var body: some View {
-        NavigationView {
-            List(bleConnection.scannedDevices) { device in
-                Text(verbatim: device.name!)
-                Spacer()
-                Button(action: {
-                    self.bleConnection.connectToDevice(device: device)
-                    self.isPresented = false
-                }) {
-                    Image(systemName: "circle.fill")
-                }.buttonStyle(DefaultButtonStyle(fixedWidth: 100, fixedHeight: 10))
-            }.navigationBarTitle("scanning...")
-                    .navigationBarItems(trailing: Button(action: {
-                        self.isPresented = false
-                    }) {
-                        Image(systemName: "arrow.left")
-                    }.buttonStyle(DefaultButtonStyle(color: .gray, fixedWidth: 60, fixedHeight: 5)))
-                    .onAppear(perform: performOnAppear)
-                    .onDisappear(perform: performOnDisappear)
-        }
-    }
-
-    private func performOnAppear() {
-        self.bleConnection.startScanningForDevices()
-    }
-
-    private func performOnDisappear() {
-        self.bleConnection.stopScanningForDevices()
-    }
-}
-
 struct ContentView: View {
-    @State var modalIsPresented = false
+    @State var showModal = false
     @EnvironmentObject var communicationObject: CommunicationObject
     @ObservedObject var bleConnection = BLEConnection()
 
@@ -84,80 +48,124 @@ struct ContentView: View {
     }
 
     var body: some View {
-        //NavigationView() {
-        VStack {
-            HStack {
-                Button(action: {
-                    self.bleConnection.messages.removeAll()
-                    self.modalIsPresented = true
-                }) {
-                    HStack(spacing: 10) {
-                        Image(systemName: "dot.radiowaves.left.and.right")
-                    }
-                }.sheet(isPresented: $modalIsPresented, content: {
-                    ScanForDevicesView(bleConnection: self.bleConnection, isPresented: self.$modalIsPresented).environmentObject(self.communicationObject)
-                }).buttonStyle(DefaultButtonStyle(disabled: scanningDisabled())).disabled(scanningDisabled())
-                Button(action: {
-                    self.bleConnection.sendCommandVersion()
-                }) {
-                    Image(systemName: "info")
-                }.buttonStyle(DefaultButtonStyle(disabled: runningDisabled())).disabled(runningDisabled())
-                Button(action: {
-                    //NOTE 1: If you measure to many points SwiftUI's list of measurement points could become very slow.
-                    //NOTE 2: Methodscript below was generated using PSTrace
-                    let script = "e\nvar c\nvar p\nset_pgstat_chan 1\nset_pgstat_mode 0\nset_pgstat_chan 0\nset_pgstat_mode 2\nset_max_bandwidth 80\nset_pot_range 500m 500m\nset_cr 590u\nset_autoranging 59n 590u\ncell_on\nmeas_loop_ca p c 500m 5m 5000m\npck_start\npck_add p\npck_add c\npck_end\nendloop\non_finished:\ncell_off\n\n"
-                    self.bleConnection.sendMethodScript(methodScript: script)
-                }) {
-                    Image(systemName: "play.fill")
-                }.buttonStyle(DefaultButtonStyle(disabled: runningDisabled())).disabled(runningDisabled())
-                Button(action: {
-                    self.bleConnection.sendCommandAbort()
-                }) {
-                    Image(systemName: "stop.fill")
-                }.buttonStyle(DefaultButtonStyle(disabled: abortingDisabled())).disabled(abortingDisabled())
-                Button(action: {
-                    self.bleConnection.disconnect()
-                }) {
-                    Image(systemName: "bolt.slash")
-                }.buttonStyle(DefaultButtonStyle(disabled: disconnectingDisabled())).disabled(disconnectingDisabled())
-
+        GeometryReader { geometry in
+            ZStack {
+                VStack {
+                    headerSection()
+                    mainSection()
+                }.padding()
+                if showModal {
+                    modalSection(width: geometry.size.width, height: geometry.size.height)
+                        .onAppear(perform: performModalOnAppear)
+                        .onDisappear(perform: performModalOnDisappear)
+                }
             }
-            TabView {
-                List {
-                    ForEach(bleConnection.messages, id: \.self) { message in
-                        VStack(alignment: .leading) {
-                            Text(message)
-                        }
-                    }.padding(5) //EXAMPLE (color rows): .listRowBackground(Color.green)
-                }.tabItem {
-                    Image(systemName: "doc.text")
-                    Text("log")
-                }.tag(0)
-                //NOTE: SwiftUI does not have an Excel like grid control, so code below is a pseudo-like grid solution...
-                List {
-                    ForEach(bleConnection.measurements) { measurement in
-                        VStack(alignment: .leading) {
-                            HStack {
-                                Text("\(measurement.id)")
-                                Text("\(String(format: "%.4f V", measurement.voltage!))")
-                                Text("\(String(format: "%.16f A", measurement.current!))")
-                                Text("\(measurement.readingStatus!)").fixedSize(horizontal: false, vertical: true)
-                                Text("\(measurement.currentRange!)")
-                                Spacer()
-                            }
-                        }
-                    }
-                }.tabItem {
-                    Image(systemName: "table")
-                    Text("measurements")
-                }.tag(1)
-            }
-        }.padding().onAppear(perform: performOnAppear)
+        }
     }
 
-    private func performOnAppear() {
+    func headerSection() -> some View {
+        HStack {
+            Button(action: {
+                self.bleConnection.messages.removeAll()
+                self.showModal = true
+            }) {
+                HStack(spacing: 10) {
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                }
+            }.buttonStyle(DefaultButtonStyle(disabled: scanningDisabled())).disabled(scanningDisabled())
+            Button(action: {
+                self.bleConnection.sendCommandVersion()
+            }) {
+                Image(systemName: "info")
+            }.buttonStyle(DefaultButtonStyle(disabled: runningDisabled())).disabled(runningDisabled())
+            Button(action: {
+                //NOTE 1: If you measure to many points SwiftUI's list of measurement points could become very slow.
+                //NOTE 2: Methodscript below was generated using PSTrace
+                let script = "e\nvar c\nvar p\nset_pgstat_chan 1\nset_pgstat_mode 0\nset_pgstat_chan 0\nset_pgstat_mode 2\nset_max_bandwidth 80\nset_pot_range 500m 500m\nset_cr 590u\nset_autoranging 59n 590u\ncell_on\nmeas_loop_ca p c 500m 5m 5000m\npck_start\npck_add p\npck_add c\npck_end\nendloop\non_finished:\ncell_off\n\n"
+                self.bleConnection.sendMethodScript(methodScript: script)
+            }) {
+                Image(systemName: "play.fill")
+            }.buttonStyle(DefaultButtonStyle(disabled: runningDisabled())).disabled(runningDisabled())
+            Button(action: {
+                self.bleConnection.sendCommandAbort()
+            }) {
+                Image(systemName: "stop.fill")
+            }.buttonStyle(DefaultButtonStyle(disabled: abortingDisabled())).disabled(abortingDisabled())
+            Button(action: {
+                self.bleConnection.disconnect()
+            }) {
+                Image(systemName: "bolt.slash")
+            }.buttonStyle(DefaultButtonStyle(disabled: disconnectingDisabled())).disabled(disconnectingDisabled())
+
+        }
+    }
+    
+    func mainSection() -> some View {
+        TabView {
+            List {
+                ForEach(bleConnection.messages, id: \.self) { message in
+                    VStack(alignment: .leading) {
+                        Text(message)
+                    }
+                }.padding(5) //EXAMPLE (color rows): .listRowBackground(Color.green)
+            }.tabItem {
+                Image(systemName: "doc.text")
+                Text("log")
+            }.tag(0)
+            //NOTE: SwiftUI does not have an Excel like grid control, so code below is a pseudo-like grid solution...
+            List {
+                ForEach(bleConnection.measurements) { measurement in
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Text("\(measurement.id)")
+                            Text("\(String(format: "%.4f V", measurement.voltage!))")
+                            Text("\(String(format: "%.16f A", measurement.current!))")
+                            Text("\(measurement.readingStatus!)").fixedSize(horizontal: false, vertical: true)
+                            Text("\(measurement.currentRange!)")
+                            Spacer()
+                        }
+                    }
+                }
+            }.tabItem {
+                Image(systemName: "table")
+                Text("measurements")
+            }.tag(1)
+        }
+    }
+    
+    func modalSection(width: CGFloat, height: CGFloat) -> some View {
+        NavigationView {
+            List(bleConnection.scannedDevices) { device in
+                HStack {
+                    Text(verbatim: device.name!)
+                    Spacer()
+                    Button(action: {
+                        self.bleConnection.connectToDevice(device: device)
+                        self.showModal = false
+                    }) {
+                        Text("Connect")
+                    }.buttonStyle(DefaultButtonStyle(fixedWidth: 100, fixedHeight: 10))
+                }
+            }.navigationBarTitle("scanning...")
+                .navigationBarItems(trailing: Button(action: {
+                    self.showModal = false
+                }) {
+                    Image(systemName: "arrow.left")
+                }.buttonStyle(DefaultButtonStyle(color: .gray, fixedWidth: 60, fixedHeight: 5)))
+        }.frame(width: width, height: height)  // Set frame to occupy the entire parent view
+            .background(Color.white)
+            .cornerRadius(20)
+            .shadow(radius: 20)
     }
 
+    func performModalOnAppear() {
+        self.bleConnection.startScanningForDevices()
+    }
+      
+    func performModalOnDisappear() {
+        self.bleConnection.stopScanningForDevices()
+    }
+    
     func scanningDisabled() -> Bool {
         var result: Bool
         result = bleConnection.bleState != .idle;
