@@ -81,18 +81,21 @@
 //#define DEVICE_TYPE DT_ES4
 
 #ifndef DEVICE_TYPE
-  #error "No device type selected"
+  #error "No device type selected, please uncomment one of the options above"
 #endif
 
 // Please uncomment one of the lines below to select the correct baudrate for your MethodSCRIPT device
 // EmStat Pico: 230400
-// EmStat4:     921600
+// EmStat4:     921600 (230400 for FW <= 1.1)
 //#define MSCRIPT_DEV_BAUDRATE 921600
 //#define MSCRIPT_DEV_BAUDRATE 230400
 
 #ifndef MSCRIPT_DEV_BAUDRATE
-  #error "No baudrate selected"
+  #error "No baudrate selected, please uncomment one of the options above"
 #endif
+
+// Set this to the port that will communicate with the EmStat.
+#define SerialEmStat Serial1
 
 int _nDataPoints = 0;
 char _versionString[30];
@@ -182,13 +185,13 @@ int write_wrapper(char c)
     SerialUSB.write(c);
   }
   // Write a character to the device
-  return Serial.write(c);
+  return SerialEmStat.write(c);
 }
 
 int read_wrapper()
 {
   // Read a character from the device
-  int c = Serial.read();
+  int c = SerialEmStat.read();
 
   if (s_printReceived && (c != -1)) { // -1 means no data
     // Send all received data to PC if required for debugging purposes (s_printReceived to be set to true)
@@ -205,10 +208,10 @@ int VerifyMSDevice()
   RetCode code;
 
   SendScriptToDevice(CMD_VERSION_STRING);
-  while (!Serial.available()) {
+  while (!SerialEmStat.available()) {
     // Wait until data is available on Serial
   }
-  while (Serial.available()) {
+  while (SerialEmStat.available()) {
     code = ReadBuf(&_msComm, _versionString);
     if (code == CODE_VERSION_RESPONSE) {
       if (strstr(_versionString, "espbl") != NULL) {
@@ -260,10 +263,7 @@ void SendScriptToDevice(char const * scriptText)
 ///
 void PrintSubpackage(const MscrSubPackage subpackage)
 {
-  // Format and print the subpackage value
-  // This is a bit bulky, but does nothing more than call printf with a format that is
-  // sensible for the `variable type` of the subpackage.
-
+  // Print subpackage label
   switch(subpackage.variable_type) {
 
   case MSCR_VT_POTENTIAL:
@@ -275,8 +275,7 @@ void PrintSubpackage(const MscrSubPackage subpackage)
   case MSCR_VT_POTENTIAL_GENERIC3:
   case MSCR_VT_POTENTIAL_GENERIC4:
   case MSCR_VT_POTENTIAL_WE_VS_CE:
-    SerialUSB.print("\tE[V]: ");
-    SerialUSB.print(sci(subpackage.value, 3));
+    SerialUSB.print("\tE [V]: ");
     break;
 
   case MSCR_VT_CURRENT:
@@ -284,46 +283,41 @@ void PrintSubpackage(const MscrSubPackage subpackage)
   case MSCR_VT_CURRENT_GENERIC2:
   case MSCR_VT_CURRENT_GENERIC3:
   case MSCR_VT_CURRENT_GENERIC4:
-    SerialUSB.print("\tI[A]: ");
-    SerialUSB.print(sci(subpackage.value, 3));
+    SerialUSB.print("\tI [A]: ");
     break;
 
   case MSCR_VT_ZREAL:
     SerialUSB.print("\tZreal[ohm]: ");
-    SerialUSB.print(sci(subpackage.value, 3));
     break;
 
   case MSCR_VT_ZIMAG:
     SerialUSB.print("\tZimag[ohm]: ");
-    SerialUSB.print(sci(subpackage.value, 3));
     break;
 
   case MSCR_VT_CELL_SET_POTENTIAL:
     SerialUSB.print("\tE set[V]: ");
-    SerialUSB.print(sci(subpackage.value, 3));
     break;
 
   case MSCR_VT_CELL_SET_CURRENT:
     SerialUSB.print("\tI set[A]: ");
-    SerialUSB.print(sci(subpackage.value, 3));
     break;
 
   case MSCR_VT_CELL_SET_FREQUENCY:
     SerialUSB.print("\tF set[Hz]: ");
-    SerialUSB.print(sci(subpackage.value, 3));
     break;
 
   case MSCR_VT_CELL_SET_AMPLITUDE:
     SerialUSB.print("\tA set[V]: ");
-    SerialUSB.print(sci(subpackage.value, 2));
     break;
 
   case MSCR_VT_UNKNOWN:
   default:
-    char formatted_srt[64];
-    snprintf(formatted_srt, 64, "\t?%d?[?] %16.3f ", subpackage.variable_type, subpackage.value);
-    SerialUSB.print(formatted_srt);
+    SerialUSB.print("\tUnknown[?]: ");
+    break;
   }
+
+  // Print subpackage value
+  SerialUSB.print(sci(subpackage.value, 3));
 
   // Print metadata
   // Note a value of <0 indicates it was provided in the MethodSCRIPT output
@@ -345,16 +339,15 @@ void PrintSubpackage(const MscrSubPackage subpackage)
     }
 
     char formatted_srt[64];
-    snprintf(formatted_srt, 64, "\tstatus: %-16s \t", status_str);
+    snprintf(formatted_srt, 64, "\tstatus: %-20s", status_str);
     SerialUSB.print(formatted_srt);
   }
 
   // `range` metadata
   if (subpackage.metadata.range >= 0) {
     char const * range_str = range_to_string(subpackage.metadata.range, (VarType)subpackage.variable_type);
-    char formatted_srt[64];
-    snprintf(formatted_srt, 64, "Range: %-20s \t", range_str);
-    SerialUSB.print(formatted_srt);
+    SerialUSB.print("\tRange: ");
+    SerialUSB.print(range_str);
   }
 }
 
@@ -366,7 +359,7 @@ void setup()
   // SerialUSB is the Arduino serial port communicating with the PC
   SerialUSB.begin(230400);
   // Serial is the port communicating with the MethodSCRIPT device
-  Serial.begin(MSCRIPT_DEV_BAUDRATE);
+  SerialEmStat.begin(MSCRIPT_DEV_BAUDRATE);
   
   //Wait for USB port to be active
   while (!SerialUSB) {
@@ -374,7 +367,7 @@ void setup()
   }
 
   //Wait for MethodSCRIPT port to be active
-  while (!Serial) {
+  while (!SerialEmStat) {
     /* do nothing */
   }
   
@@ -406,7 +399,7 @@ void loop()
   char current[20];
   char readingStatus[16];
   // If we have any buffered messages waiting for us
-  while (Serial.available()) {
+  while (SerialEmStat.available()) {
     // Read from the device and parses the response
     RetCode code = ReceivePackage(&_msComm, &package);
     switch (code) {
