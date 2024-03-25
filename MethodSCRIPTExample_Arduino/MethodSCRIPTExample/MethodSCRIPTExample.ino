@@ -94,8 +94,8 @@
   #error "No baudrate selected, please uncomment one of the options above"
 #endif
 
-// Set this to the port that will communicate with the EmStat.
-#define SerialEmStat Serial1
+// Set this to the port that will communicate with the MethodSCRIPT device.
+#define SerialMSDev Serial1
 
 int _nDataPoints = 0;
 char _versionString[30];
@@ -185,13 +185,13 @@ int write_wrapper(char c)
     SerialUSB.write(c);
   }
   // Write a character to the device
-  return SerialEmStat.write(c);
+  return SerialMSDev.write(c);
 }
 
 int read_wrapper()
 {
   // Read a character from the device
-  int c = SerialEmStat.read();
+  int c = SerialMSDev.read();
 
   if (s_printReceived && (c != -1)) { // -1 means no data
     // Send all received data to PC if required for debugging purposes (s_printReceived to be set to true)
@@ -208,10 +208,10 @@ int VerifyMSDevice()
   RetCode code;
 
   SendScriptToDevice(CMD_VERSION_STRING);
-  while (!SerialEmStat.available()) {
+  while (!SerialMSDev.available()) {
     // Wait until data is available on Serial
   }
-  while (SerialEmStat.available()) {
+  while (SerialMSDev.available()) {
     code = ReadBuf(&_msComm, _versionString);
     if (code == CODE_VERSION_RESPONSE) {
       if (strstr(_versionString, "espbl") != NULL) {
@@ -359,7 +359,7 @@ void setup()
   // SerialUSB is the Arduino serial port communicating with the PC
   SerialUSB.begin(230400);
   // Serial is the port communicating with the MethodSCRIPT device
-  SerialEmStat.begin(MSCRIPT_DEV_BAUDRATE);
+  SerialMSDev.begin(MSCRIPT_DEV_BAUDRATE);
   
   //Wait for USB port to be active
   while (!SerialUSB) {
@@ -367,7 +367,7 @@ void setup()
   }
 
   //Wait for MethodSCRIPT port to be active
-  while (!SerialEmStat) {
+  while (!SerialMSDev) {
     /* do nothing */
   }
   
@@ -399,7 +399,7 @@ void loop()
   char current[20];
   char readingStatus[16];
   // If we have any buffered messages waiting for us
-  while (SerialEmStat.available()) {
+  while (SerialMSDev.available()) {
     // Read from the device and parses the response
     RetCode code = ReceivePackage(&_msComm, &package);
     switch (code) {
