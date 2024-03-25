@@ -6,7 +6,7 @@ This example demonstrates how to communicate with a MethodSCRIPT capable
 PalmSens instrument, such as the EmStat Pico.
 
 The following features are demonstrated in this example:
-  - Auto detecting the serial port.
+  - Auto-detecting the serial port.
   - Connecting to the device using the serial port.
   - Reading the firmware version and device type.
   - Reading a MethodSCRIPT from file and executing it on the device. The
@@ -27,10 +27,10 @@ modification, are permitted provided that the following conditions are met:
    - Neither the name of PalmSens BV nor the names of its contributors
      may be used to endorse or promote products derived from this software
      without specific prior written permission.
-   - This license does not release you from any requirement to obtain separate 
-	  licenses from 3rd party patent holders to use this software.
-   - Use of the software either in source or binary form must be connected to, 
-	  run on or loaded to an PalmSens BV component.
+   - This license does not release you from any requirement to obtain separate
+     licenses from 3rd party patent holders to use this software.
+   - Use of the software either in source or binary form must be connected to,
+     run on or loaded to an PalmSens BV component.
 
 DISCLAIMER: THIS SOFTWARE IS PROVIDED BY PALMSENS "AS IS" AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -58,8 +58,8 @@ import palmsens.serial
 # Start of configuration
 ###############################################################################
 
-# COM port of the MethodSCRIPT device (None = auto detect).
-# In case auto detection does not work or is not wanted, fill in the correct
+# COM port of the MethodSCRIPT device (None = auto-detect).
+# In case auto-detection does not work or is not wanted, fill in the correct
 # port name, e.g. 'COM6' on Windows, or '/dev/ttyUSB0' on Linux.
 # DEVICE_PORT = 'COM6'
 DEVICE_PORT = None
@@ -100,9 +100,9 @@ def main():
         firmware_version = device.get_firmware_version()
         device_type = device.get_device_type()
         LOG.info('Connected to %s.', device_type)
-        LOG.info('Firmware version: %s' % firmware_version)
-        LOG.info('MethodSCRIPT version: %d' % device.get_mscript_version())
-        LOG.info('Serial number = %s' % device.get_serial_number())
+        LOG.info('Firmware version: %s', firmware_version)
+        LOG.info('MethodSCRIPT version: %s', device.get_mscript_version())
+        LOG.info('Serial number = %s', device.get_serial_number())
 
         # Read MethodSCRIPT from file and send to device.
         device.send_script(MSCRIPT_FILE_PATH)
@@ -126,16 +126,15 @@ def main():
                 # Apparently it was a data package. Print all variables.
                 cols = []
                 for var in variables:
-                    cols.append('%s = %11.4g %s' % (var.type.name, var.value,
-                                                    var.type.unit))
+                    cols.append(f'{var.type.name} = {var.value:11.4g} {var.type.unit}')
                     if 'status' in var.metadata:
                         status_text = palmsens.mscript.metadata_status_to_text(
                             var.metadata['status'])
-                        cols.append('STATUS: %-16s' % status_text)
+                        cols.append(f'STATUS: {status_text:<16s}')
                     if 'cr' in var.metadata:
                         cr_text = palmsens.mscript.metadata_current_range_to_text(
                             device_type, var.type, var.metadata['cr'])
-                        cols.append('CR: %s' % cr_text)
+                        cols.append(f'CR: {cr_text}')
                 print(' | '.join(cols))
 
 

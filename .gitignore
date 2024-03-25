@@ -241,6 +241,14 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 
+# Python cache files
+*.pyc
+__pycache__/
+
+# Apple/Windows desktop files
+.DS_Store
+desktop.ini
+
 /.metadata
 /MethodSCRIPTExample_Android/.metadata/.plugins
 /MethodSCRIPTExample_Android/.metadata/.mylyn

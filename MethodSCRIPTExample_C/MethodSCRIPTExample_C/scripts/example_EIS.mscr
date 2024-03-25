@@ -8,7 +8,7 @@ set_pgstat_chan 0
 # Set mode to high speed
 set_pgstat_mode 3
 # Enable all supported ranges for current autoranging
-set_autoranging ba 1p 1
+set_autoranging ba 1u 1
 # Enable all supported ranges for potential autoranging
 set_autoranging ab 1p 1
 # Turn cell on

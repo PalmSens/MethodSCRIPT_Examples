@@ -1,0 +1,47 @@
+e
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+# Description:  Hibernate in low power mode, wake up on WAKE pin event (button push)
+#
+# MethodSCRIPT version: 1.3
+# Last modified: 22/05/2023
+# Applies to: Sensit BT (with EmStat Pico)
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############  Hibernate and wait for button push #############
+#Hibernate in low power mode, wake up on WAKE pin event (button push)
+#Could also have used get_gpio on with GPIO pin if saving power wasn't a concern
+#Bitmask for wake-up sources:
+#0x01 = Communication
+#0x02 = WAKE pin
+#0x04 = Timer
+#At least one wake-up source must be specified.
+#60=60 seconds used by the Timer if Timer flag was set, ignored now since we use only wake pin.
+hibernate 0x02i 60
+############# Declare measurement variables variables #############
+var p
+var c
+var f
+var g
+############# Measurement initialisation #############
+set_pgstat_chan 0
+set_pgstat_mode 2
+set_max_bandwidth 200
+set_range_minmax da -400m 400m
+set_range ba 59n
+set_autoranging ba 59n 59n
+set_e -300m
+cell_on
+############# Run measurement #############
+# Perform SWV measurement from -300 mV to 300 mV at 5 Hz
+meas_loop_swv p c f g -300m 300m 10m 100m 5
+	pck_start
+		# Sweep potential
+		pck_add p
+		# Current
+		pck_add c
+	pck_end
+endloop
+on_finished:
+cell_off
+

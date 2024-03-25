@@ -23,10 +23,10 @@ modification, are permitted provided that the following conditions are met:
    - Neither the name of PalmSens BV nor the names of its contributors
      may be used to endorse or promote products derived from this software
      without specific prior written permission.
-   - This license does not release you from any requirement to obtain separate 
-	  licenses from 3rd party patent holders to use this software.
-   - Use of the software either in source or binary form must be connected to, 
-	  run on or loaded to an PalmSens BV component.
+   - This license does not release you from any requirement to obtain separate
+     licenses from 3rd party patent holders to use this software.
+   - Use of the software either in source or binary form must be connected to,
+     run on or loaded to an PalmSens BV component.
 
 DISCLAIMER: THIS SOFTWARE IS PROVIDED BY PALMSENS "AS IS" AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -43,6 +43,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # Standard library imports
 import datetime
 import logging
+import os
 import os.path
 import sys
 
@@ -85,6 +86,7 @@ def main():
     # logging.getLogger('palmsens').setLevel(logging.INFO)
     # Disable excessive logging from matplotlib.
     logging.getLogger('matplotlib').setLevel(logging.INFO)
+    logging.getLogger('PIL.PngImagePlugin').setLevel(logging.INFO)
 
     port = DEVICE_PORT
     if port is None:
@@ -130,8 +132,8 @@ def main():
     plt.title('Voltammogram')
     plt.xlabel('Applied Potential (V)')
     plt.ylabel('Measured Current (A)')
-    plt.grid(b=True, which='major')
-    plt.grid(b=True, which='minor', color='b', linestyle='-', alpha=0.2)
+    plt.grid(visible=True, which='major', linestyle='-')
+    plt.grid(visible=True, which='minor', linestyle='--', alpha=0.2)
     plt.minorticks_on()
     plt.show()
 

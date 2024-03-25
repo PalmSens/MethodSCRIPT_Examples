@@ -1,0 +1,52 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  This example shows how to run an SWV on the Sensit BT
+#               and save the results on internal storage
+#
+# MethodSCRIPT version: 1.3
+# Last modified: 22/05/2023
+# Applies to: Sensit BT (with EmStat Pico)
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+# Sets GPIO pin configuration. Bitmask followed by 2 for enabling SPI flash memory
+set_gpio_cfg 0x1E 2
+# 1=Create new file. If a file with the same name exists, new data is appended to it
+file_open "/Measurements/14-04-2022/SWV-10-49-16-0.dmeas" 1
+# 3=Output to both normal channel and file storage
+set_script_output 3
+# for potential
+var p
+# for measured current
+var c
+# for measured forward current
+var f
+# for measured reverse current
+var g
+############# Measurement initialisation #############
+set_pgstat_chan 1
+set_pgstat_mode 0
+set_pgstat_chan 0
+set_pgstat_mode 2
+set_max_bandwidth 200
+set_range_minmax da -400m 400m
+set_range ba 59n
+set_autoranging ba 59n 59n
+set_e -300m
+cell_on
+# SWV Ebegin=-0.3V, Eend=0.3V, Estep=0.01V, Eamp=0.1V, 5 Hz
+meas_loop_swv p c f g -300m 300m 10m 100m 5
+	pck_start
+		pck_add p
+		pck_add c
+		pck_add f
+		pck_add g
+	pck_end
+endloop
+on_finished:
+	file_close
+	cell_off
+

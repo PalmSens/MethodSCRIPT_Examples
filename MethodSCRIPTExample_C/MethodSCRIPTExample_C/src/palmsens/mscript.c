@@ -330,7 +330,7 @@ bool mscript_send_file(SerialPortHandle_t handle, char const * path)
 	// Open file.
 	FILE *fp = fopen(path, "r");
 	if (fp == NULL) {
-		DEBUG_PRINTF("ERROR: Could not open script file: %s\n", strerror(errno));
+		DEBUG_PRINTF("ERROR: Could not open script file %s: %s\n", path, strerror(errno));
 		success = false;
 	}
 

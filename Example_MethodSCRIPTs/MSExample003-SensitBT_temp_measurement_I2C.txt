@@ -1,0 +1,83 @@
+e
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+# Description:  Run SWV + internal temperature measurement (using ADT7420 inside the EmStat Pico module) with I2C
+#
+# MethodSCRIPT version: 1.3
+# Last modified: 22/05/2023
+# Applies to: Sensit BT (with EmStat Pico)
+#
+############# I2C Temperature measurement initialisation #############
+# Declare variables for Temperature measurement
+# Most significant bits
+var m
+# Least significant bits
+var l
+# Acknowledge
+var a
+# Array with Write data
+array w 2
+# Array with Read data
+array r 2
+# Status register
+var s
+# Configure I2C GPIOs and set it to 100 kHz clock, 7-bit address
+set_gpio_cfg 0x0300i 2
+i2c_config 100k 7
+# Configure the sensor for 16-bit mode with continuous conversion
+store_var a 0i ja
+array_set w 0i 0x03i
+array_set w 1i 0x80i
+i2c_write 0x48i w 2 a
+############# Declare measurement variables variables #############
+var p
+var c
+var f
+var g
+############# Measurement initialisation #############
+set_pgstat_chan 0
+set_pgstat_mode 2
+set_max_bandwidth 200
+set_range_minmax da -400m 400m
+set_range ba 59n
+set_autoranging ba 59n 59n
+set_e -300m
+cell_on
+############# Run measurement #############
+# Perform SWV measurement from -300 mV to 300 mV at 5 Hz
+meas_loop_swv p c f g -300m 300m 10m 100m 5
+	############# Get I2C temperature #############
+	# Check if temperature sensor is ready
+	store_var s 0x80i ja
+	i2c_write_byte 0x48i 0x02i a
+	i2c_read_byte 0x48i s a
+	bit_and_var s 0x80i
+	# Ignore if temperature sensor not ready.
+	if s != 0x80i
+		# Read temperature values
+		i2c_write_byte 0x48i 0x00i a
+		i2c_read 0x48i r 2 a
+		array_get r 0i m
+		array_get r 1i l
+		# Convert to degrees Celcius
+		bit_lsl_var m 8i
+		add_var m l
+		if m > 0x8000i
+			sub_var m 0x10000i
+		endif
+		int_to_float m
+		div_var m 128
+	endif
+	############# Send measurement package #############
+	pck_start
+		# Sweep potential
+		pck_add p
+		# Current
+		pck_add c
+		# Temperature
+		pck_add m
+	pck_end
+endloop
+on_finished:
+cell_off
+

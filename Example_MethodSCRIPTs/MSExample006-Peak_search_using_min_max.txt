@@ -1,0 +1,88 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Simple peak detection after runnning an SWV on an EmStat4M
+#
+# MethodSCRIPT version: 1.3
+# Last modified: 17/05/2023
+# Applies to: all MethodSCRIPT-compatible instruments, example tailored for EmStat4M
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+############# Declare measurement variables variables #############
+var c
+var p
+var f
+var g
+############# Init peak detect #############
+# Declare variables
+var n
+var i
+var m
+var l
+array a 100i
+array b 100i
+store_var n 0i ja
+store_var m 0 ba
+store_var l 1M ba
+############# Configure LED pins (EmStat4M) #############
+set_gpio_cfg 0x7 1
+set_gpio 0x0
+############# Measurement initialisation #############
+set_pgstat_chan 0
+set_pgstat_mode 2
+set_max_bandwidth 200
+set_range_minmax da -400m 400m
+set_range ba 59n
+set_autoranging ba 59n 59n
+set_e -300m
+cell_on
+############# Run measurement #############
+# Perform SWV measurement from -300 mV to 300 mV at 5 Hz
+meas_loop_swv p c f g -300m 300m 10m 100m 5
+	# Store measurement data in array
+	array_set a n p
+	array_set b n c
+	add_var n 1i
+endloop
+############# Simple peak search algorithm #############
+# As an example, we just determine max and min value
+# Many applications will need a more sophisticated algorithm
+store_var i 0i ja
+loop i < n
+	array_get b i c
+	if c > m
+		copy_var c m
+	endif
+	if c < l
+		copy_var c l
+	endif
+	add_var i 1i
+endloop
+############# Send measurement data #############
+store_var i 0i ja
+loop i < n
+	array_get a i p
+	array_get b i c
+	pck_start
+		pck_add p
+		pck_add c
+		pck_add m
+		pck_add l
+	pck_end
+	add_var i 1i
+endloop
+############# Decision time #############
+#subtract "min" value from "max" to get the relative peak height
+sub_var m l
+# Enable red LED if peak > nA, otherwise enable green LED (EmStat4M)
+if m > 2n
+	set_gpio 0x1
+else
+	set_gpio 0x2
+endif
+############# Turn cell off, even if aborted #############
+on_finished:
+cell_off
+

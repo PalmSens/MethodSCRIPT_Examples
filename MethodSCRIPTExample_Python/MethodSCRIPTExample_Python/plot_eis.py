@@ -24,10 +24,10 @@ modification, are permitted provided that the following conditions are met:
    - Neither the name of PalmSens BV nor the names of its contributors
      may be used to endorse or promote products derived from this software
      without specific prior written permission.
-   - This license does not release you from any requirement to obtain separate 
-	  licenses from 3rd party patent holders to use this software.
-   - Use of the software either in source or binary form must be connected to, 
-	  run on or loaded to an PalmSens BV component.
+   - This license does not release you from any requirement to obtain separate
+     licenses from 3rd party patent holders to use this software.
+   - Use of the software either in source or binary form must be connected to,
+     run on or loaded to an PalmSens BV component.
 
 DISCLAIMER: THIS SOFTWARE IS PROVIDED BY PALMSENS "AS IS" AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -44,6 +44,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # Standard library imports
 import datetime
 import logging
+import os
 import os.path
 import sys
 
@@ -91,6 +92,7 @@ def main():
     # logging.getLogger('palmsens').setLevel(logging.INFO)
     # Disable excessive logging from matplotlib.
     logging.getLogger('matplotlib').setLevel(logging.INFO)
+    logging.getLogger('PIL.PngImagePlugin').setLevel(logging.INFO)
 
     port = DEVICE_PORT
     if port is None:
@@ -151,12 +153,14 @@ def main():
     plt.grid()
     plt.xlabel("Z'")
     plt.ylabel("-Z''")
+    # plt.savefig('nyquist_plot.png')
 
     # Show the Bode plot as dual y axis (sharing the same x axis).
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
 
     ax1.set_xlabel('Frequency (Hz)')
+    ax1.grid(which='major', axis='x', linestyle='--', linewidth=0.5, alpha=0.5)
     ax1.set_ylabel('Z', color=AX1_COLOR)
     # Make x axis logarithmic.
     ax1.semilogx(applied_frequency, z, color=AX1_COLOR)
@@ -165,17 +169,18 @@ def main():
     # Turn on the minor ticks, which are required for the minor grid.
     ax1.minorticks_on()
     # Customize the major grid.
-    ax1.grid(which='major', linestyle='-', linewidth='0.1', color='black')
+    ax1.grid(which='major', axis='y', linestyle='--', linewidth=0.5, alpha=0.5, color=AX1_COLOR)
 
     # We already set the x label with ax1.
     ax2.set_ylabel('-Phase (degrees)', color=AX2_COLOR)
     ax2.semilogx(applied_frequency, z_phase, color=AX2_COLOR)
     ax2.tick_params(axis='y', labelcolor=AX2_COLOR)
+    ax2.minorticks_on()
+    ax2.grid(which='major', axis='y', linestyle='--', linewidth=0.5, alpha=0.5, color=AX2_COLOR)
 
-    # Uncomment the following line if some of the labels are clipped.
-    # fig.tight_layout()
-    plt.grid(True, which='both')
-    plt.title('Bode plot')
+    fig.suptitle('Bode plot')
+    fig.tight_layout()
+    # fig.savefig('bode_plot.png')
     plt.show()
 
 

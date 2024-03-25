@@ -24,10 +24,10 @@ modification, are permitted provided that the following conditions are met:
    - Neither the name of PalmSens BV nor the names of its contributors
      may be used to endorse or promote products derived from this software
      without specific prior written permission.
-   - This license does not release you from any requirement to obtain separate 
-	  licenses from 3rd party patent holders to use this software.
-   - Use of the software either in source or binary form must be connected to, 
-	  run on or loaded to an PalmSens BV component.
+   - This license does not release you from any requirement to obtain separate
+     licenses from 3rd party patent holders to use this software.
+   - Use of the software either in source or binary form must be connected to,
+     run on or loaded to an PalmSens BV component.
 
 DISCLAIMER: THIS SOFTWARE IS PROVIDED BY PALMSENS "AS IS" AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -172,12 +172,11 @@ class Instrument():
                 raise CommunicationError('Invalid response to firmware version request.')
             self.firmware_version = (line1 + line2).replace('\n', ' ')[1:-1]
         # Then derive the device type from the firmware version string.
+        self.device_type = DeviceType.UNKNOWN
         for device_id, device_type in _FIRMWARE_VERSION_TO_DEVICE_TYPE_MAPPING:
             if self.firmware_version.startswith(device_id):
                 self.device_type = device_type
                 break
-            else:
-                self.device_type = DeviceType.UNKNOWN
 
     def get_firmware_version(self, force=False):
         """Get the device firmware version.
@@ -200,7 +199,7 @@ class Instrument():
     def get_mscript_version(self):
         self.write('v\n')
         response = self.readline()
-        return int(response[1:-1])
+        return response[1:-1]
 
     def get_serial_number(self):
         """Read the EmStat Pico serial number."""
@@ -209,7 +208,7 @@ class Instrument():
 
     def get_register(self, register):
         """Get the value of a register."""
-        self.write('G%02d\n' % register)
+        self.write(f'G{register:02d}\n')
         return self.readline()[1:-1]
 
     def load_mscript_from_flash(self):

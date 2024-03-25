@@ -254,7 +254,7 @@ float GetParameterValue(char * paramValue)
 //
 // See documentation in MSComm.h
 //
-const double GetUnitPrefixValue(char charPrefix)
+double GetUnitPrefixValue(char charPrefix)
 {
 	switch (charPrefix)
 	{

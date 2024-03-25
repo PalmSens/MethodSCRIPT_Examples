@@ -1,0 +1,43 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Runs a chronoamperometry measurement on each channel sequentially of a MUX8 multiplexer
+#               The MUX8 inputs d0,d1 and d2 should be connected to d0,d1 and d2 digital outputs of the EmStat4M
+#
+#
+# MethodSCRIPT version: 1.3
+# Last modified: 17/05/2023
+# Applies to: EmStat4M with a MUX8 multiplexer
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+var c
+var p
+var i
+var t
+set_gpio_cfg 0b111 1
+store_var i 0i aa
+############# Measurement initialisation #############
+set_pgstat_chan 0
+set_pgstat_mode 3
+set_max_bandwidth 40
+set_range ba 2100n
+set_autoranging ba 2100n 2100u
+set_e 500m
+cell_on
+loop i < 8i
+	set_gpio i
+	timer_start
+	meas_loop_ca p c 500m 100m 60100m
+		timer_get t
+		pck_start
+			pck_add t
+			pck_add c
+		pck_end
+	endloop
+	add_var i 1i
+endloop
+on_finished:
+cell_off
+

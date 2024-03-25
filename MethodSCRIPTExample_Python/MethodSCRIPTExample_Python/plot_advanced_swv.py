@@ -35,10 +35,10 @@ modification, are permitted provided that the following conditions are met:
    - Neither the name of PalmSens BV nor the names of its contributors
      may be used to endorse or promote products derived from this software
      without specific prior written permission.
-   - This license does not release you from any requirement to obtain separate 
-	  licenses from 3rd party patent holders to use this software.
-   - Use of the software either in source or binary form must be connected to, 
-	  run on or loaded to an PalmSens BV component.
+   - This license does not release you from any requirement to obtain separate
+     licenses from 3rd party patent holders to use this software.
+   - Use of the software either in source or binary form must be connected to,
+     run on or loaded to an PalmSens BV component.
 
 DISCLAIMER: THIS SOFTWARE IS PROVIDED BY PALMSENS "AS IS" AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -56,8 +56,10 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import csv
 import datetime
 import logging
+import os
 import os.path
 import sys
+import typing
 
 # Third-party imports
 import matplotlib.pyplot as plt
@@ -110,7 +112,7 @@ YAXIS_COLUMN_INDICES = [1, 2, 3]
 LOG = logging.getLogger(__name__)
 
 
-def write_curves_to_csv(file, curves):
+def write_curves_to_csv(file: typing.IO, curves: list[list[list[palmsens.mscript.MScriptVar]]]):
     """Write the curves to file in CSV format.
 
     `file` must be a file-like object in text mode with newlines translation
@@ -134,7 +136,7 @@ def write_curves_to_csv(file, curves):
     writer = csv.writer(file, delimiter=';')
     for curve in curves:
         # Write header row.
-        writer.writerow(['%s [%s]' % (value.type.name, value.type.unit) for value in curve[0]])
+        writer.writerow([f'{value.type.name} [{value.type.unit}]' for value in curve[0]])
         # Write data rows.
         for package in curve:
             writer.writerow([value.value for value in package])
@@ -149,6 +151,7 @@ def main():
     # logging.getLogger('palmsens').setLevel(logging.INFO)
     # Disable excessive logging from matplotlib.
     logging.getLogger('matplotlib').setLevel(logging.INFO)
+    logging.getLogger('PIL.PngImagePlugin').setLevel(logging.INFO)
 
     # Determine unique name for plot and files.
     base_name = datetime.datetime.now().strftime('ms_plot_swv_%Y%m%d-%H%M%S')
@@ -198,16 +201,16 @@ def main():
     plt.title(base_name)
     # Put specified column of the first curve on x axis.
     xvar = curves[0][0][XAXIS_COLUMN_INDEX]
-    plt.xlabel('%s [%s]' % (xvar.type.name, xvar.type.unit))
+    plt.xlabel(f'{xvar.type.name} [{xvar.type.unit}]')
     # Put specified column of the first curve on y axis.
     yvar = curves[0][0][YAXIS_COLUMN_INDICES[0]]
-    plt.ylabel('%s [%s]' % (yvar.type.name, yvar.type.unit))
-    plt.grid(b=True, which='major')
-    plt.grid(b=True, which='minor', color='b', linestyle='-', alpha=0.2)
+    plt.ylabel(f'{yvar.type.name} [{yvar.type.unit}]')
+    plt.grid(visible=True, which='major', linestyle='-')
+    plt.grid(visible=True, which='minor', linestyle='--', alpha=0.2)
     plt.minorticks_on()
 
     # Loop through all curves and plot them.
-    for icurve in range(len(curves)):
+    for icurve, curve in enumerate(curves):
         # Get xaxis column for this curve.
         xvalues = palmsens.mscript.get_values_by_column(
             curves, XAXIS_COLUMN_INDEX, icurve)
@@ -217,17 +220,14 @@ def main():
                 curves, yaxis_column_index, icurve)
 
             # Ignore invalid columns.
-            if curves[icurve][0][yaxis_column_index].type != yvar.type:
+            if curve[0][yaxis_column_index].type != yvar.type:
                 continue
 
             # Make plot label.
+            label = f'{COLUMN_NAMES[yaxis_column_index]} vs {COLUMN_NAMES[XAXIS_COLUMN_INDEX]}'
             # If there are multiple curves, add the curve index to the label.
             if len(curves) > 1:
-                label = '%s vs %s %d' % (COLUMN_NAMES[yaxis_column_index],
-                                         COLUMN_NAMES[XAXIS_COLUMN_INDEX], icurve)
-            else:
-                label = '%s vs %s' % (COLUMN_NAMES[yaxis_column_index],
-                                      COLUMN_NAMES[XAXIS_COLUMN_INDEX])
+                label += f' {icurve}'
 
             # Plot the curve y axis against the global x axis.
             plt.plot(xvalues, yvalues, label=label)

@@ -1,0 +1,89 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  This example shows how to run an a repeated CA measurement
+#               on 5 channels using an EmStat Pico MUX16.
+#
+# MethodSCRIPT version: 1.3
+# Last modified: 01/11/2023
+# Applies to: EmStat Pico MUX16 (with EmStat Pico)
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# initialize the GPIO pins for use with the MUX16
+set_gpio_cfg 0x3FFi 1
+set_gpio 0x00i
+# Declare some variables to work with
+# c: current
+# p: potential
+# i: inner loop-counter
+# j: outer loop-counter
+# m: GPIO pins bitMask
+var c
+var p
+var i
+var j
+var m
+# =======================
+# Set up the potentiostat
+# =======================
+set_pgstat_chan 1
+set_pgstat_mode 0
+set_pgstat_chan 0
+set_pgstat_mode 2
+set_max_bandwidth 1400
+set_cr 1m
+set_range_minmax da -1m 1
+set_range_minmax ba 100u 100u
+set_autoranging ba 10n 1m
+set_e -200m
+cell_on
+# Initialize loop-counter
+store_var j 0i ja
+# Outer loop, repeat the process 10 times
+loop j < 10i
+	# Inner loop
+    # (replace 0i with the first channel to use minus one)
+	store_var i 0i ja
+	# Loop channels over 1 to 5 (replace `5i` with the last channel to use)
+	loop i < 5i
+		# Set appropriate pins to select multiplexer channels.
+		# First copy `i` since we want to keep it's value for counting.
+		copy_var i m
+		# Multiply with a "mask" to switch certain signals.
+		# Possible values are:
+		#     0x01 to switch only WE
+		#     0x10 to switch only RE/CE
+		#     0x11 to switch both WE and RE/CE
+		mul_var m 0x11
+		# Write the pins to the GPIO to switch the Pico MUX16's channel
+		set_gpio m
+		# ====================================
+		# Perform measurement on selected cell
+		# ====================================
+		set_e -200m
+		wait 500m
+		meas_loop_ca p c 200m 20m 1
+			pck_start
+				pck_add p
+				pck_add c
+			pck_end
+		endloop
+        # ======================================
+        # End of measurement on selected channel
+        # ======================================
+		# Increment inner loop-counter
+		add_var i 1i
+	endloop
+	# Wait approximately 30 seconds (+/-3.2%)
+    # before starting the next round.
+	wait 30
+	# Increment outer loop-counter
+	add_var j 1i
+endloop
+on_finished:
+cell_off
+
