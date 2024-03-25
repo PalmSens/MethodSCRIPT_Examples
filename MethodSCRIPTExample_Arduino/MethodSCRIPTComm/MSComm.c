@@ -44,7 +44,7 @@
 /// The size of the serial read buffer in bytes. This is also the maximum length of a package
 #define READ_BUFFER_LENGTH 1000
 
-
+static DeviceType s_dt;
 //
 // See documentation in MSComm.h
 //
@@ -54,8 +54,8 @@ void reset_mscr_subpackage(MscrSubPackage * subpackage)
 	subpackage->variable_type = MSCR_STR_TO_VT("aa");
 
 	// Clear metadata
-	subpackage->metadata.status        = -1;
-	subpackage->metadata.current_range = -1;
+	subpackage->metadata.status = -1;
+	subpackage->metadata.range  = -1;
 }
 
 //
@@ -73,7 +73,8 @@ void reset_mscr_package(MscrPackage * package)
 //
 // See documentation in MSComm.h
 //
-RetCode MSCommInit(MSComm * msComm,	WriteCharFunc writeCharFunc, ReadCharFunc readCharFunc)
+RetCode MSCommInit(MSComm * msComm,	DeviceType dt, 
+						WriteCharFunc writeCharFunc, ReadCharFunc readCharFunc)
 {
 	// Initialize msComm with the function pointer to its write and read function
 	msComm->writeCharFunc = writeCharFunc;
@@ -82,6 +83,9 @@ RetCode MSCommInit(MSComm * msComm,	WriteCharFunc writeCharFunc, ReadCharFunc re
 	if ((writeCharFunc == NULL) || (readCharFunc == NULL)) {
 		return CODE_NULL;
 	}
+	
+	s_dt = dt;
+	
 	return CODE_OK;
 }
 
@@ -240,7 +244,7 @@ float GetParameterValue(char * paramValue)
 	strncpy(strValue, paramValue, 7);
 	strValue[7] = '\0';
 	char *ptr;
-	int value =	strtol(strValue, &ptr , 16);
+	int32_t value =	strtol(strValue, &ptr , 16);
 	// Values offset to receive only positive values
 	float parameterValue = value - MSCR_PARAM_OFFSET_VALUE;
 	// Return the value of the parameter after appending the SI unit prefix
@@ -287,8 +291,8 @@ void ParseMetaDataValues(char * metaDataParams, MscrSubPackage * retData)
 			retData->metadata.status = GetStatusFromPackage(metaData);
 			break;
 		case '2':
-			// Retrieve the current range of the parameter
-			retData->metadata.current_range = GetCurrentRangeFromPackage(metaData);
+			// Retrieve the current or potential range of the parameter
+			retData->metadata.range = GetRangeFromPackage(metaData);
 			break;
 		}
 	} while ((metaData = strtokenize(&running, delimiters)) != NULL);
@@ -325,43 +329,78 @@ int GetStatusFromPackage(char * metaDataStatus)
 //
 // See documentation in MSComm.h
 //
-int GetCurrentRangeFromPackage(char * metaDataCR)
+int GetRangeFromPackage(char * metaDataRange)
 {
-	char crBytePackage[3];
-	strncpy(crBytePackage, metaDataCR + 1, 2);
-	return strtol(crBytePackage, NULL, 16);
+	char rangeBytePackage[3];
+	strncpy(rangeBytePackage, metaDataRange + 1, 2);
+	return strtol(rangeBytePackage, NULL, 16);
 }
 
 //
 // See documentation in MSComm.h
 //
-char const * current_range_to_string(int current_range)
+char const * range_to_string(int range, VarType vt)
 {
-	switch (current_range)
+	if(s_dt == DT_ESPICO)
 	{
-	case   0: return "100 nA";
-	case   1: return   "2 uA";
-	case   2: return   "4 uA";
-	case   3: return   "8 uA";
-	case   4: return  "16 uA";
-	case   5: return  "32 uA";
-	case   6: return  "63 uA";
-	case   7: return "125 uA";
-	case   8: return "250 uA";
-	case   9: return "500 uA";
-	case  10: return   "1 mA";
-	case  11: return   "5 mA";
-	case 128: return "100 nA (High speed)";
-	case 129: return   "1 uA (High speed)";
-	case 130: return   "6 uA (High speed)";
-	case 131: return  "13 uA (High speed)";
-	case 132: return  "25 uA (High speed)";
-	case 133: return  "50 uA (High speed)";
-	case 134: return "100 uA (High speed)";
-	case 135: return "200 uA (High speed)";
-	case 136: return   "1 mA (High speed)";
-	case 137: return   "5 mA (High speed)";
-	default:  return "Invalid value";
+		switch (range)
+		{
+		case   0: return "100 nA";
+		case   1: return   "2 uA";
+		case   2: return   "4 uA";
+		case   3: return   "8 uA";
+		case   4: return  "16 uA";
+		case   5: return  "32 uA";
+		case   6: return  "63 uA";
+		case   7: return "125 uA";
+		case   8: return "250 uA";
+		case   9: return "500 uA";
+		case  10: return   "1 mA";
+		case  11: return   "5 mA";
+		case 128: return "100 nA (High speed)";
+		case 129: return   "1 uA (High speed)";
+		case 130: return   "6 uA (High speed)";
+		case 131: return  "13 uA (High speed)";
+		case 132: return  "25 uA (High speed)";
+		case 133: return  "50 uA (High speed)";
+		case 134: return "100 uA (High speed)";
+		case 135: return "200 uA (High speed)";
+		case 136: return   "1 mA (High speed)";
+		case 137: return   "5 mA (High speed)";
+		default:  return "Invalid value";
+		}
+	}
+	else if(s_dt == DT_ES4)
+	{
+		if(vt == MSCR_VT_POTENTIAL)
+		{
+			switch (range)
+			{
+			case   2: return   "50 mV";
+			case   3: return  "100 mV";
+			case   4: return  "200 mV";
+			case   5: return  "500 mV";
+			case   6: return     "1 V";
+			default:  return "Invalid value";
+			}
+		}
+		else
+		{
+			switch (range)
+			{
+			case   0: return "100 pA";
+			case   3: return   "1 nA";
+			case   6: return  "10 nA";
+			case   9: return "100 nA";
+			case   12:return   "1 uA";
+			case   15:return  "10 uA";
+			case   18:return "100 uA";
+			case   21:return   "1 mA";
+			case   24:return  "10 mA";
+			case   27:return "100 mA";
+			default:  return "Invalid value";
+			}
+		}
 	}
 }
 
