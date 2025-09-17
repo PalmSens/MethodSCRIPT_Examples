@@ -188,6 +188,43 @@ MSCRIPT_POTENTIAL_RANGES_EMSTAT4 = {
     6:   "1 V",
 }
 
+MSCRIPT_CURRENT_RANGES_NEXUS = {
+    # Potentiostat ranges
+    16: '100 pA',
+    0: '1 nA',
+    1: '10 nA',
+    2: '100 nA',
+    3: '1 uA',
+    4: '10 uA',
+    5: '100 uA',
+    6: '1 mA (tia)',
+    7: '10 mA (tia)',
+    8: '1 mA',
+    9: '10 mA',
+    10: '100 mA',
+    11: '1 A',
+    # Galvanostat ranges
+    32: '1 nA',
+    33: '10 nA',
+    34: '100 nA',
+    35: '1 uA',
+    36: '10 uA',
+    37: '100 uA',
+    38: '1 mA (tia)',
+    39: '10 mA (tia)',
+    40: '1 mA',
+    41: '10 mA',
+    42: '100 mA',
+    43: '1 A',
+}
+
+MSCRIPT_POTENTIAL_RANGES_NEXUS = {
+    0: '1 V',
+    1: '100 mV',
+    2: '10 mV',
+    3: '1 mV',
+}
+
 
 def get_variable_type(var_id: str) -> VarType:
     """Get the variable type with the specified id."""
@@ -202,18 +239,31 @@ def metadata_status_to_text(status: int) -> str:
     return ' | '.join(descriptions) if descriptions else 'OK'
 
 
-def metadata_current_range_to_text(device_type: str, var_type: VarType, cr: int) -> str:
-    cr_text = None
+def _metadata_current_range_to_text(device_type: str, cr: int) -> str:
     if device_type == 'EmStat Pico':
-        cr_text = MSCRIPT_CURRENT_RANGES_EMSTAT_PICO.get(cr)
+        return MSCRIPT_CURRENT_RANGES_EMSTAT_PICO.get(cr)
     elif 'EmStat4' in device_type:
-        # For EmStat4 series instruments, the range can be a current range or
-        # potential range, depending on the variable type.
-        if var_type.id in ['ab', 'cd']:
-            cr_text = MSCRIPT_POTENTIAL_RANGES_EMSTAT4.get(cr)
-        else:
-            cr_text = MSCRIPT_CURRENT_RANGES_EMSTAT4.get(cr)
-    return cr_text or 'UNKNOWN CURRENT RANGE'
+        return MSCRIPT_CURRENT_RANGES_EMSTAT4.get(cr)
+    elif device_type == 'Nexus':
+        return MSCRIPT_CURRENT_RANGES_NEXUS.get(cr)
+    return 'UNKNOWN CURRENT RANGE'
+
+
+def _metadata_potential_range_to_text(device_type: str, cr: int) -> str:
+    if 'EmStat4' in device_type:
+        return MSCRIPT_POTENTIAL_RANGES_EMSTAT4.get(cr)
+    elif device_type == 'Nexus':
+        return MSCRIPT_POTENTIAL_RANGES_NEXUS.get(cr)
+    return 'UNKNOWN POTENTIAL RANGE'
+
+
+def metadata_range_to_text(device_type: str, var_type: VarType, cr: int) -> str:
+    """Convert a metadata range to text"""
+    if var_type.unit == 'A' or var_type.id == 'cc': # Z_real contains the metadata of the current range
+        return _metadata_current_range_to_text(device_type, cr)
+    elif var_type.unit == 'V' or var_type.unit == 'Vrms' or var_type.id == 'cd': # Z_imag contains the metadata of the potential range
+        return _metadata_potential_range_to_text(device_type, cr)
+    return f'UNKNOWN UNIT: {var_type.unit}'
 
 
 class MScriptVar:

@@ -61,12 +61,14 @@ def _is_mscript_device(port_description: str):
             port_description.startswith('ESPicoDev') or
             port_description.startswith('SensitBT') or
             port_description.startswith('SensitSmart') or
+            port_description == 'Nexus' or
             # ^ Above names are used in Linux
             # v Below names are used in Windows
             port_description.startswith('EmStat4 LR (COM') or
             port_description.startswith('EmStat4 HR (COM') or
             port_description.startswith('MultiEmStat4 LR (COM') or
             port_description.startswith('MultiEmStat4 HR (COM') or
+            port_description.startswith('Nexus (COM') or
             port_description.startswith('USB Serial Port'))
 
 

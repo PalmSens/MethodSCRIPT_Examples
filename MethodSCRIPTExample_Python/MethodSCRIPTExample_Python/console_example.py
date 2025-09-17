@@ -132,7 +132,7 @@ def main():
                             var.metadata['status'])
                         cols.append(f'STATUS: {status_text:<16s}')
                     if 'cr' in var.metadata:
-                        cr_text = palmsens.mscript.metadata_current_range_to_text(
+                        cr_text = palmsens.mscript.metadata_range_to_text(
                             device_type, var.type, var.metadata['cr'])
                         cols.append(f'CR: {cr_text}')
                 print(' | '.join(cols))

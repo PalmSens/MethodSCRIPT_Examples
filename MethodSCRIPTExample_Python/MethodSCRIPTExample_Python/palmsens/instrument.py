@@ -57,6 +57,7 @@ class DeviceType:
     MULTI_EMSTAT4_HR = 'MultiEmStat4 HR'
     MULTI_EMSTAT4_LR = 'MultiEmStat4 LR'
     EMSTAT_PICO_BOOTLOADER = 'EmStat Pico bootloader'
+    NEXUS = 'Nexus'
 
 
 _FIRMWARE_VERSION_TO_DEVICE_TYPE_MAPPING = [
@@ -66,6 +67,7 @@ _FIRMWARE_VERSION_TO_DEVICE_TYPE_MAPPING = [
     ('mes4hr', DeviceType.MULTI_EMSTAT4_HR),
     ('mes4lr', DeviceType.MULTI_EMSTAT4_LR),
     ('espbl', DeviceType.EMSTAT_PICO_BOOTLOADER),
+    ('nexus1', DeviceType.NEXUS),
 ]
 
 
