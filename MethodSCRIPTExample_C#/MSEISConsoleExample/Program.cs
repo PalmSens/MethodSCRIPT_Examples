@@ -190,7 +190,8 @@ namespace EmStatEISConsoleExample
         {
             UNKNOWN,
             EMSTAT_PICO,
-            EMSTAT4
+            EMSTAT4,
+            NEXUS
         }
 
         /// <summary>
@@ -200,7 +201,8 @@ namespace EmStatEISConsoleExample
         {
             {DeviceType.UNKNOWN, "Unknown device"},
             {DeviceType.EMSTAT_PICO, "Emstat Pico"},
-            {DeviceType.EMSTAT4, "Emstat4"}
+            {DeviceType.EMSTAT4, "Emstat4"},
+            {DeviceType.NEXUS, "Nexus"}
         };
 
         /// <summary>
@@ -261,6 +263,51 @@ namespace EmStatEISConsoleExample
             { 4, "200 mV" },
             { 5, "500 mV" },
             { 6, "1 V" }
+        };
+
+        /// <summary>
+        /// All current ranges that are supported by Nexus
+        /// </summary>
+        private static Dictionary<byte, string> CurrentRangesNexus = new Dictionary<byte, string>
+        {
+            // Potentiostat ranges
+            { 16, "100 pA" },
+            { 0 , "1 nA" },
+            { 1 , "10 nA" },
+            { 2 , "100 nA" },
+            { 3 , "1 uA" },
+            { 4 , "10 uA" },
+            { 5 , "100 uA" },
+            { 6 , "1 mA (tia)" },
+            { 7 , "10 mA (tia)" },
+            { 8 , "1 mA" },
+            { 9 , "10 mA" },
+            { 10, "100 mA" },
+            { 11, "1 A" },
+            // Galvanostat ranges
+            { 32, "1 nA" },
+            { 33, "10 nA" },
+            { 34, "100 nA" },
+            { 35, "1 uA" },
+            { 36, "10 uA" },
+            { 37, "100 uA" },
+            { 38, "1 mA (tia)" },
+            { 39, "10 mA (tia)" },
+            { 40, "1 mA" },
+            { 41, "10 mA" },
+            { 42, "100 mA" },
+            { 43, "1 A" }
+        };
+
+        /// <summary>
+        /// All potential ranges that are supported by Nexus
+        /// </summary>
+        private static Dictionary<byte, string> PotentialRangesNexus = new Dictionary<byte, string>
+        {
+            { 0, "1 V" },
+            { 1, "100 mV" },
+            { 2, "10 mV" },
+            { 3, "1 mV" },
         };
 
         [Flags]
@@ -329,6 +376,10 @@ namespace EmStatEISConsoleExample
                         {
                             return (serialPort, DeviceType.EMSTAT4);
                         }
+                        else if (response.Contains("nexus1"))
+                        {
+                            return (serialPort, DeviceType.NEXUS);
+                        }
 
                         //Not a valid device
                         serialPort.ReadTimeout = DEFAULT_READ_TIME_OUT; //Reset back to default
@@ -360,7 +411,7 @@ namespace EmStatEISConsoleExample
             serialPort.StopBits = StopBits.One;
             serialPort.BaudRate = BAUD_RATE;
             serialPort.ReadTimeout = DEFAULT_READ_TIME_OUT; //Initial time out. Upon connecting to device, time out set to READ_TIME_OUT
-            serialPort.WriteTimeout = 2;
+            serialPort.WriteTimeout = 200;
             return serialPort;
         }
 
@@ -561,6 +612,20 @@ namespace EmStatEISConsoleExample
                             break;
                         case MetadataRangeType.POTENTIAL:
                             currentRangeStr = PotentialRangesES4[crByte];
+                            break;
+                    }
+                    break;
+                case DeviceType.NEXUS:
+                    switch (metaDataTypes[variableType])
+                    {
+                        case MetadataRangeType.UNKNOWN:
+                            currentRangeStr = "UNKNOWN";
+                            break;
+                        case MetadataRangeType.CURRENT:
+                            currentRangeStr = CurrentRangesNexus[crByte];
+                            break;
+                        case MetadataRangeType.POTENTIAL:
+                            currentRangeStr = PotentialRangesNexus[crByte];
                             break;
                     }
                     break;

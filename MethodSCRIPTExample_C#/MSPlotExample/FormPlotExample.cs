@@ -89,7 +89,8 @@ namespace EmStatPlotExample
         {
             UNKNOWN,
             EMSTAT_PICO,
-            EMSTAT4
+            EMSTAT4,
+            NEXUS
         }
 
         /// <summary>
@@ -99,7 +100,8 @@ namespace EmStatPlotExample
         {
             {DeviceType.UNKNOWN, "Unknown device"},
             {DeviceType.EMSTAT_PICO, "Emstat Pico"},
-            {DeviceType.EMSTAT4, "Emstat4"}
+            {DeviceType.EMSTAT4, "Emstat4"},
+            {DeviceType.NEXUS, "Nexus"}
         };
 
         public frmPlotExample()
@@ -189,6 +191,10 @@ namespace EmStatPlotExample
                         {
                             return (serialPort, DeviceType.EMSTAT4);
                         }
+                        else if (response.Contains("nexus1"))
+                        {
+                            return (serialPort, DeviceType.NEXUS);
+                        }
 
                         //Not a valid device
                         serialPort.ReadTimeout = DEFAULT_READ_TIME_OUT; //Reset back to default
@@ -220,7 +226,7 @@ namespace EmStatPlotExample
             serialPort.StopBits = StopBits.One;
             serialPort.BaudRate = BAUD_RATE;
             serialPort.ReadTimeout = DEFAULT_READ_TIME_OUT; //Initial time out. Upon connecting to device, time out set to READ_TIME_OUT
-            serialPort.WriteTimeout = 2;
+            serialPort.WriteTimeout = 200;
             return serialPort;
         }
 
