@@ -41,7 +41,7 @@ using System.Numerics;
 using System.Drawing;
 using OxyPlot.WindowsForms;
 
-namespace EmStatPicoEISPlotExample
+namespace EmStatEISPlotExample
 {
     public partial class frmEISPlotExample : Form
     {
@@ -52,11 +52,13 @@ namespace EmStatPicoEISPlotExample
 
         const string CMD_VERSION = "t\n";                                                           //Version command
         const int BAUD_RATE = 230400;                                                               //Baudrate for EmStat Pico
-        const int READ_TIME_OUT = 7000;                                                             //Read time out for the device in ms
+        const int DEFAULT_READ_TIME_OUT = 1000;                                                     //Default read time out when not connected to a device, in ms
+        const int READ_TIME_OUT = 7000;                                                             //Read time out when connected, in ms
         const int PACKAGE_DATA_VALUE_LENGTH = 8;                                                    //Length of the data value in a package
         const int OFFSET_VALUE = 0x8000000;                                                         //Offset value to receive positive values
 
         private SerialPort SerialPortEsP;
+        private DeviceType deviceType;
         private List<double> FrequencyValues = new List<double>();                                  //Collection of Frequency values
         private List<double> RealImpedanceValues = new List<double>();                              //Collection of Real Impedance values
         private List<double> ImgImpedanceValues = new List<double>();                               //Collection of Imaginary Impedance values
@@ -92,44 +94,23 @@ namespace EmStatPicoEISPlotExample
                                                             { "E", 1e18 }};
 
         /// <summary>
-        /// Variable types and their corresponding labels
+        /// Known devices
         /// </summary>
-        readonly static Dictionary<string, string> MeasurementVariables = new Dictionary<string, string>
+        private enum DeviceType
         {
-            {"aa", " " },
-            {"ab", "E (V)" }, //WE vs RE potential
-            {"ac", "E CE (V)" }, //Versus GND
-            {"ad", "E WE/SE (V)" }, //Versus GND
-            {"ae", "E RE (V)" }, //Versus GND
-            {"ag", "E WE/SE vs CE (V)" },
+            UNKNOWN,
+            EMSTAT_PICO,
+            EMSTAT4
+        }
 
-            {"as", "E AIN0 (V)" },
-            {"at", "E AIN1 (V)" },
-            {"au", "E AIN2 (V)" },
-
-
-            {"ba", "i (A)" }, //WE current
-
-            {"ca", "Phase (Degrees)" },
-            {"cb", "Z (Ohm)" },
-            {"cc", "Z' (Ohm)" },
-            {"cd", "Z'' (Ohm)" },
-
-
-            {"da", "E (V)" }, //Applied WE vs RE setpoint
-            {"db", "i (A)" }, //Applied WE current setpoint
-            {"dc", "Frequency (Hz)" }, //Applied frequency
-            {"dd", "E AC (Vrms)" }, //Applied ac RMS amplitude
-
-
-            {"eb", "Time (s)"},
-            {"ec", "Pin mask"},
-
-            {"ja", "Misc. generic 1" },
-            {"jb", "Misc. generic 2" },
-            {"jc", "Misc. generic 3" },
-
-            {"jd", " " }
+        /// <summary>
+        /// Mapping of device types to human-readable names
+        /// </summary>
+        readonly static Dictionary<DeviceType, string> deviceNames = new Dictionary<DeviceType, string>
+        {
+            {DeviceType.UNKNOWN, "Unknown device"},
+            {DeviceType.EMSTAT_PICO, "Emstat Pico"},
+            {DeviceType.EMSTAT4, "Emstat4"}
         };
 
         public frmEISPlotExample()
@@ -308,10 +289,13 @@ namespace EmStatPicoEISPlotExample
         }
 
         /// <summary>
-        /// Opens the serial ports and identifies the port connected to EmStat Pico 
+        /// Opens the serial ports and identifies the port connected to a MethodSCRIPT-capable device.
+        /// Also identifies the device type of the connected device.
         /// </summary>
-        /// <returns> The serial port connected to EmStat Pico</returns>
-        private SerialPort OpenSerialPort()
+        /// <returns> The serial port connected to a device, and the type of that device.
+        /// If no MethodSCRIPT-capable device is found, or if it does not respond as expected,
+        /// the return values are null and DeviceType.UNKNOWN.</returns>
+        private (SerialPort serialPort, DeviceType deviceType) OpenSerialPort()
         {
             string[] ports = SerialPort.GetPortNames();
             for (int i = 0; i < ports.Length; i++)
@@ -322,7 +306,7 @@ namespace EmStatPicoEISPlotExample
                     serialPort.Open();                                  //Opens serial port 
                     if (serialPort.IsOpen)
                     {
-                        serialPort.Write("\n"); //If any unfinished command was sent to the pico, this will clear it.
+                        serialPort.Write("\n"); //If any unfinished command was sent to the device, this will clear it.
                         serialPort.Write(CMD_VERSION);                  //Writes the version command  
 
                         //Reads until "*\n" is found
@@ -333,17 +317,22 @@ namespace EmStatPicoEISPlotExample
                             response += "\n"; //ReadLine removes \n
                         }
 
+                        serialPort.ReadTimeout = READ_TIME_OUT;
                         if (response.Contains("espico"))
                         {
-                            serialPort.ReadTimeout = READ_TIME_OUT; //Sets the read time out for the device
-                            return serialPort;
+                            return (serialPort, DeviceType.EMSTAT_PICO);
+                        }
+                        else if (response.Contains("es4_"))
+                        {
+                            return (serialPort, DeviceType.EMSTAT4);
                         }
 
                         //Not a valid device
+                        serialPort.ReadTimeout = DEFAULT_READ_TIME_OUT; //Reset back to default
                         serialPort.Close();
                     }
                 }
-                catch (Exception exception)
+                catch (Exception)
                 {
                     //Probably timeout or could not open serial port
                     if (serialPort.IsOpen)
@@ -352,7 +341,7 @@ namespace EmStatPicoEISPlotExample
             }
 
             //Not found
-            return null;
+            return (null, DeviceType.UNKNOWN);
         }
 
         /// <summary>
@@ -367,7 +356,7 @@ namespace EmStatPicoEISPlotExample
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
             serialPort.BaudRate = BAUD_RATE;
-            serialPort.ReadTimeout = 1000;                              //Initial time out set to 1000ms, upon connecting to EmStat Pico, time out reset to READ_TIME_OUT
+            serialPort.ReadTimeout = DEFAULT_READ_TIME_OUT; //Initial time out. Upon connecting to device, time out set to READ_TIME_OUT
             serialPort.WriteTimeout = 2;
             return serialPort;
         }
@@ -384,7 +373,7 @@ namespace EmStatPicoEISPlotExample
         }
 
         /// <summary>
-        /// Sends the script file to EmStat Pico
+        /// Sends the script file to the device
         /// </summary>
         private void SendScriptFile()
         {
@@ -395,14 +384,14 @@ namespace EmStatPicoEISPlotExample
                 {
                     line = stream.ReadLine();               //Reads a line from the script file
                     line += "\n";                           //Appends a new line character to the line read
-                    SerialPortEsP.Write(line);              //Sends the read line to EmStat Pico
+                    SerialPortEsP.Write(line);              //Sends the read line to the device
                 }
                 lbConsole.Items.Add("Measurement started.");
             }
         }
 
         /// <summary>
-        /// Processes the response packages from the EmStat Pico and stores the response in RawData.
+        /// Processes the response packages from the device and stores the response in RawData.
         /// Possibilities of time out exception in case the script file was empty 
         /// </summary>
         private void ProcessReceivedPackets()
@@ -456,7 +445,7 @@ namespace EmStatPicoEISPlotExample
         private void ParsePackageLine(string packageLine)
         {
             string[] variables;
-            string variableIdentifier;
+            string variableType;
             string dataValue;
 
             int startingIndex = packageLine.IndexOf('P');                       //Identifies the beginning of the package
@@ -465,10 +454,10 @@ namespace EmStatPicoEISPlotExample
             variables = responsePackageLine.Split(';');                         //The data values are separated by the delimiter ';'
             foreach (string variable in variables)
             {
-                variableIdentifier = variable.Substring(0, 2);                 //The string (2 characters) that identifies the variable type
+                variableType = variable.Substring(0, 2);                        //The string (2 characters) that identifies the variable type
                 dataValue = variable.Substring(2, PACKAGE_DATA_VALUE_LENGTH);
-                double dataValueWithPrefix = ParseParamValues(dataValue);      //Parses the data value package and returns the actual values with their corresponding SI unit prefixes 
-                switch (variableIdentifier)
+                double dataValueWithPrefix = ParseParamValues(dataValue);       //Parses the data value package and returns the actual values with their corresponding SI unit prefixes 
+                switch (variableType)
                 {
                     case "dc":                                                  //Frequency reading
                         FrequencyValues.Add(dataValueWithPrefix);              //Adds the value to the FrequencyReadings list
@@ -541,16 +530,16 @@ namespace EmStatPicoEISPlotExample
         #region Events
 
         /// <summary>
-        /// Connects to the EmStatPico if available.
+        /// Connects to the device if available.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void btnConnect_Click(object sender, EventArgs e)
         {
-            SerialPortEsP = OpenSerialPort();                       //Opens and identifies the port connected to EmStat Pico
+            (SerialPortEsP, deviceType) = OpenSerialPort();   //Opens and identifies the port, and identifies the device type
             if (SerialPortEsP != null && SerialPortEsP.IsOpen)
             {
-                lbConsole.Items.Add($"Connected to EmStat Pico.");
+                lbConsole.Items.Add($"Connected to {deviceNames[deviceType]}");
                 EnableButtons(true);
             }
             else
@@ -560,14 +549,14 @@ namespace EmStatPicoEISPlotExample
         }
 
         /// <summary>
-        /// Disconnects the serial port connected to EmStat Pico.
+        /// Disconnects the serial port connected to the device.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void btnDisconnect_Click(object sender, EventArgs e)
         {
-            SerialPortEsP.Close();                                  //Closes the serial port
-            lbConsole.Items.Add($"Disconnected from EmStat Pico.");
+            SerialPortEsP.Close();
+            lbConsole.Items.Add($"Disconnected from {deviceNames[deviceType]}");
             EnableButtons(false);
         }
 

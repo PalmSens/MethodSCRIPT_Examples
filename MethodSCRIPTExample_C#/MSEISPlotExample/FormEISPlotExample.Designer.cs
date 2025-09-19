@@ -1,4 +1,4 @@
-﻿namespace EmStatPicoEISPlotExample
+﻿namespace EmStatEISPlotExample
 {
     partial class frmEISPlotExample
     {
@@ -72,7 +72,7 @@
             this.btnConnect.Name = "btnConnect";
             this.btnConnect.Size = new System.Drawing.Size(159, 23);
             this.btnConnect.TabIndex = 2;
-            this.btnConnect.Text = "Connect to EmStat Pico";
+            this.btnConnect.Text = "Connect to device";
             this.btnConnect.UseVisualStyleBackColor = true;
             this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
             // 

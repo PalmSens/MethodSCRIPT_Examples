@@ -30,7 +30,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Windows.Forms;
 
-namespace EmStatPicoEISPlotExample
+namespace EmStatEISPlotExample
 {
     static class Program
     {

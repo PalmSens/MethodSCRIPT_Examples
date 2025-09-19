@@ -33,7 +33,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace EmStatPicoPlotExample
+namespace EmStatPlotExample
 {
     static class Program
     {

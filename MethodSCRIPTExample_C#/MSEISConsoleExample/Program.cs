@@ -34,7 +34,7 @@ using System.IO;
 using System.IO.Ports;
 using System.Reflection;
 
-namespace ESPicoEISConsoleExample
+namespace EmStatEISConsoleExample
 {
     class Program
     {
@@ -45,11 +45,13 @@ namespace ESPicoEISConsoleExample
 
         const string CMD_VERSION = "t\n";                                                            //Version command
         const int BAUD_RATE = 230400;                                                                //Baudrate for EmStat Pico
-        const int READ_TIME_OUT = 7000;                                                              //Read time out for the device in ms
-        const int PACKAGE_DATA_VALUE_LENGTH = 8;                                                    //Length of the data value in a package
+        const int DEFAULT_READ_TIME_OUT = 1000;                                                      //Default read time out when not connected to a device, in ms
+        const int READ_TIME_OUT = 7000;                                                              //Read time out when connected, in ms
+        const int PACKAGE_DATA_VALUE_LENGTH = 8;                                                     //Length of the data value in a package
         const int OFFSET_VALUE = 0x8000000;                                                          //Offset value to receive positive values
 
         static SerialPort SerialPortEsP;
+        static DeviceType deviceType = DeviceType.UNKNOWN;
         private static List<double> FrequencyValues = new List<double>();                            //Collection of Frequency values
         private static List<double> RealImpedanceValues = new List<double>();                        //Collection of real Impedance values
         private static List<double> ImgImpedanceValues = new List<double>();                         //Collection of imaginary Impedance values
@@ -117,34 +119,149 @@ namespace ESPicoEISConsoleExample
         };
 
         /// <summary>
-        /// All possible current ranges, the current ranges
-        /// that are supported by EmStat pico.
+        /// Types of metadata range
         /// </summary>
-        private enum CurrentRanges
+        private enum MetadataRangeType
         {
-            cr100nA = 0,
-            cr2uA = 1,
-            cr4uA = 2,
-            cr8uA = 3,
-            cr16uA = 4,
-            cr32uA = 5,
-            cr63uA = 6,
-            cr125uA = 7,
-            cr250uA = 8,
-            cr500uA = 9,
-            cr1mA = 10,
-            cr5mA = 11,
-            hscr100nA = 128,
-            hscr1uA = 129,
-            hscr6uA = 130,
-            hscr13uA = 131,
-            hscr25uA = 132,
-            hscr50uA = 133,
-            hscr100uA = 134,
-            hscr200uA = 135,
-            hscr1mA = 136,
-            hscr5mA = 137,
+            UNKNOWN,
+            CURRENT,
+            POTENTIAL
         }
+
+        /// <summary>
+        /// Mapping of variable IDs to their metadata range type.
+        /// </summary>
+        readonly static Dictionary<string, MetadataRangeType> metaDataTypes = new Dictionary<string, MetadataRangeType>
+        {
+            { "aa", MetadataRangeType.UNKNOWN},
+            { "ab", MetadataRangeType.POTENTIAL },
+            { "ac", MetadataRangeType.POTENTIAL },
+            { "ad", MetadataRangeType.POTENTIAL },
+            { "ae", MetadataRangeType.POTENTIAL },
+            { "af", MetadataRangeType.POTENTIAL },
+            { "ag", MetadataRangeType.POTENTIAL },
+            { "as", MetadataRangeType.POTENTIAL },
+            { "at", MetadataRangeType.POTENTIAL },
+            { "au", MetadataRangeType.POTENTIAL },
+            { "av", MetadataRangeType.POTENTIAL },
+            { "aw", MetadataRangeType.POTENTIAL },
+            { "ax", MetadataRangeType.POTENTIAL },
+            { "ay", MetadataRangeType.POTENTIAL },
+            { "az", MetadataRangeType.POTENTIAL },
+            { "ba", MetadataRangeType.CURRENT },
+            { "ca", MetadataRangeType.UNKNOWN },
+            { "cb", MetadataRangeType.UNKNOWN },
+            { "cc", MetadataRangeType.CURRENT },
+            { "cd", MetadataRangeType.POTENTIAL },
+            { "ce", MetadataRangeType.POTENTIAL },
+            { "cf", MetadataRangeType.CURRENT },
+            { "cg", MetadataRangeType.UNKNOWN },
+            { "ch", MetadataRangeType.UNKNOWN },
+            { "ci", MetadataRangeType.POTENTIAL },
+            { "cj", MetadataRangeType.UNKNOWN },
+            { "ck", MetadataRangeType.CURRENT },
+            { "da", MetadataRangeType.POTENTIAL },
+            { "db", MetadataRangeType.CURRENT },
+            { "dc", MetadataRangeType.UNKNOWN },
+            { "dd", MetadataRangeType.UNKNOWN },
+            { "ea", MetadataRangeType.UNKNOWN },
+            { "eb", MetadataRangeType.UNKNOWN },
+            { "ec", MetadataRangeType.UNKNOWN },
+            { "ed", MetadataRangeType.UNKNOWN },
+            { "ee", MetadataRangeType.UNKNOWN },
+            { "ha", MetadataRangeType.CURRENT },
+            { "hb", MetadataRangeType.CURRENT },
+            { "hc", MetadataRangeType.CURRENT },
+            { "hd", MetadataRangeType.CURRENT },
+            { "ia", MetadataRangeType.POTENTIAL },
+            { "ib", MetadataRangeType.POTENTIAL },
+            { "ic", MetadataRangeType.POTENTIAL },
+            { "id", MetadataRangeType.POTENTIAL },
+            { "ja", MetadataRangeType.UNKNOWN },
+            { "jb", MetadataRangeType.UNKNOWN },
+            { "jc", MetadataRangeType.UNKNOWN },
+            { "jd", MetadataRangeType.UNKNOWN },
+        };
+
+        /// <summary>
+        /// Known devices
+        /// </summary>
+        private enum DeviceType
+        {
+            UNKNOWN,
+            EMSTAT_PICO,
+            EMSTAT4
+        }
+
+        /// <summary>
+        /// Mapping of device types to human-readable names
+        /// </summary>
+        readonly static Dictionary<DeviceType, string> deviceNames = new Dictionary<DeviceType, string>
+        {
+            {DeviceType.UNKNOWN, "Unknown device"},
+            {DeviceType.EMSTAT_PICO, "Emstat Pico"},
+            {DeviceType.EMSTAT4, "Emstat4"}
+        };
+
+        /// <summary>
+        /// All current ranges that are supported by EmStat pico.
+        /// </summary>
+        private static Dictionary<byte, string> CurrentRangesPico = new Dictionary<byte, string>
+        {
+            { 0, "100nA"},
+            { 1, "2uA"},
+            { 2, "4uA"},
+            { 3, "8uA"},
+            { 4, "16uA"},
+            { 5, "32uA"},
+            { 6, "63uA"},
+            { 7, "125uA"},
+            { 8, "250uA"},
+            { 9, "500uA"},
+            { 10, "1mA"},
+            { 11, "15mA"},
+            { 128, "100nA (High speed)"},
+            { 129, "1uA (High speed)"},
+            { 130, "6uA (High speed)"},
+            { 131, "13uA (High speed)"},
+            { 132, "25uA (High speed)"},
+            { 133, "50uA (High speed)"},
+            { 134, "100uA (High speed)"},
+            { 135, "200uA (High speed)"},
+            { 136, "1mA (High speed)"},
+            { 137, "5mA (High speed)"},
+        };
+
+        /// <summary>
+        /// All current ranges that are supported by EmStat4
+        /// </summary>
+        private static Dictionary<byte, string> CurrentRangesES4 = new Dictionary<byte, string>
+        {
+            // EmStat4 LR only:
+            { 3, "1 nA" },
+            { 6, "10 nA" },
+            // EmStat4 LR/HR:
+            { 9, "100 nA" },
+            { 12, "1 uA" },
+            { 15, "10 uA" },
+            { 18, "100 uA" },
+            { 21, "1 mA" },
+            { 24, "10 mA" },
+            // EmStat4 HR only:
+            { 27, "100 mA" }
+        };
+
+        /// <summary>
+        /// All potential ranges that are supported by EmStat4
+        /// </summary>
+        private static Dictionary<byte, string> PotentialRangesES4 = new Dictionary<byte, string>
+        {
+            { 2, "50 mV" },
+            { 3, "100 mV" },
+            { 4, "200 mV" },
+            { 5, "500 mV" },
+            { 6, "1 V" }
+        };
 
         [Flags]
         private enum ReadingStatus
@@ -157,12 +274,12 @@ namespace ESPicoEISConsoleExample
 
         static void Main(string[] args)
         {
-            SerialPortEsP = OpenSerialPort();                   //Opens and identifies the port connected to EmStat Pico
+            (SerialPortEsP, deviceType) = OpenSerialPort();     //Opens and identifies the port, and identifies the device type
             if (SerialPortEsP != null && SerialPortEsP.IsOpen)
             {
-                Console.WriteLine("\nConnected to EmStat Pico.\n");
+                Console.WriteLine($"\nConnected to {deviceNames[deviceType]}\n");
                 SendScriptFile();                               //Sends the script file for EIS measurement
-                ProcessReceivedPackets();                       //Parses the received measurement packages
+                ProcessReceivedPackages();                      //Parses the received measurement response packages
                 SerialPortEsP.Close();                          //Closes the serial port
             }
             else
@@ -175,10 +292,13 @@ namespace ESPicoEISConsoleExample
         }
 
         /// <summary>
-        /// Opens the serial ports and identifies the port connected to EmStat Pico 
+        /// Opens the serial ports and identifies the port connected a MethodSCRIPT-capable device.
+        /// Also identifies the device type of the connected device.
         /// </summary>
-        /// <returns> The serial port connected to EmStat Pico</returns>
-        private static SerialPort OpenSerialPort()
+        /// <returns> The serial port connected to a device, and the type of that device.
+        /// If no MethodSCRIPT-capable device is found, or if it does not respond as expected,
+        /// the return values are null and DeviceType.UNKNOWN.</returns>
+        private static (SerialPort serialPort, DeviceType deviceType) OpenSerialPort()
         {
             string[] ports = SerialPort.GetPortNames();
             for (int i = 0; i < ports.Length; i++)
@@ -200,17 +320,22 @@ namespace ESPicoEISConsoleExample
                             response += "\n"; //ReadLine removes \n
                         }
 
+                        serialPort.ReadTimeout = READ_TIME_OUT;
                         if (response.Contains("espico"))
                         {
-                            serialPort.ReadTimeout = READ_TIME_OUT; //Sets the read time out for the device
-                            return serialPort;
+                            return (serialPort, DeviceType.EMSTAT_PICO);
+                        }
+                        else if (response.Contains("es4_"))
+                        {
+                            return (serialPort, DeviceType.EMSTAT4);
                         }
 
                         //Not a valid device
+                        serialPort.ReadTimeout = DEFAULT_READ_TIME_OUT; //Reset back to default
                         serialPort.Close();
                     }
                 }
-                catch (Exception exception)
+                catch (Exception)
                 {
                     //Probably timeout or could not open serial port
                     if (serialPort.IsOpen)
@@ -219,7 +344,7 @@ namespace ESPicoEISConsoleExample
             }
 
             //Not found
-            return null;
+            return (null, DeviceType.UNKNOWN);
         }
 
         /// <summary>
@@ -234,7 +359,7 @@ namespace ESPicoEISConsoleExample
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
             serialPort.BaudRate = BAUD_RATE;
-            serialPort.ReadTimeout = 1000;                  //Initial time out set to 1000ms, upon connecting to EmStat Pico, time out reset to READ_TIME_OUT
+            serialPort.ReadTimeout = DEFAULT_READ_TIME_OUT; //Initial time out. Upon connecting to device, time out set to READ_TIME_OUT
             serialPort.WriteTimeout = 2;
             return serialPort;
         }
@@ -250,17 +375,17 @@ namespace ESPicoEISConsoleExample
                 while (!stream.EndOfStream)
                 {
                     line = stream.ReadLine();               //Reads a line from the script file
-                    line += "\n";                           //Appends a new line character to the line read
+                    line += "\n";                           //Adds a new line character to the line read
                     SerialPortEsP.Write(line);              //Sends the read line to EmStat Pico
                 }
-                Console.Write("Measurement started.\n");
+                Console.WriteLine("Measurement started.");
             }
         }
 
         /// <summary>
         /// Processes the response packages from the EmStat Pico and stores the response in RawData.
         /// </summary>
-        private static void ProcessReceivedPackets()
+        private static void ProcessReceivedPackages()
         {
             string readLine = "";
             Console.WriteLine("\nReceiving measurement response:");
@@ -274,7 +399,7 @@ namespace ESPicoEISConsoleExample
                 {
                     NDataPointsReceived++;                  //Increments the number of data points if the read line contains the header char 'P
                     ParsePackageLine(readLine);             //Parses the line read 
-                }              // Parse the line read 
+                }
             }
             Console.WriteLine("");
             Console.WriteLine($"\nMeasurement completed, {NDataPointsReceived} data points received.");
@@ -309,7 +434,7 @@ namespace ESPicoEISConsoleExample
         private static void ParsePackageLine(string packageLine)
         {
             string[] variables;
-            string variableIdentifier;
+            string variableType;
             string dataValue;
 
             int startingIndex = packageLine.IndexOf('P');                        //Identifies the beginning of the package
@@ -320,38 +445,39 @@ namespace ESPicoEISConsoleExample
 
             foreach (string variable in variables)
             {
-                variableIdentifier = variable.Substring(0, 2);                  //The string (2 characters) that identifies the variable type
+                variableType = variable.Substring(0, 2);                        //The string (2 characters) that identifies the variable type
                 dataValue = variable.Substring(2, PACKAGE_DATA_VALUE_LENGTH);
                 double dataValueWithPrefix = ParseParamValues(dataValue);       //Parses the data value package and returns the actual values with their corresponding SI unit prefixes 
-                switch (variableIdentifier)
+                switch (variableType)
                 {
                     case "dc":                                                 //Frequency reading
-                        Console.Write("{0,13} :{1,10} {2,2}", MeasurementVariables[variableIdentifier], string.Format("{0:0.00}", dataValueWithPrefix).ToString(), " ");
+                        Console.Write("{0,13} :{1,10} {2,2}", MeasurementVariables[variableType], string.Format("{0:0.00}", dataValueWithPrefix).ToString(), " ");
                         FrequencyValues.Add(dataValueWithPrefix);              //Adds the value to the FrequencyReadings array
                         break;
                     case "cc":                                                 //Real Impedance reading
-                        Console.Write("{0,8} :{1,10} {2,2}", MeasurementVariables[variableIdentifier], string.Format("{0:0.000E+00}", dataValueWithPrefix).ToString(), " ");
+                        Console.Write("{0,8} :{1,10} {2,2}", MeasurementVariables[variableType], string.Format("{0:0.000E+00}", dataValueWithPrefix).ToString(), " ");
                         RealImpedanceValues.Add(dataValueWithPrefix);          //Adds the value to RealImpedanceReadings array
                         break;
                     case "cd":                                                 //Imaginary Impedance reading
-                        Console.Write("{0,8} :{1,10} {2,2}", MeasurementVariables[variableIdentifier], string.Format("{0:0.000E+00}", dataValueWithPrefix).ToString(), " ");
+                        Console.Write("{0,8} :{1,10} {2,2}", MeasurementVariables[variableType], string.Format("{0:0.000E+00}", dataValueWithPrefix).ToString(), " ");
                         ImgImpedanceValues.Add(dataValueWithPrefix);           //Adds the value to ImgImpedanceReadings array
                         break;
                 }
                 if (variable.Substring(10).StartsWith(","))
-                    ParseMetaDataValues(variable.Substring(10));              //Parses the metadata values in the variable, if any
+                    ParseMetaDataValues(variableType, variable.Substring(10));               //Parses the metadata values in the variable, if any
             }
         }
 
         /// <summary>
         /// Parses the metadata values of the variable, if any.
         /// The first character in each meta data value specifies the type of data.
-        /*  1 - 1 char hex mask holding the status (0 = OK, 2 = overload, 4 = underload, 8 = overload warning (80% of max))
-         *  2 - 2 chars hex holding the current range index. First bit high (0x80) indicates a high speed mode cr.
-         *  4 - 1 char hex holding the noise value */
+        /// 1 - 1 char hex mask holding the status (0 = OK, 2 = overload, 4 = underload, 8 = overload warning (80% of max))
+        /// 2 - 2 chars hex holding the current range index. First bit high (0x80) indicates a high speed mode cr.
+        /// 4 - 1 char hex holding the noise value
         /// </summary>
-        /// <param name="packageMetaData"></param>
-        private static void ParseMetaDataValues(string packageMetaData)
+        /// <param name="variableType">The type of variable ("da", "ba", etc.) this metadata is attached to.</param>
+        /// <param name="packageMetaData">The metadata value itself, as described above.</param>
+        private static void ParseMetaDataValues(string variableType, string packageMetaData)
         {
             string[] metaDataValues;
             metaDataValues = packageMetaData.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);          //The metadata values are separated by the delimiter ','
@@ -365,7 +491,10 @@ namespace ESPicoEISConsoleExample
                         break;
                     case '2':
                         crByte = GetCurrentRangeFromPackage(metaData);
-                        if (crByte != 0) DisplayCR(crByte);
+                        if (crByte != 0)
+                        {
+                            DisplayCR(variableType, crByte);
+                        }
                         break;
                     case '4':
                         GetNoiseFromPackage(metaData);
@@ -411,77 +540,32 @@ namespace ESPicoEISConsoleExample
         /// <summary>
         /// Displays the string corresponding to the input cr byte
         /// </summary>
+        /// <param name="variableType">The type of variable ("da", "ba", etc.) this metadata was attached to. Used to determine the correct unit.</param>
         /// <param name="crByte">The crByte value whose string is to be obtained</param>
-        private static void DisplayCR(byte crByte)
+        private static void DisplayCR(string variableType, byte crByte)
         {
             string currentRangeStr = "";
-            switch (crByte)
+            switch (deviceType)
             {
-                case (byte)CurrentRanges.cr100nA:
-                    currentRangeStr = "100nA";
+                case DeviceType.EMSTAT_PICO:
+                    currentRangeStr = CurrentRangesPico[crByte];
                     break;
-                case (byte)CurrentRanges.cr2uA:
-                    currentRangeStr = "2uA";
+                case DeviceType.EMSTAT4:
+                    switch (metaDataTypes[variableType])
+                    {
+                        case MetadataRangeType.UNKNOWN:
+                            currentRangeStr = "UNKNOWN";
+                            break;
+                        case MetadataRangeType.CURRENT:
+                            currentRangeStr = CurrentRangesES4[crByte];
+                            break;
+                        case MetadataRangeType.POTENTIAL:
+                            currentRangeStr = PotentialRangesES4[crByte];
+                            break;
+                    }
                     break;
-                case (byte)CurrentRanges.cr4uA:
-                    currentRangeStr = "4uA";
-                    break;
-                case (byte)CurrentRanges.cr8uA:
-                    currentRangeStr = "8uA";
-                    break;
-                case (byte)CurrentRanges.cr16uA:
-                    currentRangeStr = "16uA";
-                    break;
-                case (byte)CurrentRanges.cr32uA:
-                    currentRangeStr = "32uA";
-                    break;
-                case (byte)CurrentRanges.cr63uA:
-                    currentRangeStr = "63uA";
-                    break;
-                case (byte)CurrentRanges.cr125uA:
-                    currentRangeStr = "125uA";
-                    break;
-                case (byte)CurrentRanges.cr250uA:
-                    currentRangeStr = "250uA";
-                    break;
-                case (byte)CurrentRanges.cr500uA:
-                    currentRangeStr = "500uA";
-                    break;
-                case (byte)CurrentRanges.cr1mA:
-                    currentRangeStr = "1mA";
-                    break;
-                case (byte)CurrentRanges.cr5mA:
-                    currentRangeStr = "15mA";
-                    break;
-                case (byte)CurrentRanges.hscr100nA:
-                    currentRangeStr = "100nA (High speed)";
-                    break;
-                case (byte)CurrentRanges.hscr1uA:
-                    currentRangeStr = "1uA (High speed)";
-                    break;
-                case (byte)CurrentRanges.hscr6uA:
-                    currentRangeStr = "6uA (High speed)";
-                    break;
-                case (byte)CurrentRanges.hscr13uA:
-                    currentRangeStr = "13uA (High speed)";
-                    break;
-                case (byte)CurrentRanges.hscr25uA:
-                    currentRangeStr = "25uA (High speed)";
-                    break;
-                case (byte)CurrentRanges.hscr50uA:
-                    currentRangeStr = "50uA (High speed)";
-                    break;
-                case (byte)CurrentRanges.hscr100uA:
-                    currentRangeStr = "100uA (High speed)";
-                    break;
-                case (byte)CurrentRanges.hscr200uA:
-                    currentRangeStr = "200uA (High speed)";
-                    break;
-                case (byte)CurrentRanges.hscr1mA:
-                    currentRangeStr = "1mA (High speed)";
-                    break;
-                case (byte)CurrentRanges.hscr5mA:
-                    currentRangeStr = "5mA (High speed)";
+                case DeviceType.UNKNOWN:
+                    currentRangeStr = "UNKNOWN";
                     break;
             }
             Console.Write(String.Format("CR : {0,-5} {1,2}", currentRangeStr, " "));
