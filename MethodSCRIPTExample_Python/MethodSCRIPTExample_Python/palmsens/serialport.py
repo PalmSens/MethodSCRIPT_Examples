@@ -85,7 +85,7 @@ def auto_detect_port():
     LOG.info('Auto-detecting serial communication port.')
     # Get the available ports.
     ports = serial.tools.list_ports.comports(include_links=False)
-    candidates = []
+    candidates: list[str] = []
     for port in ports:
         LOG.debug('Found port: %s', port.description)
         if _is_mscript_device(port.description):
@@ -102,7 +102,7 @@ def auto_detect_port():
 class Serial():
     """Serial communication interface for EmStat Pico."""
 
-    def __init__(self, port, timeout):
+    def __init__(self, port: str, timeout: float):
         self.connection = serial.Serial(port=None, baudrate=230400, timeout=timeout)
         self.connection.port = port
 

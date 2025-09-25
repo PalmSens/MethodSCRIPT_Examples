@@ -45,6 +45,8 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 import time
 
+from palmsens.serialport import Serial
+
 
 LOG = logging.getLogger(__name__)
 
@@ -103,7 +105,7 @@ class Instrument():
         - readline() -> bytes
     """
 
-    def __init__(self, comm):
+    def __init__(self, comm: Serial):
         """Initialize the object.
 
         `comm` must be a communication object as described in the
@@ -128,7 +130,7 @@ class Instrument():
         LOG.debug('TX: %r', data)
         self.comm.write(data)
 
-    def writelines(self, lines):
+    def writelines(self, lines: list[str]):
         """Write multiple lines to the device."""
         for line in lines:
             self.write(line)
@@ -153,7 +155,7 @@ class Instrument():
 
     def readlines_until_end(self):
         """Receive all lines until an empty line is received."""
-        lines = []
+        lines: list[str] = []
         while True:
             try:
                 line = self.readline()
@@ -164,7 +166,7 @@ class Instrument():
             lines.append(line)
         return lines
 
-    def _update_firmware_version_and_device_type(self, force=False):
+    def _update_firmware_version_and_device_type(self, force: bool=False):
         # First get the firmware version string from the device.
         if force or not self.firmware_version:
             self.write('t\n')
@@ -180,7 +182,7 @@ class Instrument():
                 self.device_type = device_type
                 break
 
-    def get_firmware_version(self, force=False):
+    def get_firmware_version(self, force: bool=False):
         """Get the device firmware version.
 
         The result of this call is cached. If it is changed on the device, use
@@ -189,7 +191,7 @@ class Instrument():
         self._update_firmware_version_and_device_type(force=force)
         return self.firmware_version
 
-    def get_device_type(self, force=False):
+    def get_device_type(self, force: bool=False):
         """Get the device type.
 
         The result of this call is cached. If it is changed on the device, use
@@ -226,7 +228,7 @@ class Instrument():
         # TODO: check response!
         self.write('r\n')
 
-    def send_script(self, path):
+    def send_script(self, path: str):
         """Read a script from file and send it to the device.
 
         Note that the file should contain ASCII characters only. Other

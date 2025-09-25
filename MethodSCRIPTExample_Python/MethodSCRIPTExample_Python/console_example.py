@@ -51,7 +51,7 @@ import sys
 # Local imports
 import palmsens.instrument
 import palmsens.mscript
-import palmsens.serial
+import palmsens.serialport
 
 
 ###############################################################################
@@ -85,11 +85,11 @@ def main():
 
     port = DEVICE_PORT
     if port is None:
-        port = palmsens.serial.auto_detect_port()
+        port = palmsens.serialport.auto_detect_port()
 
     # Create and open serial connection to the device.
     LOG.info('Trying to connect to device using port %s...', port)
-    with palmsens.serial.Serial(port, 5) as comm:
+    with palmsens.serialport.Serial(port, 5) as comm:
         device = palmsens.instrument.Instrument(comm)
         LOG.info('Connected.')
 
@@ -124,7 +124,7 @@ def main():
 
             if variables:
                 # Apparently it was a data package. Print all variables.
-                cols = []
+                cols: list[str] = []
                 for var in variables:
                     cols.append(f'{var.type.name} = {var.value:11.4g} {var.type.unit}')
                     if 'status' in var.metadata:
