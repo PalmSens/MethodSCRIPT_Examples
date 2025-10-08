@@ -165,6 +165,7 @@ typedef enum {
 	EMSTAT4_HR,
 	MULTI_EMSTAT4_LR,
 	MULTI_EMSTAT4_HR,
+	NEXUS,
 } DeviceType_t;
 
 /// MethodSCRIPT sub package metadata. This is part of a subpackage.

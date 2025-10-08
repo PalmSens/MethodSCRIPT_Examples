@@ -55,7 +55,7 @@ import numpy as np
 # Local imports
 import palmsens.instrument
 import palmsens.mscript
-import palmsens.serial
+import palmsens.serialport
 
 
 ###############################################################################
@@ -96,10 +96,10 @@ def main():
 
     port = DEVICE_PORT
     if port is None:
-        port = palmsens.serial.auto_detect_port()
+        port = palmsens.serialport.auto_detect_port()
 
     # Create and open serial connection to the device.
-    with palmsens.serial.Serial(port, 1) as comm:
+    with palmsens.serialport.Serial(port, 1) as comm:
         device = palmsens.instrument.Instrument(comm)
         device_type = device.get_device_type()
         LOG.info('Connected to %s.', device_type)

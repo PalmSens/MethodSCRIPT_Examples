@@ -281,6 +281,8 @@ DeviceType_t mscript_get_device_type(char const * firmware_version)
 		return MULTI_EMSTAT4_LR;
 	} else if (!strncmp(firmware_version, "mes4hr", 6)) {
 		return MULTI_EMSTAT4_HR;
+	} else if (!strncmp(firmware_version, "nexus1", 6)) {
+		return NEXUS;
 	}
 	return UNKNOWN_DEVICE;
 }
@@ -292,6 +294,7 @@ static char const * const DEVICE_TYPE_NAMES[] = {
 	[EMSTAT4_HR]       = "EmStat4 HR",
 	[MULTI_EMSTAT4_LR] = "MultiEmStat4 LR",
 	[MULTI_EMSTAT4_HR] = "MultiEmStat4 HR",
+	[NEXUS]	           = "Nexus",
 };
 
 /**
@@ -671,6 +674,54 @@ char const * mscript_metadata_range_to_string(DeviceType_t device_type,
 			}
 		}
 		break;
+	case NEXUS:
+		switch (variable_type)
+		{
+		case MSCRIPT_VARTYPE_POTENTIAL:
+		case MSCRIPT_VARTYPE_ZIMAG:
+			// These variable types define a potential range.
+			// Translate potential ranges used in Nexus instruments.
+			switch (range)
+			{
+			case 0: return "1 V";
+			case 1: return "100 mV";
+			case 2: return "10 mV";
+			case 3: return "1 mV";
+			}
+			break;
+		default:
+			// Translate current ranges used in Nexus instruments.
+			switch (range)
+			{
+			// Potentiostat ranges
+			case 16: return "100 pA";
+			case 0: return "1 nA";
+			case 1: return "10 nA";
+			case 2: return "100 nA";
+			case 3: return "1 uA";
+			case 4: return "10 uA";
+			case 5: return "100 uA";
+			case 6: return "1 mA (tia)";
+			case 7: return "10 mA (tia)";
+			case 8: return "1 mA";
+			case 9: return "10 mA";
+			case 10: return "100 mA";
+			case 11: return "1 A";
+			// Galvanostat ranges
+			case 32: return "1 nA";
+			case 33: return "10 nA";
+			case 34: return "100 nA";
+			case 35: return "1 uA";
+			case 36: return "10 uA";
+			case 37: return "100 uA";
+			case 38: return "1 mA (tia)";
+			case 39: return "10 mA (tia)";
+			case 40: return "1 mA";
+			case 41: return "10 mA";
+			case 42: return "100 mA";
+			case 43: return "1 A";
+			}
+		}
 
 	case UNKNOWN_DEVICE:
 		break;

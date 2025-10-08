@@ -67,7 +67,7 @@ import matplotlib.pyplot as plt
 # Local imports
 import palmsens.instrument
 import palmsens.mscript
-import palmsens.serial
+import palmsens.serialport
 
 
 ###############################################################################
@@ -78,8 +78,7 @@ import palmsens.serial
 DEVICE_PORT = None
 
 # Location of MethodSCRIPT file to use.
-MSCRIPT_FILE_PATH_ES4 = 'scripts/example_advanced_swv_es4.mscr'
-MSCRIPT_FILE_PATH_ESPICO = 'scripts/example_advanced_swv_espico.mscr'
+MSCRIPT_FILE_PATH = 'scripts/example_advanced_swv.mscr'
 
 # Location of output files. Directory will be created if it does not exist.
 OUTPUT_PATH = 'output'
@@ -160,25 +159,17 @@ def main():
 
     port = DEVICE_PORT
     if port is None:
-        port = palmsens.serial.auto_detect_port()
+        port = palmsens.serialport.auto_detect_port()
 
     # Create and open serial connection to the device.
-    with palmsens.serial.Serial(port, 1) as comm:
+    with palmsens.serialport.Serial(port, 1) as comm:
         device = palmsens.instrument.Instrument(comm)
         device_type = device.get_device_type()
         LOG.info('Connected to %s.', device_type)
 
-        if device_type == palmsens.instrument.DeviceType.EMSTAT_PICO:
-            mscript_file_path = MSCRIPT_FILE_PATH_ESPICO
-        elif 'EmStat4' in device_type:
-            mscript_file_path = MSCRIPT_FILE_PATH_ES4
-        else:
-            LOG.error('No SWV script for this device found.')
-            return
-
         # Read and send the MethodSCRIPT file.
         LOG.info('Sending MethodSCRIPT.')
-        device.send_script(mscript_file_path)
+        device.send_script(MSCRIPT_FILE_PATH)
 
         # Read the result lines.
         LOG.info('Waiting for results.')
