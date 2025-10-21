@@ -66,10 +66,17 @@ def _is_mscript_device(port_description: str):
             # v Below names are used in Windows
             port_description.startswith('EmStat4 LR (COM') or
             port_description.startswith('EmStat4 HR (COM') or
+            port_description.startswith('EmStat4T (COM') or
             port_description.startswith('MultiEmStat4 LR (COM') or
             port_description.startswith('MultiEmStat4 HR (COM') or
             port_description.startswith('Nexus (COM') or
             port_description.startswith('USB Serial Port'))
+
+def guess_baudrate(port_description: str) -> int:
+    """Guess the appropriate baudrate depending on the device description"""
+    if "EmStat4" in port_description or "Nexus" in port_description:
+        return 921600
+    return 230400
 
 
 def auto_detect_port():
@@ -85,11 +92,11 @@ def auto_detect_port():
     LOG.info('Auto-detecting serial communication port.')
     # Get the available ports.
     ports = serial.tools.list_ports.comports(include_links=False)
-    candidates: list[str] = []
+    candidates: list[tuple[str, int]] = []
     for port in ports:
         LOG.debug('Found port: %s', port.description)
         if _is_mscript_device(port.description):
-            candidates.append(port.device)
+            candidates.append((port.device, guess_baudrate(port.description)))
 
     if len(candidates) != 1:
         LOG.error('%d candidates found. Auto-detect failed.', len(candidates))
@@ -102,8 +109,8 @@ def auto_detect_port():
 class Serial():
     """Serial communication interface for EmStat Pico."""
 
-    def __init__(self, port: str, timeout: float):
-        self.connection = serial.Serial(port=None, baudrate=230400, timeout=timeout)
+    def __init__(self, port: str, baudrate: int, timeout: float):
+        self.connection = serial.Serial(port=None, baudrate=baudrate, timeout=timeout)
         self.connection.port = port
 
     def __enter__(self):

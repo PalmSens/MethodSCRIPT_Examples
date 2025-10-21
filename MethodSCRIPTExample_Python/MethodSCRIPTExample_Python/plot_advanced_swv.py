@@ -76,6 +76,10 @@ import palmsens.serialport
 
 # COM port of the device (None = auto detect).
 DEVICE_PORT = None
+# Baud rate of the MethodSCRIPT device.
+# None = guess, based on COM port auto-detect.
+# Common values are 230400 for EmStat Pico or 921600 for EmStat4 or Nexus.
+BAUD_RATE = None
 
 # Location of MethodSCRIPT file to use.
 MSCRIPT_FILE_PATH = 'scripts/example_advanced_swv.mscr'
@@ -158,11 +162,18 @@ def main():
     base_path = os.path.join(OUTPUT_PATH, base_name)
 
     port = DEVICE_PORT
+    baudrate = BAUD_RATE
     if port is None:
-        port = palmsens.serialport.auto_detect_port()
+        (port, guessed_baudrate) = palmsens.serialport.auto_detect_port()
+        if BAUD_RATE is None:
+            baudrate = guessed_baudrate
+
+    if baudrate is None:
+        LOG.error('Baud rate must be provided when not auto-dectecting serial port')
+        sys.exit()
 
     # Create and open serial connection to the device.
-    with palmsens.serialport.Serial(port, 1) as comm:
+    with palmsens.serialport.Serial(port, baudrate, 1) as comm:
         device = palmsens.instrument.Instrument(comm)
         device_type = device.get_device_type()
         LOG.info('Connected to %s.', device_type)
