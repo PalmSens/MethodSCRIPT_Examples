@@ -45,6 +45,7 @@ namespace EmStatEISConsoleExample
 
         const string CMD_VERSION = "t\n";                                                            //Version command
         const int BAUD_RATE = 230400;                                                                //Baudrate for EmStat Pico
+        // const int BAUD_RATE = 921600;                                                             //Baudrate for EmStat4 or Nexus
         const int DEFAULT_READ_TIME_OUT = 1000;                                                      //Default read time out when not connected to a device, in ms
         const int READ_TIME_OUT = 7000;                                                              //Read time out when connected, in ms
         const int PACKAGE_DATA_VALUE_LENGTH = 8;                                                     //Length of the data value in a package
