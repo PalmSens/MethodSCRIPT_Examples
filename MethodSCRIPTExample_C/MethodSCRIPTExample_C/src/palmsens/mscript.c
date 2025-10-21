@@ -62,7 +62,7 @@
 #include "mscript_debug_printf.h"
 #include "mscript_serial_port.h"
 
-/// Maximum number of characters that the EmStat Pico can receive in one line
+/// Maximum number of characters that the device can receive in one line
 #define MSCRIPT_WRITE_LINE_MAX_CHARS 128
 
 /// Buffer size for write line buffer (maximum length + 1 for terminating zero character)

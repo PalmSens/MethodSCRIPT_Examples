@@ -81,6 +81,16 @@
 #include "palmsens/mscript.h"
 #include "palmsens/mscript_serial_port.h"
 
+// Please uncomment one of the lines below to select the correct baudrate for your MethodSCRIPT device
+// EmStat Pico: 230400
+// EmStat4:     921600 (230400 for FW <= 1.1)
+// #define MSCRIPT_DEV_BAUDRATE 921600
+// #define MSCRIPT_DEV_BAUDRATE 230400
+
+#ifndef MSCRIPT_DEV_BAUDRATE
+#error "No baudrate selected, please uncomment one of the options above"
+#endif
+
 /// Timeout (in ms) for reading responses.
 // NOTE: If you're doing long measurements, you might need to increase this value.
 #define READ_TIMEOUT 5000
@@ -149,7 +159,7 @@ int main(int argc, char * argv[])
 	char const * script_name = (argc >= 3) ? argv[2] : NULL;
 
 	// Open the serial port on the requested port.
-	SerialPortHandle_t h_device = mscript_serial_port_open(port);
+	SerialPortHandle_t h_device = mscript_serial_port_open(port, MSCRIPT_DEV_BAUDRATE);
 	if (h_device == BAD_HANDLE) {
 		printf("ERROR: Could not open port.\n");
 		return EXIT_FAILURE;

@@ -43,7 +43,7 @@
 #include <windows.h>
 #include "mscript_debug_printf.h"
 
-SerialPortHandle_t mscript_serial_port_open(char const * port)
+SerialPortHandle_t mscript_serial_port_open(char const * port, int baudrate)
 {
 	assert(port != NULL);
 
@@ -80,8 +80,8 @@ SerialPortHandle_t mscript_serial_port_open(char const * port)
 		}
 	}
 	if (success) {
-		// Configuration for EmStat Pico is: 230400 bps, 8 data bits, no parity, and 1 stop bit.
-		dcb.BaudRate = 230400;
+		// Configuration is: 8 data bits, no parity, and 1 stop bit.
+		dcb.BaudRate = baudrate;
 		dcb.ByteSize = 8;
 		dcb.Parity = NOPARITY;
 		dcb.StopBits = ONESTOPBIT;

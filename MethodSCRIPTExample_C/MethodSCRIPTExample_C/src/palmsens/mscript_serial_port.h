@@ -64,10 +64,11 @@ extern "C" {
  * 
  * \param serial_port_name name of the serial port, e.g., "COM1" on Windows
  *                         or "/dev/ttyUSB0" on Linux
+ * \param baudrate baud rate of the serial port.
  *
  * \return a handle on success, or `BAD_HANDLE` on failure.
  */
-SerialPortHandle_t mscript_serial_port_open(char const * serial_port_name);
+SerialPortHandle_t mscript_serial_port_open(char const * serial_port_name, int baudrate);
 
 /**
  * Write data to the device.
