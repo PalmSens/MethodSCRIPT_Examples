@@ -61,7 +61,7 @@
  */
 #define MSCRIPT_READ_BUFFER_SIZE 1000
 
-/* The first character of the response of the EmStat Pico identifies the
+/* The first character of the response of the device identifies the
  * type of message. The following defines define the most commonly used
  * message types.
  */
