@@ -81,11 +81,13 @@
 #include "palmsens/mscript.h"
 #include "palmsens/mscript_serial_port.h"
 
-// Please uncomment one of the lines below to select the correct baudrate for your MethodSCRIPT device
-// EmStat Pico: 230400
-// EmStat4:     921600 (230400 for FW <= 1.1)
-// #define MSCRIPT_DEV_BAUDRATE 921600
-// #define MSCRIPT_DEV_BAUDRATE 230400
+/*
+Please uncomment one of the #define lines below to select the correct baudrate for your MethodSCRIPT device
+For the EmStat Pico: 230400
+For the EmStat4: 921600 (230400 for FW <= 1.1)
+*/
+//#define MSCRIPT_DEV_BAUDRATE 230400
+//#define MSCRIPT_DEV_BAUDRATE 921600
 
 #ifndef MSCRIPT_DEV_BAUDRATE
 #error "No baudrate selected, please uncomment one of the options above"
