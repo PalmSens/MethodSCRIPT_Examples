@@ -1,0 +1,26 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  This example shows how to read the battery percentage of the SensitWearable
+#
+# MethodSCRIPT version: 1.6
+# Last modified: 15/10/2024
+# Applies to: Sensit Wearable
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# Note that during charging, this value is unavailable.
+#
+var voltage
+# Read the battery% to the voltage variable
+battery_perc voltage
+# battery_perc will return -1 if it is unavailable
+if voltage < 0
+    send_string "Battery% is unavailable! Are you plugged in?"
+else
+    send_string f"Battery at {voltage}%"
+endif
+

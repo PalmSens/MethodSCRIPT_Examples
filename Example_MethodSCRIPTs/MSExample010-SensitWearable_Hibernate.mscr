@@ -1,0 +1,77 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  This example demonstrates the hibernate features of the Sensit Wearable
+#
+# MethodSCRIPT version: 1.6
+# Last modified: 15/10/2024
+# Applies to: Sensit Wearable
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# The Sensit Wearable can wake from hibernate via a number of methods:
+# - Communication over the USB
+# - Pressing the housing button
+# - After a certain duration
+# - Double tapping the device
+#
+# This script hibernates until a press on the housing button or a
+# double tap is detected, at which point it performs a one second CA
+# measurement and returns to hibernation
+#
+var p
+var c
+var year
+var mon
+var day
+var hour
+var min
+var sec
+#
+# Append all data to "readings.txt"
+#
+file_open "readings.txt" 1
+#
+# Configure potentiostat
+#
+set_script_output 3
+# Loop forever
+loop 2 > 1
+    cell_off
+    set_pgstat_mode 0 # Use pgstat mode 0 to minimise hibernate current
+    hibernate 0x0B 0  # Hibernate until comms received, double tap or housing button press
+    set_pgstat_mode 2
+    # Set the potential range to something that will accept 100mV
+    set_range_minmax da 50m 150m
+    # Set the current range to something very large (1A) - we will autorange to something better
+    set_range_minmax ba 0 1
+    set_autoranging ba 0 1
+    set_e 100m
+    cell_on
+    # Read back the current time from the RTC
+    rtc_get year mon day hour min sec
+    # Write a timestamp
+    send_string f"{year}-{mon}-{day} {hour}:{min}:{sec}"
+    # Settle the system
+    wait 100m
+    timer_start
+    var t
+    # Perform a measurement. This can be replaced with any technique
+    meas_loop_ca p c 100m 100m 1
+        timer_get t
+        pck_start
+        pck_add t
+        pck_add c
+        pck_end
+    endloop
+endloop
+on_finished:
+file_close
+    # Files are automatically closed when MethodScript ends, but this is
+    # more explicit!
+    file_close
+    cell_off
+

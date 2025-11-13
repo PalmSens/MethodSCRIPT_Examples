@@ -1,0 +1,63 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  This example shows how to read the ADXL367 accelerometer
+#               on the Sensit Wearable
+#
+# MethodSCRIPT version: 1.5
+# Last modified: 15/10/2024
+# Applies to: Sensit Wearable
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+var reading
+var ack
+store_var ack 0i aa
+i2c_config 100k 7
+# Enable measurement mode
+array i2c_data 2
+store_var i2c_data[0i] 0x2D aa # Address byte: POWER_CTL
+store_var i2c_data[1i] 0x02 aa # Data byte: MEASURE = Measurement mode
+i2c_write 0x53 i2c_data 2i ack
+if ack != 0i
+    send_string f"Write failed with code {ack}"
+    abort
+endif
+#
+var time
+var reading
+# Loop forever
+loop 2 > 1
+    # Select address 0x0A, the Z data register
+    store_var i2c_data[0i] 0x0A aa
+    # Write-then-read. The read back data will be stored
+    # in the i2c_data array
+    i2c_write_read 0x53 i2c_data 1i i2c_data 1i ack
+    if ack != 0i
+        send_string f"Read failed with code {ack}"
+        abort
+    endif
+    # Copy out the reading
+    copy_var i2c_data[0i] reading
+    # We need to interpret the 8b value we get back
+    # as a signed integer. So if the top bit is set,
+    # subtract 256 to get us into the negative range
+    if reading & 0b10000000
+        sub_var reading 256i
+    endif
+    # Write out the result!
+    #
+    # You can hold the device upside down to see the
+    # readings go negative
+    send_string f"{reading}"
+    get_time time
+    pck_start
+        pck_add time
+        pck_add reading
+    pck_end
+    wait 200m
+endloop
+

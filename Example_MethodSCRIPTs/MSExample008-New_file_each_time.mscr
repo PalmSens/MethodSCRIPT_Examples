@@ -1,0 +1,57 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  This example shows how to write to a file, and add an
+#               incrementing number to the path if it already exists
+#
+# MethodSCRIPT version: 1.5
+# Last modified: 15/10/2024
+# Applies to: Any MethodSCRIPT device with file storage
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# Open a file and start writing to it. The "&i" in the name
+# will be replaced with an incrementing number, in order to
+# make the file unique. So the first time it will be
+# "output_0000.txt", then "output_0001.txt" etc.
+#
+# Note that this requires file mode "2". Any other mode is an error.
+#
+# On the EmStatPico, GPIO will need to be configured to allow file operations
+# (See Device I/O pin configurations in the MethodScript documentation)
+#
+file_open "output_&i.txt" 2
+set_script_output 3 # Use normal output and file
+#
+var p # Applied potential during CA
+var c # Measured current during CA
+# Configure the potentiostat to max range mode,
+# ranged for 100mV and autoranging for the whole
+# set of current ranges
+set_pgstat_mode 4
+set_range_minmax da 50m 150m
+set_autoranging ba 0 1
+cell_on
+# Perform a 1 second CA measurement
+timer_start
+var t
+meas_loop_ca p c 100m 20m 1
+    timer_get t
+    pck_start
+    pck_add t
+    pck_add c
+    pck_end
+endloop
+on_finished:
+    # Files are automatically closed when MethodScript ends, but this is
+    # more explicit!
+    file_close
+    cell_off
+#
+# Each time this script is run, it will create a brand new file.
+# After a few runs, you will have a collection of `output_XXXX.txt`
+# files with data from each run.
+

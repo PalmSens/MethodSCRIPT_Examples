@@ -1,0 +1,39 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  This example shows how to read the RTC on the Sensit Wearable
+#
+# MethodSCRIPT version: 1.6
+# Last modified: 15/10/2024
+# Applies to: Sensit Wearable
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# The Sensit Wearable RTC can be set to the current time using the
+# `System date and time` register with address `0x0E`.
+#
+var year
+var mon
+var day
+var hour
+var min
+var sec
+#
+# Fetch the time and write it out
+rtc_get year mon day hour min sec
+send_string f"{year}-{mon}-{day} {hour}:{min}:{sec}"
+#
+# 5 seconds later, time has advanced by 5 seconds!
+wait 5
+rtc_get year min day hour min sec
+send_string f"{year}-{mon}-{day} {hour}:{min}:{sec}"
+#
+# The RTC keeps count even during hibernation
+set_pgstat_mode 0
+hibernate 0x04 5
+rtc_get year min day hour min sec
+send_string f"{year}-{mon}-{day} {hour}:{min}:{sec}"
+

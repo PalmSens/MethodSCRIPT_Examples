@@ -1,0 +1,29 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  This example shows how to read the temperature of the SensitWearable
+#
+# MethodSCRIPT version: 1.6
+# Last modified: 15/10/2024
+# Applies to: Sensit Wearable
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+var temp
+# Measurements can't be made with the pgstat off
+set_pgstat_mode 2
+# Measure the board temperature
+# `ef` is `VT_BOARD_TEMPERATURE`
+meas 100m temp ef
+# The value returned is in degrees C
+send_string f"{temp}C"
+# To convert to Fahrenheit,
+# F = C * 1.8 + 32
+var temp_f
+copy_var temp temp_f
+mul_var temp_f 1800m
+add_var temp_f 32
+send_string f"{temp_f}F"
