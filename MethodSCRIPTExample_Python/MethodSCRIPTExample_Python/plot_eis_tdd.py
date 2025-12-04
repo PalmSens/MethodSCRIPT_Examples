@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """
-PalmSens MethodSCRIPT example: simple Cyclic Voltammetry (CV) measurement
+PalmSens MethodSCRIPT example: Electrochemical Impedance Spectroscopy (EIS)
 
-This example showcases how to run a Cyclic Voltammetry (CV) measurement on
-a MethodSCRIPT capable PalmSens instrument, such as the EmStat Pico.
+This example showcases how to run an Electrochemical Impedance Spectroscopy
+(EIS) measurement on a MethodSCRIPT capable PalmSens instrument, such as the
+EmStat Pico.
 
 The following features are demonstrated in this example:
   - Connecting to the PalmSens instrument using the serial port.
-  - Running a Cyclic Voltammetry (CV) measurement.
+  - Running an Electrochemical Impedance Spectroscopy (EIS) measurement.
   - Receiving and interpreting the measurement data from the device.
   - Plotting the measurement data.
 
 -------------------------------------------------------------------------------
-Copyright (c) 2019-2021 PalmSens BV
+Copyright (c) 2025 PalmSens BV
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -49,6 +50,7 @@ import sys
 
 # Third-party imports
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Local imports
 import palmsens.instrument
@@ -68,11 +70,17 @@ DEVICE_PORT = None
 BAUD_RATE = None
 
 # Location of MethodSCRIPT file to use.
-MSCRIPT_FILE_PATH = 'scripts/example_cv.mscr'
+MSCRIPT_FILE_PATH = 'scripts/example_eis_tdd.mscr'
 
 # Location of output files. Directory will be created if it does not exist.
 OUTPUT_PATH = 'output'
 
+# Plot colors.
+AX1_COLOR = 'tab:red'   # Color for impedance (Z)
+AX2_COLOR = 'tab:blue'  # Color for phase
+
+sys.stdin.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding='utf-8')
 ###############################################################################
 # End of configuration
 ###############################################################################
@@ -87,7 +95,7 @@ def main():
     logging.basicConfig(level=logging.DEBUG, format='[%(module)s] %(message)s',
                         stream=sys.stdout)
     # Uncomment the following line to reduce the log level for our library.
-    # logging.getLogger('palmsens').setLevel(logging.INFO)
+    logging.getLogger('palmsens').setLevel(logging.INFO)
     # Disable excessive logging from matplotlib.
     logging.getLogger('matplotlib').setLevel(logging.INFO)
     logging.getLogger('PIL.PngImagePlugin').setLevel(logging.INFO)
@@ -104,7 +112,7 @@ def main():
         sys.exit()
 
     # Create and open serial connection to the device.
-    with palmsens.serialport.Serial(port, baudrate, 1) as comm:
+    with palmsens.serialport.Serial(port, baudrate, 10) as comm:
         device = palmsens.instrument.Instrument(comm)
         device_type = device.get_device_type()
         LOG.info('Connected to %s.', device_type)
@@ -119,7 +127,7 @@ def main():
 
     # Store results in file.
     os.makedirs(OUTPUT_PATH, exist_ok=True)
-    result_file_name = datetime.datetime.now().strftime('ms_plot_cv_%Y%m%d-%H%M%S.txt')
+    result_file_name = datetime.datetime.now().strftime('ms_plot_eis_tdd_%Y%m%d-%H%M%S.txt')
     result_file_path = os.path.join(OUTPUT_PATH, result_file_name)
     with open(result_file_path, 'wt', encoding='ascii') as file:
         file.writelines(result_lines)
@@ -131,20 +139,75 @@ def main():
     for package in curves.packages:
         LOG.info([str(value) for value in package])
 
-    # Get the applied potentials (first column of each row)
-    applied_potential = curves.get_column_values(0)
-    # Get the measured currents (second column of each row)
-    measured_current = curves.get_column_values(1)
+    # Get the applied frequencies.
+    applied_frequency = np.array(curves.get_column_values(0))
+    # Get the measured real part of the complex impedance.
+    measured_z_real = np.array(curves.get_column_values(1))
+    # Get the measured imaginary part of the complex impedance.
+    measured_z_imag = np.array(curves.get_column_values(2))
+
+    # Calculate Z and phase.
+    # Invert the imaginary part for the electrochemist convention.
+    measured_z_imag = -measured_z_imag
+    # Compose the complex impedance.
+    z_complex = measured_z_real + 1j * measured_z_imag
+    # Get the phase from the complex impedance in degrees.
+    z_phase = np.angle(z_complex, deg=True)
+    # Get the impedance value.
+    z = np.abs(z_complex)
 
     # Plot the results.
+    # Show the Nyquist plot as figure 1.
     plt.figure(1)
-    plt.plot(applied_potential, measured_current)
-    plt.title('Voltammogram')
-    plt.xlabel('Applied Potential (V)')
-    plt.ylabel('Measured Current (A)')
-    plt.grid(visible=True, which='major', linestyle='-')
-    plt.grid(visible=True, which='minor', linestyle='--', alpha=0.2)
-    plt.minorticks_on()
+    plt.plot(measured_z_real, measured_z_imag)
+    plt.title('Nyquist plot')
+    plt.axis('equal')
+    plt.grid()
+    plt.xlabel("Z'")
+    plt.ylabel("-Z''")
+    # plt.savefig('nyquist_plot.png')
+
+    # Show the Bode plot as dual y axis (sharing the same x axis).
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+
+    ax1.set_xlabel('Frequency (Hz)')
+    ax1.grid(which='major', axis='x', linestyle='--', linewidth=0.5, alpha=0.5)
+    ax1.set_ylabel('Z', color=AX1_COLOR)
+    # Make x axis logarithmic.
+    ax1.semilogx(applied_frequency, z, color=AX1_COLOR)
+    # Show ticks.
+    ax1.tick_params(axis='y', labelcolor=AX1_COLOR)
+    # Turn on the minor ticks, which are required for the minor grid.
+    ax1.minorticks_on()
+    # Customize the major grid.
+    ax1.grid(which='major', axis='y', linestyle='--', linewidth=0.5, alpha=0.5, color=AX1_COLOR)
+
+    # We already set the x label with ax1.
+    ax2.set_ylabel('-Phase (degrees)', color=AX2_COLOR)
+    ax2.semilogx(applied_frequency, z_phase, color=AX2_COLOR)
+    ax2.tick_params(axis='y', labelcolor=AX2_COLOR)
+    ax2.minorticks_on()
+    ax2.grid(which='major', axis='y', linestyle='--', linewidth=0.5, alpha=0.5, color=AX2_COLOR)
+
+    fig.suptitle('Bode plot')
+    fig.tight_layout()
+    # fig.savefig('bode_plot.png')
+
+    if len(curves.packages) != len(curves.loops):
+        LOG.error("Not an equal amount of packages and curves!")
+        return
+
+    for package, loop in zip(curves.packages, curves.loops):
+        label = f'{package[0].value:.2E} Hz'
+        plt.figure()
+        plt.title(f'Potential vs Current ({label})')
+        plt.grid()
+        plt.xlabel("Potential signal")
+        plt.ylabel("Current signal")
+        potentials = loop.get_column_values(0)
+        currents = loop.get_column_values(1)
+        plt.plot(potentials, currents)
     plt.show()
 
 

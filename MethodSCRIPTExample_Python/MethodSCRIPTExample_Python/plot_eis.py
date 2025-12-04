@@ -134,16 +134,15 @@ def main():
     curves = palmsens.mscript.parse_result_lines(result_lines)
 
     # Log the results.
-    for curve in curves:
-        for package in curve:
-            LOG.info([str(value) for value in package])
+    for package in curves.packages:
+        LOG.info([str(value) for value in package])
 
     # Get the applied frequencies.
-    applied_frequency = palmsens.mscript.get_values_by_column(curves, 0)
+    applied_frequency = np.array(curves.get_column_values(0))
     # Get the measured real part of the complex impedance.
-    measured_z_real = palmsens.mscript.get_values_by_column(curves, 1)
+    measured_z_real = np.array(curves.get_column_values(1))
     # Get the measured imaginary part of the complex impedance.
-    measured_z_imag = palmsens.mscript.get_values_by_column(curves, 2)
+    measured_z_imag = np.array(curves.get_column_values(2))
 
     # Calculate Z and phase.
     # Invert the imaginary part for the electrochemist convention.

@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 """
-PalmSens MethodSCRIPT console example
+PalmSens MethodSCRIPT example: simple Cyclic Voltammetry (CV) measurement
 
-This example demonstrates how to communicate with a MethodSCRIPT capable
-PalmSens instrument, such as the EmStat Pico.
+This example showcases how to run a Cyclic Voltammetry (CV) measurement on
+a MethodSCRIPT capable PalmSens instrument, such as the EmStat Pico.
 
 The following features are demonstrated in this example:
-  - Auto-detecting the serial port.
-  - Connecting to the device using the serial port.
-  - Reading the firmware version and device type.
-  - Reading a MethodSCRIPT from file and executing it on the device. The
-    MethodSCRIPT used in this example performs a Cyclic Voltammetry (CV)
-    measurement.
-  - Receiving and interpreting the response from the device (i.e., the data
-    packages) and printing the measurement data to the console.
+  - Connecting to the PalmSens instrument using the serial port.
+  - Running a Cyclic Voltammetry (CV) measurement.
+  - Receiving and interpreting the measurement data from the device.
+  - Plotting the measurement data.
 
 -------------------------------------------------------------------------------
 Copyright (c) 2019-2021 PalmSens BV
@@ -45,8 +41,14 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 # Standard library imports
+import datetime
 import logging
+import os
+import os.path
 import sys
+
+# Third-party imports
+import matplotlib.pyplot as plt
 
 # Local imports
 import palmsens.instrument
@@ -58,19 +60,18 @@ import palmsens.serialport
 # Start of configuration
 ###############################################################################
 
-# COM port of the MethodSCRIPT device (None = auto-detect).
-# In case auto-detection does not work or is not wanted, fill in the correct
-# port name, e.g. 'COM6' on Windows, or '/dev/ttyUSB0' on Linux.
-# DEVICE_PORT = 'COM6'
+# COM port of the device (None = auto detect).
 DEVICE_PORT = None
-# Baud rate of the MethodSCRIPT device. If both this and DEVICE_PORT are None,
-# the auto-detection mechanism will try to guess the correct baud rate. Setting
-# BAUD_RATE overrides the guessed value if using COM-port autodetect.
+# Baud rate of the MethodSCRIPT device.
+# None = guess, based on COM port auto-detect.
 # Common values are 230400 for EmStat Pico or 921600 for EmStat4 or Nexus.
 BAUD_RATE = None
 
 # Location of MethodSCRIPT file to use.
-MSCRIPT_FILE_PATH = 'scripts/example_cv.mscr'
+MSCRIPT_FILE_PATH = 'scripts/example_cv_nscans.mscr'
+
+# Location of output files. Directory will be created if it does not exist.
+OUTPUT_PATH = 'output'
 
 ###############################################################################
 # End of configuration
@@ -83,10 +84,13 @@ LOG = logging.getLogger(__name__)
 def main():
     """Run the example."""
     # Configure the logging.
-    logging.basicConfig(level=logging.INFO, format='[%(module)s] %(message)s',
+    logging.basicConfig(level=logging.DEBUG, format='[%(module)s] %(message)s',
                         stream=sys.stdout)
     # Uncomment the following line to reduce the log level for our library.
     # logging.getLogger('palmsens').setLevel(logging.INFO)
+    # Disable excessive logging from matplotlib.
+    logging.getLogger('matplotlib').setLevel(logging.INFO)
+    logging.getLogger('PIL.PngImagePlugin').setLevel(logging.INFO)
 
     port = DEVICE_PORT
     baudrate = BAUD_RATE
@@ -100,55 +104,48 @@ def main():
         sys.exit()
 
     # Create and open serial connection to the device.
-    LOG.info('Trying to connect to device using port %s...', port)
-    with palmsens.serialport.Serial(port, baudrate, 5) as comm:
+    with palmsens.serialport.Serial(port, baudrate, 1) as comm:
         device = palmsens.instrument.Instrument(comm)
-        LOG.info('Connected.')
-
-        # For development: abort any previous script and restore communication.
-        device.abort_and_sync()
-
-        # Check if device is connected and responding successfully.
-        firmware_version = device.get_firmware_version()
         device_type = device.get_device_type()
         LOG.info('Connected to %s.', device_type)
-        LOG.info('Firmware version: %s', firmware_version)
-        LOG.info('MethodSCRIPT version: %s', device.get_mscript_version())
-        LOG.info('Serial number = %s', device.get_serial_number())
 
-        # Read MethodSCRIPT from file and send to device.
+        # Read and send the MethodSCRIPT file.
+        LOG.info('Sending MethodSCRIPT.')
         device.send_script(MSCRIPT_FILE_PATH)
 
-        # Read the script output (results) from the device.
-        while True:
-            line = device.readline()
+        # Read the result lines.
+        LOG.info('Waiting for results.')
+        result_lines = device.readlines_until_end()
 
-            # No data means timeout, so ignore it and try again.
-            if not line:
-                continue
+    # Store results in file.
+    os.makedirs(OUTPUT_PATH, exist_ok=True)
+    result_file_name = datetime.datetime.now().strftime('ms_plot_cv_%Y%m%d-%H%M%S.txt')
+    result_file_path = os.path.join(OUTPUT_PATH, result_file_name)
+    with open(result_file_path, 'wt', encoding='ascii') as file:
+        file.writelines(result_lines)
 
-            # An empty line means end of script.
-            if line == '\n':
-                break
+    # Parse the result.
+    curves = palmsens.mscript.parse_result_lines(result_lines)
 
-            # Non-empty line received. Try to parse as data package.
-            if line[0] == 'P':
-                variables = palmsens.mscript.parse_mscript_data_package(line)
-            else:
-                continue
+    # Log the results.
+    for curve in curves.loops:
+        for package in curve.packages:
+            LOG.info([str(value) for value in package])
 
-            cols: list[str] = []
-            for var in variables:
-                cols.append(f'{var.type.name} = {var.value:11.4g} {var.type.unit}')
-                if 'status' in var.metadata:
-                    status_text = palmsens.mscript.metadata_status_to_text(
-                        var.metadata['status'])
-                    cols.append(f'STATUS: {status_text:<16s}')
-                if 'cr' in var.metadata:
-                    cr_text = palmsens.mscript.metadata_range_to_text(
-                        device_type, var.type, var.metadata['cr'])
-                    cols.append(f'CR: {cr_text}')
-            print(' | '.join(cols))
+    # Plot the results.
+    plt.figure(1)
+    for icurve, curve in enumerate(curves.loops):
+        applied_potential = curve.get_column_values(0)
+        measured_current = curve.get_column_values(1)
+        plt.plot(applied_potential, measured_current, label=f"Curve {icurve}")
+    plt.title('Voltammogram')
+    plt.xlabel('Applied Potential (V)')
+    plt.ylabel('Measured Current (A)')
+    plt.grid(visible=True, which='major', linestyle='-')
+    plt.grid(visible=True, which='minor', linestyle='--', alpha=0.2)
+    plt.minorticks_on()
+    plt.legend()
+    plt.show()
 
 
 if __name__ == '__main__':

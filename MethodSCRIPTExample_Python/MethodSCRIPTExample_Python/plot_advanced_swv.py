@@ -115,7 +115,7 @@ YAXIS_COLUMN_INDICES = [1, 2, 3]
 LOG = logging.getLogger(__name__)
 
 
-def write_curves_to_csv(file: typing.IO, curves: list[list[list[palmsens.mscript.MScriptVar]]]):
+def write_curves_to_csv(file: typing.IO, curves: palmsens.mscript.MScriptLoop):
     """Write the curves to file in CSV format.
 
     `file` must be a file-like object in text mode with newlines translation
@@ -137,11 +137,11 @@ def write_curves_to_csv(file: typing.IO, curves: list[list[list[palmsens.mscript
     # use Excel to read the CSV file, you might want to remove this line.
     file.write('sep=;\n')
     writer = csv.writer(file, delimiter=';')
-    for curve in curves:
+    for curve in curves.loops:
         # Write header row.
-        writer.writerow([f'{value.type.name} [{value.type.unit}]' for value in curve[0]])
+        writer.writerow([f'{value.type.name} [{value.type.unit}]' for value in curve.packages[0]])
         # Write data rows.
-        for package in curve:
+        for package in curve.packages:
             writer.writerow([value.value for value in package])
 
 
@@ -202,27 +202,26 @@ def main():
     plt.figure()
     plt.title(base_name)
     # Put specified column of the first curve on x axis.
-    xvar = curves[0][0][XAXIS_COLUMN_INDEX]
+    first_pkg = curves.loops[0].packages[0]
+    xvar = first_pkg[XAXIS_COLUMN_INDEX]
     plt.xlabel(f'{xvar.type.name} [{xvar.type.unit}]')
     # Put specified column of the first curve on y axis.
-    yvar = curves[0][0][YAXIS_COLUMN_INDICES[0]]
+    yvar = first_pkg[YAXIS_COLUMN_INDICES[0]]
     plt.ylabel(f'{yvar.type.name} [{yvar.type.unit}]')
     plt.grid(visible=True, which='major', linestyle='-')
     plt.grid(visible=True, which='minor', linestyle='--', alpha=0.2)
     plt.minorticks_on()
 
     # Loop through all curves and plot them.
-    for icurve, curve in enumerate(curves):
+    for icurve, curve in enumerate(curves.loops):
         # Get xaxis column for this curve.
-        xvalues = palmsens.mscript.get_values_by_column(
-            curves, XAXIS_COLUMN_INDEX, icurve)
+        xvalues = curve.get_column_values(XAXIS_COLUMN_INDEX)
         # Loop through all y axis columns and plot one curve per column.
         for yaxis_column_index in YAXIS_COLUMN_INDICES:
-            yvalues = palmsens.mscript.get_values_by_column(
-                curves, yaxis_column_index, icurve)
+            yvalues = curve.get_column_values(yaxis_column_index)
 
             # Ignore invalid columns.
-            if curve[0][yaxis_column_index].type != yvar.type:
+            if curve.packages[0][yaxis_column_index].type != yvar.type:
                 continue
 
             # Make plot label.
