@@ -15,7 +15,8 @@ e
 #
 # initialize the GPIO pins for use with the MUX16
 set_gpio_cfg 0x3FFi 1
-set_gpio 0x00i
+# Configure the MUX in MUX16 mode, no additional configuration
+mux_config 4i 0x0000
 # Declare some variables to work with
 # c: current
 # p: potential
@@ -45,44 +46,35 @@ cell_on
 store_var j 0i ja
 # Outer loop, repeat the process 10 times
 loop j < 10i
-	# Inner loop
-    # (replace 0i with the first channel to use minus one)
-	store_var i 0i ja
-	# Loop channels over 1 to 5 (replace `5i` with the last channel to use)
-	loop i < 5i
-		# Set appropriate pins to select multiplexer channels.
-		# First copy `i` since we want to keep it's value for counting.
-		copy_var i m
-		# Multiply with a "mask" to switch certain signals.
-		# Possible values are:
-		#     0x01 to switch only WE
-		#     0x10 to switch only RE/CE
-		#     0x11 to switch both WE and RE/CE
-		mul_var m 0x11
-		# Write the pins to the GPIO to switch the Pico MUX16's channel
-		set_gpio m
-		# ====================================
-		# Perform measurement on selected cell
-		# ====================================
-		set_e -200m
-		wait 500m
-		meas_loop_ca p c 200m 20m 1
-			pck_start
-				pck_add p
-				pck_add c
-			pck_end
-		endloop
+    # Inner loop
+    # (replace 1i with the first channel to use)
+    store_var i 1i ja
+    # Loop over channels 1 to 5 (replace `5i` with the last channel to use)
+    loop i <= 5i
+        # Select the multiplexer channel
+        mux_set_channel i
+        # ====================================
+        # Perform measurement on selected cell
+        # ====================================
+        set_e -200m
+        wait 500m
+        meas_loop_ca p c 200m 20m 1
+            pck_start
+                pck_add p
+                pck_add c
+            pck_end
+        endloop
         # ======================================
         # End of measurement on selected channel
         # ======================================
-		# Increment inner loop-counter
-		add_var i 1i
-	endloop
-	# Wait approximately 30 seconds (+/-3.2%)
+        # Increment inner loop-counter
+        add_var i 1i
+    endloop
+    # Wait approximately 30 seconds (+/-3.2%)
     # before starting the next round.
-	wait 30
-	# Increment outer loop-counter
-	add_var j 1i
+    wait 30
+    # Increment outer loop-counter
+    add_var j 1i
 endloop
 on_finished:
 cell_off

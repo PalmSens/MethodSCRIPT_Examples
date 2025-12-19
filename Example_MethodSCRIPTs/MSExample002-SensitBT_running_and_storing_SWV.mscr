@@ -39,14 +39,14 @@ set_e -300m
 cell_on
 # SWV Ebegin=-0.3V, Eend=0.3V, Estep=0.01V, Eamp=0.1V, 5 Hz
 meas_loop_swv p c f g -300m 300m 10m 100m 5
-	pck_start
-		pck_add p
-		pck_add c
-		pck_add f
-		pck_add g
-	pck_end
+    pck_start
+        pck_add p
+        pck_add c
+        pck_add f
+        pck_add g
+    pck_end
 endloop
 on_finished:
-	file_close
-	cell_off
+    file_close
+    cell_off
 

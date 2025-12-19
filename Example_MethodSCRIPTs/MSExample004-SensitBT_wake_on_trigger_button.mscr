@@ -35,12 +35,12 @@ cell_on
 ############# Run measurement #############
 # Perform SWV measurement from -300 mV to 300 mV at 5 Hz
 meas_loop_swv p c f g -300m 300m 10m 100m 5
-	pck_start
-		# Sweep potential
-		pck_add p
-		# Current
-		pck_add c
-	pck_end
+    pck_start
+        # Sweep potential
+        pck_add p
+        # Current
+        pck_add c
+    pck_end
 endloop
 on_finished:
 cell_off
