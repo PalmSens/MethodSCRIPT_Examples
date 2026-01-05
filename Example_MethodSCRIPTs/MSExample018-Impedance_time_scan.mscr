@@ -1,0 +1,66 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Perform a fixed frequency Electrical Impedance Spectroscopy (EIS) every 10 seconds.
+#               Send a data packet every iteration, with each packet containing
+#               the time and the real and imaginary part of the impedance.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat Pico, Sensit Wearable, EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# initialize variables
+var measurement_time
+var measurement_interval
+var frequency
+var z_real
+var z_imaginary
+var amplitude
+var frequency_start
+var frequency_end
+var points
+var dc_potential
+var time
+store_var time 0 eb
+var x
+# set technique variables
+store_var amplitude 10m ja
+store_var frequency_start 100 ja
+store_var frequency_end 100 ja
+store_var points 1i ja
+store_var dc_potential 0 ja
+set_e dc_potential # set begin potential when cell turns on
+store_var measurement_time 3600 ja # set total time for measurement in seconds
+store_var measurement_interval 10 ja # set interval between measurements in seconds
+### Measurement initialisation ###
+set_pgstat_chan 0
+set_pgstat_mode 3
+set_max_bandwidth 1k
+set_range_minmax da -500m 500m
+set_range ba 10m
+set_autoranging ba 1n 10m
+set_range ab 1
+set_autoranging ab 100m 1
+set_int measurement_interval
+loop time <= measurement_time
+    cell_on
+    meas_loop_eis frequency z_real z_imaginary amplitude frequency_start frequency_end points dc_potential
+    endloop
+    cell_off
+    pck_start
+        pck_add time
+        pck_add z_real
+        pck_add z_imaginary
+    pck_end
+    add_var time measurement_interval
+    await_int # wait for the interval time to elapse so the measurements are equally spaced
+endloop
+on_finished:
+  cell_off
+

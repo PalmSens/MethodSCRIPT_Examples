@@ -1,0 +1,123 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Performs an Electrochemical Impedance Spectroscopy (EIS) measurement on five multiplexer channels.
+#               For every frequency all channels will be measured before moving on to the next frequency.
+#               The measured current is stored in the "Output current" array.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat4 instruments with a mux
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# Enable the MUX type and configuration
+# 1 = MUX8; 2 = MUX16; 3 = MUX8-R2
+# 0x0002 = Switch box 1; 0x0004 Switch box 2; 0x0008 OCP mode enable;
+# 0x0010 Common RE and CE; 0x0020 Connect RE to CE; 0x0040 Connect SE to WE
+# 0x0100 WE mode (0x0000 = float, 0x0100 = GND)
+# Connect RE to CE and have inactive WE floating
+mux_config 3i 0x0020
+# Store the amount of attached mux channels
+var channels
+mux_get_channel_count channels
+# initialize variables
+var f
+var zr
+var zi
+var ch
+var n
+var q
+var p
+var c
+var edc
+var nch
+var nfq
+var f_min
+var f_max
+store_var nch 5i ee # Number of channels to be multiplexed (the one followed by 'i').
+store_var nfq 36i ee # Number of frequencies measured over the range.
+array frequencies nfq # array to store all frequencies in.
+store_var f_min 100 dc # Start frequency
+store_var f_max 100k dc # End frequency
+# get frequencies to be measured in logarithmic spacing and store in frequencies array
+var i
+var x
+var y
+var z
+var nfqm
+copy_var f_max x
+copy_var f_min y
+log_var x
+log_var y
+div_var x y
+sub_var x 1
+copy_var nfq nfqm
+sub_var nfqm 1i
+int_to_float nfqm
+store_var i 0i ee
+loop i < nfq
+    copy_var f_min z
+    copy_var i y
+    int_to_float y
+    div_var y nfqm
+    mul_var y x
+    add_var y 1
+    pow_var z y
+    copy_var z frequencies[i]
+    add_var i 1i
+endloop
+# An 'i' is required after integer numbers.
+array et nch
+array zre nch
+array zim nch
+set_int 200m # interval time for each measurement point on each channel.
+store_var n 0i ee
+set_pgstat_chan 0
+set_pgstat_mode 3
+cell_on
+# below the equilibration step: Edc, time interval (doesn't matter), duration time
+meas_loop_ca p c 0 200m 5
+endloop #end of the equilibration step
+cell_off
+# set properties for EIS measurements
+set_pgstat_chan 0
+set_pgstat_mode 3
+set_max_bandwidth 1M
+set_range ba 21m
+set_autoranging ba 2100p 21m
+set_range ab 2100m
+set_autoranging ab 105m 2100m
+loop n < nfq
+    store_var ch 0i ja # The first channel to be measured -1 (the one followed by 'i').
+    loop ch < nch
+        copy_var ch q
+        add_var q 1i
+        mux_set_channel q
+        set_e 0
+        cell_on
+        # EIS parameters below, after zi: Eac, Frequency, Frequency (again), n points (leave as 1), Edc
+        meas_loop_eis f zr zi 500m frequencies[n] frequencies[n] 1 0 eis_opt(100u 1)
+            copy_var zr zre[ch]
+            copy_var zi zim[ch]
+        endloop
+        add_var ch 1i
+    endloop
+    pck_start
+        store_var ch 0i ja
+        pck_add frequencies[n]
+        loop ch < nch
+            pck_add zre[ch]
+            pck_add zim[ch]
+            add_var ch 1i
+        endloop
+    pck_end
+    add_var n 1i
+endloop
+on_finished:
+cell_off
+

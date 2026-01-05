@@ -1,0 +1,77 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Calculate the temperature measured with a 10K Ohm Negative Temperature Coefficient resistor (NTC)
+#               connected between CE/RE and WE.
+#               Send a data packet every 100 ms with the elapsed time and 
+#               mean of the temperature over the previous 10 samples.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: Sensit Wearable, EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+array temperature 10i
+var temperature_mean
+var time
+var potential
+var current
+var x
+var i
+store_var i 0i aa
+var skip_first
+store_var skip_first 0i aa
+### Measurement initialization ###
+set_pgstat_chan 0
+set_pgstat_mode 3
+set_max_bandwidth 300
+set_range_minmax da -500m 500m
+set_range ba 1u
+set_autoranging ba 59n 100u
+set_e 500u
+cell_on
+timer_start
+meas_loop_ca potential current 500u 100m 60
+    timer_get time
+    # calculate the NTC resistance
+    copy_var potential x
+    div_var x current
+    # make sure resistance is positive and non-zero
+    if x <= 0
+        store_var x 1u ja
+    endif
+    # calculate temperature using T_ntc = 1/(ln(R/R_nom)/beta + 1/T_nom)
+    div_var x 10k
+    log_var x
+    div_var x 3380
+    add_var x 3355705n
+    pow_var x -1
+    # go from Kelvin to degrees C
+    sub_var x 273
+    copy_var x temperature[i]
+    mean temperature temperature_mean
+    alter_vartype temperature_mean ed   # indicate that the variable is a temperature
+    if skip_first == 1i
+        sub_var time 1 # subtract 1 second because the first 10 measurements are skipped
+        pck_start
+            pck_add time
+            pck_add temperature_mean
+            pck_add potential
+            pck_add current
+        pck_end
+    endif
+    if i < 9
+        add_var i 1i
+    else
+        store_var i 0i aa
+        store_var skip_first 1i aa
+    endif
+endloop
+on_finished:
+    cell_off
+

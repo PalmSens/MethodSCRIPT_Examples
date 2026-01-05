@@ -1,0 +1,54 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Sets a cell potential and goes into hibernation while still applying the cell potential.
+#               The device is woken up every 30 seconds and performs an Open Circuit Potential (OCP) measurement.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat Pico, Sensit Wearable, EmStat4
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# initialize variables
+var hibernate_duration
+var bias_potential
+var interval
+var time
+var potential
+var t
+var i
+store_var i 0i aa
+store_var hibernate_duration 30 ja # Set duration of hibernation
+store_var bias_potential 10m ja # Set bias potential during hibernation
+store_var interval 100m ja # Set time between points of OCP measurement
+store_var time 5100m ja # Set duration of OCP measurement
+# start hibernation loop
+loop i < 10i
+    # Initialize pgstat
+    set_pgstat_chan 0
+    set_pgstat_mode 2
+    set_max_bandwidth 10
+    set_range ab 1
+    set_autoranging ab 10m 1
+    set_e bias_potential
+    cell_on
+    hibernate 4i hibernate_duration
+    cell_off                            # it is important to have the cell off during OCP
+    timer_start
+    meas_loop_ocp potential interval time
+        timer_get t
+        pck_start
+            pck_add t
+            pck_add potential
+        pck_end
+    endloop
+    add_var i 1i
+endloop
+on_finished:
+    cell_off
+

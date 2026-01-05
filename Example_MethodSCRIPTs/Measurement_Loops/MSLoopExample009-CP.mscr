@@ -1,0 +1,51 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Perform a Chronopotentiometry (CP) measurement.
+#               Send a data packet for every iteration, with each packet containing the elapsed time,
+#               the set current and the measured potential.
+#               A DC current of 1 mA is applied.
+#               The current is measured every 100 ms for a total of 2 seconds.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 10/11/2025
+# Applies to: EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+var potential
+var current
+var dc_current
+var time_interval
+var time_run
+var t
+# set technique variables
+store_var dc_current 1m ja
+store_var time_interval 100m ja
+store_var time_run 2 ja
+set_i 0
+############# Measurement initialisation #############
+set_pgstat_chan 0
+set_pgstat_mode 6
+set_max_bandwidth 10
+set_range ab 1
+set_autoranging ab 100m 2
+set_range db 20m
+set_autoranging db 20m 20m
+cell_on
+timer_start
+meas_loop_cp potential current dc_current time_interval time_run
+    timer_get t
+    pck_start
+    pck_add t
+    pck_add current
+    pck_add potential
+    pck_end
+endloop
+on_finished:
+    cell_off
+

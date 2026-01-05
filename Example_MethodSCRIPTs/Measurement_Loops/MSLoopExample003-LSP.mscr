@@ -1,0 +1,47 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Perform a Linear Sweep Potentiometry (LSP) measurement.
+#               Send a data packet for every iteration, with each packet containing the set current and measured potential.
+#               The LSP performs a current sweep from -5 mA to 5 mA with steps of 100uA at a rate of 1 mA/s
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 10/11/2025
+# Applies to: EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+var potential
+var current
+var sweep_begin
+var sweep_end
+var step_size
+var scan_rate
+# set technique variables
+store_var sweep_begin -5m ja
+store_var sweep_end 5m ja
+store_var step_size 100u ja
+store_var scan_rate 1m ja
+set_i 0
+############# Measurement initialisation #############
+set_pgstat_chan 0
+set_pgstat_mode 6
+set_max_bandwidth 60
+set_range ab 1
+set_autoranging ab 100m 2
+set_range db 20m
+set_autoranging db 20m 20m
+cell_on
+meas_loop_lsp potential current sweep_begin sweep_end step_size scan_rate
+    pck_start
+    pck_add current
+    pck_add potential
+    pck_end
+endloop
+on_finished:
+    cell_off
+

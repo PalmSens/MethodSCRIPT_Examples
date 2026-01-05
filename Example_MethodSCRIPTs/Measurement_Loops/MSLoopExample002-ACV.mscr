@@ -1,0 +1,58 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Perform an Alternating Current Voltammetry (ACV) measurement.
+#               Send a data packet for every iteration, with each packet containing the set potential and AC current.
+#               The ACV performs a potential scan from -500 mV to 500 mV with steps of 10 mV,
+#               a scanrate of 20 mV/s and an amplitude of 10 mV at 15 Hz.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 10/11/2025
+# Applies to: EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+var dc_pot
+var dc_cur
+var ac_pot
+var ac_cur
+var z_real
+var z_imag
+var scan_begin
+var scan_end
+var step_pot
+var scan_rate
+var amplitude
+var freq
+# set technique variables
+store_var scan_begin -500m ja
+store_var scan_end 500m ja
+store_var step_pot 10m ja
+store_var scan_rate 20m ja
+store_var amplitude 10m ja
+store_var freq 15 ja
+set_e scan_begin
+############# Measurement initialisation #############
+set_pgstat_chan 0
+set_pgstat_mode 3
+set_max_bandwidth 150
+set_range ba 2u
+set_autoranging ba 2n 20m
+set_range ab 1
+set_autoranging ab 100m 2
+cell_on
+meas_loop_acv dc_pot dc_cur ac_pot ac_cur z_real z_imag scan_begin scan_end step_pot scan_rate amplitude freq
+    pck_start
+        pck_add dc_pot
+        pck_add ac_cur
+        pck_add z_real
+        pck_add z_imag
+    pck_end
+endloop
+on_finished:
+    cell_off
+

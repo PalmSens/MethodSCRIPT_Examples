@@ -1,0 +1,92 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Performs a set of single frequency EIS measurements and calculates
+#               the reciprocal of the square of capacitance (RSC).
+#               For each iteration a package is send with the potential and RSC.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat Pico, Sensit Wearable, EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# initialize variables
+var current
+var potential
+var extra1
+var extra2
+var z_r
+var z_i
+var pot_begin
+var pot_end
+var pot_step
+var scan_rate
+var amplitude
+var frequency
+var rsc
+store_var rsc 0 ja
+var i
+store_var i 0i aa
+var points
+store_var points 0 ja
+var y
+store_var y 0 ja
+# set technique variables
+store_var pot_begin -500m ia
+store_var pot_end -200m ia
+store_var pot_step 10m ia
+store_var amplitude 10m ia # Sine wave RMS
+store_var frequency 1k ja
+set_e pot_begin
+# set pgstat settings
+set_pgstat_chan 0
+set_pgstat_mode 3
+set_max_bandwidth 10k
+set_range ba 2100u
+set_autoranging ba 2100n 2100m
+set_range ab 4200m
+set_autoranging ab 42m 4200m
+# calculate all potentials to apply
+copy_var pot_begin points
+sub_var points pot_end
+div_var points pot_step
+pow_var points 2
+pow_var points 500m # way of doing square root to get absolute value
+add_var points 1100m
+float_to_int points
+array potentials points # make array to store potentials in
+loop i < points
+    copy_var pot_begin potentials[i]
+    add_var potentials[i] y
+    add_var y pot_step
+    add_var i 1i
+endloop
+cell_on
+# pre-treatment with amperometry at -500mV
+meas_loop_ca potential current -500m 200m 3
+endloop
+# ACV to obtain impedance by changing the dc offset of EIS measurements
+store_var i 0i aa
+loop i < points
+    meas_loop_eis extra1 z_r z_i amplitude frequency frequency 1 potentials[i]
+    endloop
+    # Math operations to obtain RSC from z_i (imaginary impedance)
+    copy_var z_i rsc #create a copy of z_i to RSC
+    mul_var rsc 6283m # multiply by 2*pi
+    mul_var rsc frequency # multiply by frequency
+    pow_var rsc 2 # apply square power
+    # send data package
+    pck_start
+        pck_add potentials[i]
+        pck_add rsc # send RSC as Y for PSTrace
+    pck_end
+    add_var i 1i
+endloop
+on_finished:
+    cell_off
+

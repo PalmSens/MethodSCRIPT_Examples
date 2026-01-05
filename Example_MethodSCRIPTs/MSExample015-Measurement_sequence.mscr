@@ -1,0 +1,114 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Performs a sequence of measurement loops.
+#               Beginning and ending with EIS and performing CA in between.
+#               Storing all measurement data in one file.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat Pico, Sensit Wearable, EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+### initialize file ###
+# In order to enable flash storage
+# the following line needs to be uncommented for Sensit and EmStat Pico devices (the Sensit Smart has no on board storage):
+# set_gpio_cfg 0x1E 2
+# file_open "..." 2 = Create new file. If a file with the same name exists, the file name is incremented.
+# The place where the incremented number will go in the file name is indicated by '&i'.
+file_open f"/Measurements/sequences/sequence-&i.dmeas" 2
+# set_script_output 3 = Output to both normal channel and file storage.
+# The normal channel is serial/USB. This way the data can be plotted in PSTrace.
+set_script_output 3
+### define variables ###
+# EIS
+var frequency
+var z_real
+var z_imaginary
+var amplitude
+var frequency_start
+var frequency_end
+var points
+# CV
+var potential
+var current
+var dc_potential
+var time_interval
+var time_run
+var t
+# set global pgstat mode and channel
+set_pgstat_chan 0
+set_pgstat_mode 3
+### perform EIS ###
+# set technique variables
+store_var amplitude 10m ja
+store_var frequency_start 100k ja
+store_var frequency_end 1 ja
+store_var points 36i ja
+store_var dc_potential 200m ja
+set_e dc_potential # set begin potential when cell turns on
+# set pgstat settings
+set_max_bandwidth 1M
+set_range_minmax da dc_potential dc_potential
+set_range ba 2u
+set_autoranging ba 500n 2m
+set_range ab 4
+set_autoranging ab 4 4
+cell_on
+meas_loop_eis frequency z_real z_imaginary amplitude frequency_start frequency_end points dc_potential
+    pck_start
+    pck_add frequency
+    pck_add z_real
+    pck_add z_imaginary
+    pck_end
+endloop
+cell_off
+### perform CA ###
+# set technique variables
+store_var dc_potential 100m ja
+store_var time_interval 100m ja
+store_var time_run 45 ja
+set_e dc_potential
+# set pgstat settings
+set_max_bandwidth 60
+set_range_minmax da dc_potential dc_potential
+set_range ba 30u
+set_autoranging ba 50n 2m
+cell_on
+timer_start
+meas_loop_ca potential current dc_potential time_interval time_run
+    timer_get t
+    pck_start
+    pck_add t
+    pck_add potential
+    pck_add current
+    pck_end
+endloop
+cell_off
+### perform EIS ###
+# set technique variables
+store_var dc_potential 200m ja
+set_e dc_potential
+# set pgstat settings
+set_max_bandwidth 1M
+set_range_minmax da dc_potential dc_potential
+set_range ba 2u
+set_autoranging ba 500n 2m
+set_range ab 4
+set_autoranging ab 4 4
+cell_on
+meas_loop_eis frequency z_real z_imaginary amplitude frequency_start frequency_end points dc_potential
+    pck_start
+        pck_add frequency
+        pck_add z_real
+        pck_add z_imaginary
+    pck_end
+endloop
+on_finished:
+    cell_off
+

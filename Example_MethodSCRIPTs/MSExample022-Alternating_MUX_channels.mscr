@@ -1,0 +1,63 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Performs a Chronoamperometry (CA) measurement on all multiplexer channels.
+#               During the interval time, all selected multiplexer channels are measured for an equal amount of time.
+#               The measured current is stored in the "Output current" array.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat4 instruments with a mux
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# Enable the MUX type and configuration
+# 1 = MUX8; 2 = MUX16; 3 = MUX8-R2
+# 0x0002 = Switch box 1; 0x0004 Switch box 2; 0x0008 OCP mode enable;
+# 0x0010 Common RE and CE; 0x0020 Connect RE to CE; 0x0040 Connect SE to WE
+# 0x0100 WE mode (0x0000 = float, 0x0100 = GND)
+# Connect RE to CE and have inactive WE floating
+mux_config 3i 0x0020
+# Store the amount of attached mux channels
+var channels
+mux_get_channel_count channels
+var potential
+array currents channels
+var dc_potential
+var time_interval
+var time_run
+var t
+var i
+store_var i 0i ja
+# set technique variables
+store_var dc_potential 100m ja
+store_var time_interval 200m ja
+store_var time_run 10 ja
+set_e dc_potential # set begin potential when cell turns on
+############# Measurement initialisation #############
+set_pgstat_chan 0
+set_pgstat_mode 3
+set_max_bandwidth 300
+set_range ba 100u
+set_autoranging ba 59n 100u
+cell_on
+timer_start
+meas_loop_ca_alt_mux potential currents dc_potential time_interval time_run 1i 8i
+    timer_get t
+    pck_start
+        pck_add t
+        pck_add potential
+        loop i < channels
+            pck_add currents[i]
+            add_var i 1i
+        endloop
+    pck_end
+    store_var i 0i ja
+endloop
+on_finished:
+    cell_off
+

@@ -1,0 +1,148 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Play a song on the buzzer of the device.
+#
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat4T, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# play 'Old MacDonald Had a Farm'
+# Verse 1
+# Old MacDonald had a farm
+beep 24 70 200m # C4
+wait 50m
+beep 24 70 200m # C4
+wait 50m
+beep 24 70 200m # C4
+wait 50m
+beep 19 70 200m # G3
+wait 50m
+beep 21 70 200m # A3
+wait 50m
+beep 21 70 200m # A3
+wait 50m
+beep 19 70 400m # G3~
+wait 50m
+# E-I-E-I-O
+beep 28 70 200m # E4
+wait 50m
+beep 28 70 200m # E4
+wait 50m
+beep 26 70 200m # D4
+wait 50m
+beep 26 70 200m # D4
+wait 50m
+beep 24 70 600m # C4~~
+wait 50m
+# And on his farm
+beep 19 70 200m # G3
+wait 50m
+beep 24 70 200m # C4
+wait 50m
+beep 24 70 200m # C4
+wait 50m
+beep 24 70 200m # C4
+wait 50m
+# he had a cow
+beep 19 70 200m # G3
+wait 50m
+beep 21 70 200m # A3
+wait 50m
+beep 21 70 200m # A3
+wait 50m
+beep 19 70 400m # G3
+wait 50m
+# E-I-E-I-O
+beep 28 70 200m # E4
+wait 50m
+beep 28 70 200m # E4
+wait 50m
+beep 26 70 200m # D4
+wait 50m
+beep 26 70 200m # D4
+wait 50m
+beep 24 70 600m # C4~~
+wait 50m
+# With a moo moo here
+beep 19 70 100m
+wait 25m        # (G3 G3)
+beep 19 70 100m
+wait 25m
+beep 24 70 200m # C4
+wait 50m
+beep 24 70 200m # C4
+wait 50m
+beep 24 70 200m # C4
+wait 50m
+# and a moo moo there
+beep 19 70 100m
+wait 25m        # (G3 G3)
+beep 19 70 100m
+wait 25m
+beep 24 70 200m # C4
+wait 50m
+beep 24 70 200m # C4
+wait 50m
+beep 24 70 200m # C4
+wait 50m
+# Here a moo, there a moo,
+beep 24 70 100m
+wait 25m        # (C4 C4)
+beep 24 70 100m
+wait 25m
+beep 24 70 400m # C4~
+wait 100m
+beep 24 70 100m
+wait 25m        # (C4 C4)
+beep 24 70 100m
+wait 25m
+beep 24 70 400m # C4~
+wait 50m
+# everywhere a moo moo
+beep 24 70 100m
+wait 25m        # (C4 C4)
+beep 24 70 100m
+wait 25m
+beep 24 70 100m
+wait 25m        # (C4 C4)
+beep 24 70 100m
+wait 25m
+beep 24 70 200m # C4
+wait 50m
+beep 24 70 200m # C4
+wait 100m
+# Old MacDonald had a farm
+beep 24 70 200m # C4
+wait 50m
+beep 24 70 200m # C4
+wait 50m
+beep 24 70 200m # C4
+wait 50m
+beep 19 70 200m # G3
+wait 50m
+beep 21 70 200m # A3
+wait 50m
+beep 21 70 200m # A3
+wait 50m
+beep 19 70 400m # G3~
+wait 50m
+# E-I-E-I-O
+beep 28 70 200m # E4
+wait 50m
+beep 28 70 200m # E4
+wait 50m
+beep 26 70 200m # D4
+wait 50m
+beep 26 70 200m # D4
+wait 50m
+beep 24 70 600m # C4~~
+wait 50m
+

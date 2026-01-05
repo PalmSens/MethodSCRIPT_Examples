@@ -249,6 +249,13 @@ __pycache__/
 .DS_Store
 desktop.ini
 
+# VS code user environment
+.vscode/
+
+# User
+Drafts/
+
+# MISC
 /.metadata
 /MethodSCRIPTExample_Android/.metadata/.plugins
 /MethodSCRIPTExample_Android/.metadata/.mylyn

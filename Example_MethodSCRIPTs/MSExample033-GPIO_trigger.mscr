@@ -1,0 +1,68 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Waits on a pull-down of a GPIO pin before starting a CA measurement.
+#               When no pull-down is given for one minute the loop is stopped.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat Pico, EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# initialize GPIO0 as input
+# please consult the manual of you device which GPIO is available as an input on the aux port.
+set_gpio_cfg 0b1 0
+set_gpio_pullup 0b1 1
+# initialize variable
+var g
+var potential
+var current
+var dc_potential
+var time_interval
+var time_run
+var time
+# set technique variables
+store_var dc_potential 100m ja
+store_var time_interval 100m ja
+store_var time_run 2 ja
+set_e dc_potential
+# set pgstat settings
+set_pgstat_chan 0
+set_pgstat_mode 3
+set_max_bandwidth 300
+set_range_minmax da -500m 500m
+set_range ba 100u
+set_autoranging ba 59n 100u
+# start the main loop
+timer_start
+loop 1i == 1i
+    get_gpio g # read all the GPIO
+    bit_or_var g 0b11111110
+    if g == 0b11111110
+        cell_on
+        timer_start # start the timer for the CA loop
+        meas_loop_ca potential current dc_potential time_interval time_run
+            timer_get time
+            pck_start
+            pck_add time
+            pck_add potential
+            pck_add current
+            pck_end
+        endloop
+        cell_off
+        timer_start # restart the timer for the 1 minute wait
+    endif
+    timer_get time
+    send_string f"{time}"
+    if time >= 60
+        breakloop # break the loop when the time between pull-downs is one minute
+    endif
+endloop
+on_finished
+    cell_off
+

@@ -1,0 +1,43 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Start the QR code scanner.
+#               Send the result of the scan over serial.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat4T
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# make an arbitrarily long array to store the qr code values in
+array outputs 5i
+var out_count
+# perform the scan, the amount of values read in out_count
+qr_scan outputs out_count
+var ix
+store_var ix 0i aa
+if out_count == -3i
+    send_string "No code was scanned"
+    abort
+elseif out_count == -2i
+    send_string "Code contained invalid formatting"
+    abort
+elseif out_count == -1i
+    send_string "Code did not contain #!PS marker"
+    abort
+else
+    send_string f"Parsed {out_count} values"
+endif
+loop ix < out_count
+    if ix >= 5i
+        send_string "More than 5 values parsed but not stored"
+        breakloop
+    endif
+    send_string f"{ix}: {outputs[ix]}"
+    add_var ix 1i
+endloop

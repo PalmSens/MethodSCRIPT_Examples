@@ -1,0 +1,50 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Perform a Chronoamperometry (CA) measurement.
+#               Send a data packet for every iteration, with each packet containing the elapsed time,
+#               the set potential and the measured current.
+#               A DC potential of 100 mV is applied.
+#               The current is measured every 100 ms for a total of 2 seconds.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 10/11/2025
+# Applies to: EmStat Pico, Sensit Wearable, EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+var potential
+var current
+var dc_potential
+var time_interval
+var time_run
+var t
+# set technique variables
+store_var dc_potential 100m ja
+store_var time_interval 100m ja
+store_var time_run 2 ja
+set_e dc_potential
+############# Measurement initialisation #############
+set_pgstat_chan 0
+set_pgstat_mode 3
+set_max_bandwidth 60
+set_range_minmax da dc_potential dc_potential
+set_range ba 30u
+set_autoranging ba 50n 2m
+cell_on
+timer_start
+meas_loop_ca potential current dc_potential time_interval time_run
+    timer_get t
+    pck_start
+    pck_add t
+    pck_add potential
+    pck_add current
+    pck_end
+endloop
+on_finished:
+    cell_off
+

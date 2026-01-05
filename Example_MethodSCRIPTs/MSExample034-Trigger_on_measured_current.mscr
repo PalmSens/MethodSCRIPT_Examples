@@ -1,0 +1,85 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Perform a CA measurement.
+#               When the measured current goes below 100 uA an OCP measurement is started.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: Sensit Wearable, EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# initialize variables
+var potential
+var current
+var dc_potential
+var time_interval
+var time_run
+var time
+var index
+var break
+store_var break 0i aa
+# initialize the currents array
+array currents 5i
+store_var currents[0i] 100m ja
+store_var currents[1i] 100m ja
+store_var currents[2i] 100m ja
+store_var currents[3i] 100m ja
+store_var currents[4i] 100m ja
+# set technique variables
+store_var dc_potential 100m ja
+store_var time_interval 100m ja
+store_var time_run 3600 ja # let the CA run for a maximum of one hour
+store_var index 0i aa
+set_e dc_potential
+# set pgstat settings for CA
+set_pgstat_chan 0
+set_pgstat_mode 3
+set_max_bandwidth 300
+set_range_minmax da -500m 500m
+set_range ba 100u
+set_autoranging ba 59n 100u
+# start the CA measurement
+cell_on
+timer_start
+meas_loop_ca potential current dc_potential time_interval time_run
+    timer_get time
+    pck_start
+        pck_add time
+        pck_add current
+    pck_end
+    copy_var current currents[index]
+    mean currents current # eliminate spikes by looking at a five point mean
+    if current < 100u # check if the current is below 100 uA
+        store_var break 1i ja # indicate that the CA was broken off
+        breakloop
+    endif
+    if index < 4i
+        add_var index 1i
+    else
+        store_var index 0i aa
+    endif
+endloop
+cell_off
+set_range ab 1
+set_autoranging ab 10m 1
+store_var time_run 30 ja
+if break == 1i # check if the CA was really broken off
+    timer_start
+    # perform the OCP
+    meas_loop_ocp potential time_interval time_run
+        timer_get time
+        pck_start
+            pck_add time
+            pck_add potential
+        pck_end
+    endloop
+endif
+on_finished
+    cell_off
+

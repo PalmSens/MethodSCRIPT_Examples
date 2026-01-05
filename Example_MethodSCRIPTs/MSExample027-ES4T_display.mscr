@@ -1,0 +1,81 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Demo the display functions of the EmStat4T
+#
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat4T
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+var btn
+var progress
+var num
+var choice
+store_var progress 0i ja
+# display text on the screen for 3 seconds
+display_clear
+display_text "Hello" 0
+display_text "World!" 0
+display_text ":-)" 0
+display_draw
+wait 3
+# show buttons on screen
+display_clear
+display_text "Pick a button!" 1
+display_btns btn "Left" "Right" # immediatly draws the display
+# check which button was pressed
+if btn == 0i
+    display_text "You pressed left!" 1
+    display_draw
+elseif btn == 1i
+    display_text "You pressed right!" 1
+    display_draw
+endif
+wait 3
+# show a 'loading bar' that goes from 0 to 100 in 5 seconds
+loop progress <= 100i
+    display_clear
+    display_text "Loading..." 0
+    display_progress progress
+    display_draw
+    wait 50m
+    add_var progress 1i
+endloop
+# prompt variable field
+display_clear
+display_inp_num "Please enter a number" num 0
+# display the number that was entered
+display_text f"You entered {num}" 0
+display_draw
+wait 3
+# make a scroll menu with all the icon choices
+display_clear
+display_scroll_add "None"
+display_scroll_add "Okay"
+display_scroll_add "Warn"
+display_scroll_add "Query"
+display_scroll_add "Error"
+display_scroll_add "Info"
+display_scroll_add "QR Code"
+display_scroll_add "Spinner"
+display_scroll_add "Add Droplet"
+display_scroll_add "Insert SPE"
+display_scroll_get "Choose an Icon" choice
+# display which icon was chosen
+if choice == 0
+    display_text "You chose no icon" 1
+    display_text ":-(" 1
+else
+    display_icon choice
+    display_text "You chose this icon" 0
+endif
+display_draw
+wait 3
+

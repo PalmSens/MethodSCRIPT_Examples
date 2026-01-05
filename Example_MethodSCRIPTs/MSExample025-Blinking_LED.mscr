@@ -1,0 +1,27 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Blink the on board LED of the device.
+#               Since the GPIO for the onboard LED is locked the notify_led command must be used.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat Pico, Sensit Wearable, EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+var i
+store_var i 0i ja
+loop i < 30i
+    notify_led 5        # LED in alert state (RED)
+    # For the Sensit Wearable this will not change the LED color but only the blink frequency.
+    wait 1
+    notify_led 1        # LED in idle state (BLUE)
+    wait 1
+    add_var i 1i
+endloop
+

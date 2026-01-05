@@ -1,0 +1,64 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Connects to the Real Time Clock (RTC), gets the date and time and saves a file with a timestamp.
+#               An RTC has its own power source and keeps the time up to date even if the device is powered off.
+#               This script sets the time and date in the array to the arbitrary value of 2012-08-24 14:16:00
+#               Then it will wait 10 seconds and read the time from the RTC.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: EmStat Pico, Sensit Wearable, EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# To configure the RTC for the EmStat Pico a register needs to be set with the following serial commands:
+# S0252243DF8
+# S010080
+# S0212345678
+# These commands are not send via MethodSCRIPT but need to be send following the communication protocol.
+# More information: https://www.palmsens.com/app/uploads/2025/10/Emstat-Pico-communication-protocol-V1.6.pdf
+# After these commands the EmStat Pico needs to be restarted
+array datetime 6i
+# The values stored in the array are written in hexadecimal format in this example (you don't have to)
+# Year = 2012
+store_var datetime[0i] 0x7DC aa
+# Month = August
+store_var datetime[1i] 0x008 aa
+# Day = 24
+store_var datetime[2i] 0x018 aa
+# Hour = 2 PM
+store_var datetime[3i] 0x00E aa
+# Minute = 16
+store_var datetime[4i] 0x010 aa
+# Seconds = 0
+store_var datetime[5i] 0x000 aa
+# Send the date just stored in the array
+send_string f"Date stored: {datetime[0i]} {datetime[1i]} {datetime[2i]} {datetime[3i]} {datetime[4i]} {datetime[5i]}"
+wait 5
+# Read data from real-time clock
+rtc_get datetime[0i] datetime[1i] datetime[2i] datetime[3i] datetime[4i] datetime[5i]
+send_string f"Date from RTC: {datetime[0i]} {datetime[1i]} {datetime[2i]} {datetime[3i]} {datetime[4i]} {datetime[5i]}"
+wait 5
+# Wait ~10 seconds
+send_string "Waiting for the time to change."
+wait 5
+# Read data from real-time clock
+rtc_get datetime[0i] datetime[1i] datetime[2i] datetime[3i] datetime[4i] datetime[5i]
+send_string f"Date from RTC: {datetime[0i]} {datetime[1i]} {datetime[2i]} {datetime[3i]} {datetime[4i]} {datetime[5i]}"
+wait 5
+# Wait ~10 seconds
+send_string "Waiting for the time to change."
+wait 5
+# Read data from real-time clock
+rtc_get datetime[0i] datetime[1i] datetime[2i] datetime[3i] datetime[4i] datetime[5i]
+send_string f"Date from RTC: {datetime[0i]} {datetime[1i]} {datetime[2i]} {datetime[3i]} {datetime[4i]} {datetime[5i]}"
+wait 5
+# Store file with RTC date
+file_open f"date_files/{datetime[0i]}-{datetime[1i]}-{datetime[2i]}-{datetime[3i]}:{datetime[4i]}_emptyfile" 0
+file_close
+

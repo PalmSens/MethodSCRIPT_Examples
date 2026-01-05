@@ -1,0 +1,147 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  Performs LSV at a time interval and determines the polarization resistance.
+#               Every iteration the LSV data is send, the linear fit of that data and the determined Rpol.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: Sensit Wearable, EmStat4, Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# initialize variables
+var ocp
+array ocps 10i
+var potential
+var current
+var pot_begin
+var pot_end
+var pot_step
+var scan_rate
+var pot_region
+var points
+var interval_time
+var loops
+var rpol
+var slope
+var intercept
+var ss_res
+var ss_tot
+var error
+var time
+store_var time 0 eb
+var lp
+store_var lp 0i aa
+var index
+store_var index 0i aa
+var x
+var y
+# Set LSV technique variables
+store_var pot_step 100u ia
+store_var scan_rate 100m aa
+store_var pot_region 10m ia # Ecorr +-pot_region determines the region for LSV
+# Set variables for the Rpol loop
+store_var interval_time 30 eb # set the amount of time for each loop
+store_var loops 10 aa # set the amount of loops to be done
+### OCP measurement ###
+set_pgstat_chan 0
+set_pgstat_mode 3
+set_max_bandwidth 60
+set_range ab 1
+set_autoranging ab 10m 1
+cell_off
+meas_loop_ocp ocp 100m 1
+    copy_var ocp ocps[index]
+    add_var index 1i
+endloop
+# determine Ecorr and set potential region
+mean ocps ocp
+send_string f"OCP: {ocp}"
+copy_var ocp pot_begin
+copy_var ocp pot_end
+sub_var pot_begin pot_region
+add_var pot_end pot_region
+# determine amount of data points
+copy_var pot_region points
+mul_var points 2
+div_var points pot_step
+# initialize data arrays
+array potentials points
+array currents points
+# set potentiostat settings for LSV
+set_max_bandwidth 500
+set_range_minmax da -500m 500m
+set_range ba 100u
+set_autoranging ba 59n 100u
+# set technique variables
+set_e pot_begin
+### begin loop for Rpol ###
+loop lp < loops
+    set_int interval_time
+    # do the LSV
+    store_var index 0i aa
+    cell_on
+    meas_loop_lsv potential current pot_begin pot_end pot_step scan_rate
+        pck_start
+            pck_add potential
+            pck_add current
+        pck_end
+        copy_var potential potentials[index]
+        copy_var current currents[index]
+        add_var index 1i
+    endloop
+    cell_off
+    # get the linear fit of the data
+    linear_fit potentials currents slope intercept
+    # plot the linear fit and get the Rsquared
+    store_var index 0i aa
+    store_var ss_res 0 ja
+    store_var ss_tot 0 ja
+    loop index < points
+        copy_var slope y
+        mul_var y potentials[index]
+        add_var y intercept
+        alter_vartype y ba
+        pck_start
+            pck_add potentials[index]
+            pck_add y
+        pck_end
+        # calculate the residual sum of squares and the total sum of squares
+        copy_var currents[index] x
+        sub_var x y
+        pow_var x 2
+        add_var ss_res x
+        mean currents x
+        mul_var x -1
+        add_var x currents[index]
+        pow_var x 2
+        add_var ss_tot x
+        add_var index 1i
+    endloop
+    # send Rsquared
+    store_var error 1 ja
+    div_var ss_res ss_tot
+    sub_var error ss_res
+    send_string f"linear fit R_squared: {error}"
+    # plot the Rcorr vs time
+    copy_var slope rpol
+    pow_var rpol -1
+    alter_vartype rpol cb
+    pck_start
+        pck_add time
+        pck_add rpol
+        pck_add error
+    pck_end
+    add_var time interval_time
+    add_var lp 1i
+    # wait to start the next loop
+    await_int
+endloop
+on_finished:
+    cell_off
+

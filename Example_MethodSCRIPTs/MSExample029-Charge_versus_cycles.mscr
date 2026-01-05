@@ -1,0 +1,111 @@
+e
+#############
+# MethodSCRIPT example for potentiostats by PalmSens BV - www.palmsens.com
+#
+#
+# Description:  With Chronopotentiometry (CP) charge and discharge a cell with a constant current.
+#               Store the amount of charge transferred during each charge and discharge step.
+#               Send live I-V verus time. Send the capacity per charge - discharge step.
+#               The charge values are the modulus and are converted to mAh.
+#
+#
+# MethodSCRIPT version: 1.8
+# Last modified: 15/12/2025
+# Applies to: Nexus
+# Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
+#
+#############
+#
+# initialize variables
+var potential_max
+var potential_min
+var current_charge
+var current_discharge
+var cycles
+var interval
+var max_time
+var cycle
+var current
+var potential
+var time
+var q
+var qchg
+var qdis
+array capacity_charge 10000i
+array capacity_discharge 10000i
+store_var cycle 1i ja
+# set technique parameters
+store_var potential_max 4300m ab # maximum potential to charge to
+store_var potential_min 2500m ab # minimum potential to discharge to
+store_var current_charge  100m ba # constant current to charge with
+store_var current_discharge -100m ba # constant current to discharge with
+store_var cycles 100i ja # amount of charge and discharge cycles
+store_var interval 1000m eb # interval time of each measurement point
+store_var max_time 4000 eb # maximum duration of each step (if the cut-off is not met)
+# initialize the galvanostat
+set_acquisition_frac_autoadjust 50
+set_pgstat_chan 0
+set_pgstat_mode 6
+set_max_bandwidth 58505m
+set_range ab 2100m
+set_autoranging ab 210m 2100m
+set_range db 2100m
+set_autoranging db 2100m 2100m
+meas 100m potential ab
+cell_on ocp(potential)
+# charge/discharge loop
+timer_start
+loop cycle <= cycles
+# constant current charge
+meas_loop_cp potential current current_charge interval max_time
+    timer_get time
+    copy_var current q
+    mul_var q interval
+    div_var q 3600m
+    add_var capacity_charge[cycle] q
+    set_script_output 1
+    pck_start
+        pck_add time
+        pck_add potential
+        pck_add current
+    pck_end
+    send_string f"Cycle {cycle}/{cycles}    |    E = {potential} V    |    I = {current} A    |    Qchg = {capacity_charge[cycle]} Ah   |    Qdis = {capacity_discharge[cycle]} Ah   |   t = {time} s"
+    set_script_output 0
+    if potential > potential_max
+        breakloop
+    endif
+endloop
+# constant current discharge
+meas_loop_cp potential current current_discharge interval max_time
+    timer_get time
+    copy_var current q
+    mul_var q interval
+    div_var q -3600m
+    add_var capacity_discharge[cycle] q
+    set_script_output 1
+    pck_start
+        pck_add time
+        pck_add potential
+        pck_add current
+    pck_end
+    send_string f"Cycle {cycle}/{cycles}    |    E = {potential} V    |    I = {current} A    |    Qchg = {capacity_charge[cycle]} Ah   |    Qdis = {capacity_discharge[cycle]} Ah   |   t = {time} s"
+    if potential < potential_min
+        breakloop
+    endif
+endloop
+# send cycle number and amount of coulombs charged and discharged
+copy_var capacity_charge[cycle] qchg
+copy_var capacity_discharge[cycle] qdis
+alter_vartype qchg as
+alter_vartype qdis as
+alter_vartype cycle at
+pck_start
+    pck_add cycle
+    pck_add qchg
+    pck_add qdis
+pck_end
+add_var cycle 1i
+endloop
+on_finished:
+cell_off
+
