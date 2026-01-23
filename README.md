@@ -61,5 +61,5 @@ This example demonstrates the implementation of OxyPlot to show the EIS measurem
 
 # Support #
 The EmStat Pico module is a product from PalmSens BV and Analog Devices Inc.
-All support questions should be posted in our [EngineerZone forums](https://ez.analog.com/partnerzone/palmsens/). 
+Need help? Email our support team at support@palmsens.com
 
