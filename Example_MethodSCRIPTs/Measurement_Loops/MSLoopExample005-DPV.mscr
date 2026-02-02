@@ -31,7 +31,6 @@ store_var step_size 10m ja
 store_var pulse_potential 20m ja
 store_var pulse_time 5m ja
 store_var scan_rate 100m ja
-set_e scan_begin
 ############# Measurement initialisation #############
 set_pgstat_chan 0
 set_pgstat_mode 3
@@ -39,6 +38,7 @@ set_max_bandwidth 1200
 set_range_minmax da scan_begin scan_end
 set_range ba 12u
 set_autoranging ba 50n 2m
+set_e scan_begin # potential when cell turns on
 cell_on
 meas_loop_dpv potential current scan_begin scan_end step_size pulse_potential pulse_time scan_rate
     pck_start

@@ -35,7 +35,6 @@ store_var step_pot 10m ja
 store_var scan_rate 20m ja
 store_var amplitude 10m ja
 store_var freq 15 ja
-set_e scan_begin
 ############# Measurement initialisation #############
 set_pgstat_chan 0
 set_pgstat_mode 3
@@ -44,6 +43,7 @@ set_range ba 2u
 set_autoranging ba 2n 20m
 set_range ab 1
 set_autoranging ab 100m 2
+set_e scan_begin # potential when cell turns on
 cell_on
 meas_loop_acv dc_pot dc_cur ac_pot ac_cur z_real z_imag scan_begin scan_end step_pot scan_rate amplitude freq
     pck_start

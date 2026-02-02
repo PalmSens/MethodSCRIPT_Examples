@@ -51,7 +51,6 @@ store_var frequency_start 100k ja
 store_var frequency_end 1 ja
 store_var points 36i ja
 store_var dc_potential 200m ja
-set_e dc_potential # set begin potential when cell turns on
 # set pgstat settings
 set_max_bandwidth 1M
 set_range_minmax da dc_potential dc_potential
@@ -59,6 +58,7 @@ set_range ba 2u
 set_autoranging ba 500n 2m
 set_range ab 4
 set_autoranging ab 4 4
+set_e dc_potential # set begin potential when cell turns on
 cell_on
 meas_loop_eis frequency z_real z_imaginary amplitude frequency_start frequency_end points dc_potential
     pck_start
@@ -73,12 +73,12 @@ cell_off
 store_var dc_potential 100m ja
 store_var time_interval 100m ja
 store_var time_run 45 ja
-set_e dc_potential
 # set pgstat settings
 set_max_bandwidth 60
 set_range_minmax da dc_potential dc_potential
 set_range ba 30u
 set_autoranging ba 50n 2m
+set_e dc_potential # potential when cell turns on
 cell_on
 timer_start
 meas_loop_ca potential current dc_potential time_interval time_run
@@ -93,7 +93,6 @@ cell_off
 ### perform EIS ###
 # set technique variables
 store_var dc_potential 200m ja
-set_e dc_potential
 # set pgstat settings
 set_max_bandwidth 1M
 set_range_minmax da dc_potential dc_potential
@@ -101,6 +100,7 @@ set_range ba 2u
 set_autoranging ba 500n 2m
 set_range ab 4
 set_autoranging ab 4 4
+set_e dc_potential # potential when cell turns on
 cell_on
 meas_loop_eis frequency z_real z_imaginary amplitude frequency_start frequency_end points dc_potential
     pck_start

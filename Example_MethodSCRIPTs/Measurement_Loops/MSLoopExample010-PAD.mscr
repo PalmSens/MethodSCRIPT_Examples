@@ -31,7 +31,6 @@ store_var pulse_potential 1500m ja
 store_var pulse_time 10m ja
 store_var interval_time 50m ja
 store_var run_time 10050m ja
-set_e dc_potential
 ############# Measurement initialisation #############
 set_pgstat_chan 0
 set_pgstat_mode 3
@@ -39,6 +38,7 @@ set_max_bandwidth 600
 set_range_minmax da dc_potential pulse_potential
 set_range ba 30u
 set_autoranging ba 50n 2m
+set_e dc_potential # potential when cell turns on
 cell_on
 # The last parameter of the command is the mode and determines the type of current given to the output variables
 # 1: DC mode, the current is measured before the pulse

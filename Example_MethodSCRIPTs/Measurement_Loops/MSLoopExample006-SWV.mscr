@@ -5,7 +5,7 @@ e
 #
 # Description:  Perform a Square Wave Voltammetry (SWV) measurement.
 #               Send a data packet for every iteration, with each packet containing the set potential and
-#               "forward current – reverse current".
+#               "forward current - reverse current".
 #               The SWV performs a potential scan from -500 mV to 500 mV.
 #               It steps with 10 mV increments at a frequency of 10 Hz.
 #               At every step a pulse of 30 mV is applied for 50 ms.
@@ -33,7 +33,6 @@ store_var scan_end 500m ja
 store_var step_size 10m ja
 store_var pulse_amplitude 15m ja
 store_var frequency 10 ja
-set_e scan_begin
 ############# Measurement initialisation #############
 set_pgstat_chan 0
 set_pgstat_mode 3
@@ -41,6 +40,7 @@ set_max_bandwidth 120
 set_range_minmax da -515m 515m
 set_range ba 30u
 set_autoranging ba 50n 2m
+set_e scan_begin # potential when cell turns on
 cell_on
 meas_loop_swv potential current current_forward current_reverse scan_begin scan_end step_size pulse_amplitude frequency
     pck_start

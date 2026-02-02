@@ -42,7 +42,6 @@ store_var pot_end -200m ia
 store_var pot_step 10m ia
 store_var amplitude 10m ia # Sine wave RMS
 store_var frequency 1k ja
-set_e pot_begin
 # set pgstat settings
 set_pgstat_chan 0
 set_pgstat_mode 3
@@ -51,6 +50,7 @@ set_range ba 2100u
 set_autoranging ba 2100n 2100m
 set_range ab 4200m
 set_autoranging ab 42m 4200m
+set_e pot_begin # set begin potential when cell turns on
 # calculate all potentials to apply
 copy_var pot_begin points
 sub_var points pot_end

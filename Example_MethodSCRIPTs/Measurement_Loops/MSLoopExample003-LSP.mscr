@@ -26,7 +26,6 @@ store_var sweep_begin -5m ja
 store_var sweep_end 5m ja
 store_var step_size 100u ja
 store_var scan_rate 1m ja
-set_i 0
 ############# Measurement initialisation #############
 set_pgstat_chan 0
 set_pgstat_mode 6
@@ -35,6 +34,7 @@ set_range ab 1
 set_autoranging ab 100m 2
 set_range db 20m
 set_autoranging db 20m 20m
+set_i 0 # current when cell turns on
 cell_on
 meas_loop_lsp potential current sweep_begin sweep_end step_size scan_rate
     pck_start

@@ -31,7 +31,6 @@ store_var frequency_start 100k ja
 store_var frequency_end 100 ja
 store_var points 11i ja
 store_var dc_current 10m ja
-set_i 0
 ############# Measurement initialisation #############
 set_pgstat_chan 0
 set_pgstat_mode 6
@@ -40,6 +39,7 @@ set_range ab 2
 set_autoranging ab 100m 2
 set_range db 20m
 set_autoranging db 20m 20m
+set_i 0 # current when cell turns on
 cell_on
 meas_loop_geis frequency z_real z_imaginary amplitude frequency_start frequency_end points dc_current
     pck_start

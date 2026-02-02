@@ -36,7 +36,6 @@ store_var dc_potential 100m ja
 store_var time_interval 100m ja
 store_var time_run 3600 ja # let the CA run for a maximum of one hour
 store_var index 0i aa
-set_e dc_potential
 # set pgstat settings for CA
 set_pgstat_chan 0
 set_pgstat_mode 3
@@ -44,6 +43,7 @@ set_max_bandwidth 300
 set_range_minmax da -500m 500m
 set_range ba 100u
 set_autoranging ba 59n 100u
+set_e dc_potential # set begin potential when cell turns on
 # start the CA measurement
 cell_on
 timer_start
@@ -80,6 +80,6 @@ if break == 1i # check if the CA was really broken off
         pck_end
     endloop
 endif
-on_finished
+on_finished:
     cell_off
 

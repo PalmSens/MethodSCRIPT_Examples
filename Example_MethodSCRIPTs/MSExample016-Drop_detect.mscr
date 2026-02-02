@@ -64,7 +64,6 @@ store_var scan_vertex1 500m ja
 store_var scan_vertex2 -500m ja
 store_var step_size 10m ja
 store_var scan_rate 100m ja
-set_e scan_start # set begin potential when cell turns on
 # Measurement initialisation
 set_pgstat_chan 0
 set_pgstat_mode 3
@@ -72,6 +71,7 @@ set_max_bandwidth 60
 set_range_minmax da scan_vertex2 scan_vertex1
 set_range ba 50u
 set_autoranging ba 50n 2m
+set_e scan_start # set begin potential when cell turns on
 cell_on
 meas_loop_cv potential current scan_start scan_vertex1 scan_vertex2 step_size scan_rate nscans(3)
     pck_start

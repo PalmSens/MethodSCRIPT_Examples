@@ -31,7 +31,6 @@ store_var frequency_start 100k ja
 store_var frequency_end 100 ja
 store_var points 11i ja
 store_var dc_potential 200m ja
-set_e dc_potential
 ############# Measurement initialisation #############
 set_pgstat_chan 0
 set_pgstat_mode 3
@@ -41,6 +40,7 @@ set_range ba 2u
 set_autoranging ba 500n 2m
 set_range ab 4
 set_autoranging ab 4 4
+set_e dc_potential # potential when cell turns on
 cell_on
 meas_loop_eis frequency z_real z_imaginary amplitude frequency_start frequency_end points dc_potential
     pck_start

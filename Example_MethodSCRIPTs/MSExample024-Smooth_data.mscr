@@ -30,7 +30,6 @@ store_var sweep_begin -500m ja
 store_var sweep_end 500m ja
 store_var step_size 10m ja
 store_var scan_rate 100m ja
-set_e sweep_begin
 ############# Measurement initialisation #############
 set_pgstat_chan 0
 set_pgstat_mode 3
@@ -38,6 +37,7 @@ set_max_bandwidth 10
 set_range_minmax da sweep_begin sweep_end
 set_range ba 100u
 set_autoranging ba 59n 100u
+set_e sweep_begin # set begin potential when cell turns on
 # calculate the amount of data points
 copy_var sweep_end points
 sub_var points sweep_begin

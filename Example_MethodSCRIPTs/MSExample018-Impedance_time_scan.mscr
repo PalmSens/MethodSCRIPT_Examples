@@ -35,7 +35,6 @@ store_var frequency_start 100 ja
 store_var frequency_end 100 ja
 store_var points 1i ja
 store_var dc_potential 0 ja
-set_e dc_potential # set begin potential when cell turns on
 store_var measurement_time 3600 ja # set total time for measurement in seconds
 store_var measurement_interval 10 ja # set interval between measurements in seconds
 ### Measurement initialisation ###
@@ -47,6 +46,7 @@ set_range ba 10m
 set_autoranging ba 1n 10m
 set_range ab 1
 set_autoranging ab 100m 1
+set_e dc_potential # set begin potential when cell turns on
 set_int measurement_interval
 loop time <= measurement_time
     cell_on

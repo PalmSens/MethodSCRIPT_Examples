@@ -37,13 +37,13 @@ store_var i 0i ja
 store_var dc_potential 100m ja
 store_var time_interval 200m ja
 store_var time_run 10 ja
-set_e dc_potential # set begin potential when cell turns on
 ############# Measurement initialisation #############
 set_pgstat_chan 0
 set_pgstat_mode 3
 set_max_bandwidth 300
 set_range ba 100u
 set_autoranging ba 59n 100u
+set_e dc_potential # set begin potential when cell turns on
 cell_on
 timer_start
 meas_loop_ca_alt_mux potential currents dc_potential time_interval time_run 1i 8i
