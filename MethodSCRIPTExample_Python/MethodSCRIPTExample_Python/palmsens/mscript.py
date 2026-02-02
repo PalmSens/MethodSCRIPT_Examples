@@ -235,32 +235,32 @@ def metadata_status_to_text(status: int) -> str:
     return " | ".join(descriptions) if descriptions else "OK"
 
 
-def _metadata_current_range_to_text(device_type: str, cr: int) -> str:
+def _metadata_current_range_to_text(device_type: str, range: int) -> str:
     if device_type == "EmStat Pico":
-        return MSCRIPT_CURRENT_RANGES_EMSTAT_PICO.get(cr) or "UNKNOWN CURRENT RANGE"
+        return MSCRIPT_CURRENT_RANGES_EMSTAT_PICO.get(range) or "UNKNOWN CURRENT RANGE"
     if "EmStat4" in device_type:
-        return MSCRIPT_CURRENT_RANGES_EMSTAT4.get(cr) or "UNKNOWN CURRENT RANGE"
+        return MSCRIPT_CURRENT_RANGES_EMSTAT4.get(range) or "UNKNOWN CURRENT RANGE"
     if device_type == "Nexus":
-        return MSCRIPT_CURRENT_RANGES_NEXUS.get(cr) or "UNKNOWN CURRENT RANGE"
+        return MSCRIPT_CURRENT_RANGES_NEXUS.get(range) or "UNKNOWN CURRENT RANGE"
     return "UNKNOWN DEVICE TYPE"
 
 
-def _metadata_potential_range_to_text(device_type: str, cr: int) -> str:
+def _metadata_potential_range_to_text(device_type: str, range: int) -> str:
     if "EmStat4" in device_type:
-        return MSCRIPT_POTENTIAL_RANGES_EMSTAT4.get(cr) or "UNKNOWN POTENTIAL RANGE"
+        return MSCRIPT_POTENTIAL_RANGES_EMSTAT4.get(range) or "UNKNOWN POTENTIAL RANGE"
     if device_type == "Nexus":
-        return MSCRIPT_POTENTIAL_RANGES_NEXUS.get(cr) or "UNKNOWN POTENTIAL RANGE"
+        return MSCRIPT_POTENTIAL_RANGES_NEXUS.get(range) or "UNKNOWN POTENTIAL RANGE"
     return "UNKNOWN DEVICE TYPE"
 
 
-def metadata_range_to_text(device_type: str, var_type: VarType, cr: int) -> str:
+def metadata_range_to_text(device_type: str, var_type: VarType, range: int) -> str:
     """Convert a metadata range to text"""
     if var_type.unit == "A" or var_type.id == "cc":
         # Z_real contains the metadata of the current range
-        return _metadata_current_range_to_text(device_type, cr)
+        return _metadata_current_range_to_text(device_type, range)
     if var_type.unit == "V" or var_type.unit == "Vrms" or var_type.id == "cd":
         # Z_imag contains the metadata of the potential range
-        return _metadata_potential_range_to_text(device_type, cr)
+        return _metadata_potential_range_to_text(device_type, range)
     return f"UNKNOWN UNIT: {var_type.unit}"
 
 
@@ -336,7 +336,7 @@ class MScriptVar:
                 metadata["status"] = value
             if (len(token) == 3) and (token[0] == "2"):
                 value = int(token[1:], 16)
-                metadata["cr"] = value
+                metadata["range"] = value
         return metadata
 
 

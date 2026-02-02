@@ -157,9 +157,9 @@ def plot_curve(curve_x: tuple[mscript.MScriptVar], curve_y: tuple[mscript.MScrip
 def plot_metadata(x_vals: list[float], y_vals: list[float], curve: tuple[mscript.MScriptVar], device_type):
     prev_range = None
     for x_val, y_val, p in zip(x_vals, y_vals, curve):
-        if 'cr' in p.metadata:
+        if 'range' in p.metadata:
             # Add annotation to data points to indicate change in range metadata.
-            meas_range = p.metadata['cr']
+            meas_range = p.metadata['range']
             if meas_range != prev_range:
                 range_label = mscript.metadata_range_to_text(device_type, p.type, meas_range)
                 plt.annotate(text=range_label, xy=(x_val, y_val), xycoords='data',

@@ -96,7 +96,7 @@ def main():
             baudrate = guessed_baudrate
 
     if baudrate is None:
-        LOG.error('Baud rate must be provided when not auto-dectecting serial port')
+        LOG.error('Baud rate must be provided when not auto-detecting serial port')
         sys.exit()
 
     # Create and open serial connection to the device.
@@ -144,10 +144,10 @@ def main():
                     status_text = palmsens.mscript.metadata_status_to_text(
                         var.metadata['status'])
                     cols.append(f'STATUS: {status_text:<16s}')
-                if 'cr' in var.metadata:
-                    cr_text = palmsens.mscript.metadata_range_to_text(
-                        device_type, var.type, var.metadata['cr'])
-                    cols.append(f'CR: {cr_text}')
+                if 'range' in var.metadata:
+                    range_text = palmsens.mscript.metadata_range_to_text(
+                        device_type, var.type, var.metadata['range'])
+                    cols.append(f'range: {range_text}')
             print(' | '.join(cols))
 
 

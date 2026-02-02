@@ -100,7 +100,7 @@ def main():
             baudrate = guessed_baudrate
 
     if baudrate is None:
-        LOG.error('Baud rate must be provided when not auto-dectecting serial port')
+        LOG.error('Baud rate must be provided when not auto-detecting serial port')
         sys.exit()
 
     # Create and open serial connection to the device.
