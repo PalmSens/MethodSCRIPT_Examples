@@ -255,7 +255,7 @@ def _metadata_potential_range_to_text(device_type: str, range: int) -> str:
 
 def metadata_range_to_text(device_type: str, var_type: VarType, range: int) -> str:
     """Convert a metadata range to text"""
-    if var_type.unit == "A" or var_type.id == "cc":
+    if var_type.unit == "A" or var_type.unit == "Arms" or var_type.id == "cc":
         # Z_real contains the metadata of the current range
         return _metadata_current_range_to_text(device_type, range)
     if var_type.unit == "V" or var_type.unit == "Vrms" or var_type.id == "cd":
