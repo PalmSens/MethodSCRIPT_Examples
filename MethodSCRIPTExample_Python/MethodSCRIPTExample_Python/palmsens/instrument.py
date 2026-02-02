@@ -44,10 +44,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # Standard library imports
 import logging
 import time
+import re
 
 from palmsens.serialport import Serial
 
-
+ERROR_PATTERN = re.compile(r'.*!([0-9A-Fa-f]{4})(:.*|\n)')
 LOG = logging.getLogger(__name__)
 
 
@@ -134,7 +135,7 @@ class Instrument():
         """Write multiple lines to the device."""
         for line in lines:
             self.write(line)
-
+    
     def readline(self) -> str:
         """Read one response line from the device."""
         # Read line using the raw serial interface.
@@ -162,6 +163,11 @@ class Instrument():
             except CommunicationTimeout:
                 continue
             if line == '\n':
+                break
+            match = ERROR_PATTERN.match(line)
+            if match:
+                error_code = match.group(1) + match.group(2).strip()
+                LOG.error('MethodSCRIPT error: %s', error_code)
                 break
             lines.append(line)
         return lines
