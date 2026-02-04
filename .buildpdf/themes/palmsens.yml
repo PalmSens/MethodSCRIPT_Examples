@@ -1,0 +1,68 @@
+extends: default
+title_page:
+  align: center
+  logo:
+    top: 0%
+  title:
+    top: 55%
+    line_height: 0.9
+    font-size: 20
+  subtitle:
+    font_style: bold_italic
+    line_height: 1
+  authors:
+    font_color: 181818
+  revision:
+    margin_top: $base_font_size * 1.25
+  background-image: image:palmsens/title_page_background.png[position=bottom]
+header:
+  height: 2.5cm
+  background-image: image:palmsens/header_background.png[fit=none, width=700]
+  font-size: 16
+  font-color: FFFFFF
+  line-height: 1
+  recto: &shared_header
+    left:
+      content: |
+        *{doctitle}* +
+        Last document update: {revdate}
+  verso: *shared_header
+footer:
+  height: 2.5cm
+  recto: &shared_footer
+    left:
+      content: "Page | {page-number}"
+    right:
+      content:
+        image:palmsens/palmsens_logo.png[width=120]
+  verso: *shared_footer
+page:
+  layout: portrait
+  margin: [3cm, 2cm, 3cm, 2cm]
+  size: A4
+table:
+  stripes: even
+  head:
+    background-color: 0077c8
+    font-color: FFFFFF
+  body:
+    stripe-background-color: f9fbfc
+heading:
+  h2-font-size: 16
+  h3-font-size: 12
+  h4-font-size: 10
+codespan:
+  background-color: F0F3F3
+  font-color: 333333
+  border-radius: 3
+  border-offset: 2
+code:
+  font-size: 10
+base:
+  font-size: 10
+  line-height: 1.05
+quote:
+  font-size: 10
+  font-style: italic
+running-content:
+  start-at: toc
