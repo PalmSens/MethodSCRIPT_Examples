@@ -10,11 +10,11 @@
 
 == Contents
 
-The example _example.c_ found in https://github.com/PalmSens/MethodSCRIPT_Examples/tree/master/MethodSCRIPTExample_C[the _src_ folder on GitHub] demonstrates basic communication with a MethodSCRIPT capable PalmSens instrument using C. The example allows the user to start measurements on (for example) the EmStat Pico from a Windows or Linux PC using a simple C program which makes use of the MethodSCRIPT SDK.
+The example _example.c_ found in https://github.com/PalmSens/MethodSCRIPT_Examples/tree/master/MethodSCRIPTExample_C[the _src_ folder on GitHub] demonstrates basic communication with a MethodSCRIPT capable PalmSens instrument using C. The example allows the user to start measurements on the EmStat Pico, EmStat4 or Nexus from a Windows or Linux PC using a simple C program which makes use of the MethodSCRIPT SDK.
 
 == Basic Console Example (example.c)
 
-This example demonstrates how to implement serial communication with a PalmSens instrument. It performs the following steps:
+This example demonstrates how to implement serial communication with a MethodSCRIPT capable PalmSens instrument. It performs the following steps:
 
 * Establish a connection with the device.
 * Write a MethodSCRIPT to the device.
@@ -45,7 +45,7 @@ So, on Windows, the example should be called like this:
 
 [source,console]
 ----
-example.exe COM8 example_LSV_10k
+.\example.exe COM8 example_LSV_10k
 ----
 
 If the second argument (the script name) is not given, the application only connects to the device and prints the firmware version.
@@ -56,7 +56,7 @@ Communicating over a serial port on Windows and Linux is done using standard fil
 
 For MethodSCRIPT, the following settings are required for the serial port:
 
-* baud rate: 230400 bps
+* baud rate: 230400 bps for the EmStat Pico, 921600 bps for EmStat4 and Nexus devices
 * 8 databits
 * no parity
 * 1 stopbit

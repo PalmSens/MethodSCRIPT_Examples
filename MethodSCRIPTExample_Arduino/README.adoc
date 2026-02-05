@@ -10,16 +10,16 @@
 
 == Contents
 
-The Arduino example _MethodSCRIPTExample.ino_ found in https://github.com/PalmSens/MethodSCRIPT_Examples/tree/master/MethodSCRIPTExample_Arduino[the _MethodSCRIPTExample_Arduino_ folder on GitHub] demonstrates basic communication with the EmStat Pico through an Arduino MKR Zero using MethodSCRIPT. The example allows the user to start measurements on a MethodSCRIPT-capable PalmSens instrument such as the EmStat Pico from a PC connected to the Arduino through USB.
+The Arduino example _MethodSCRIPTExample.ino_ found in https://github.com/PalmSens/MethodSCRIPT_Examples/tree/master/MethodSCRIPTExample_Arduino[the _MethodSCRIPTExample_Arduino_ folder on GitHub] demonstrates basic communication with the EmStat Pico through an Arduino MKR Zero using MethodSCRIPT. The example allows the user to start measurements on a MethodSCRIPT-capable PalmSens instrument such as the EmStat Pico or the EmStat4 from a PC connected to the Arduino through USB.
 
 This example is designed for and tested with the Arduino MKR Zero. It might work on other Arduino boards as well, but the MKR Zero is recommended.
 
 == Hardware setup
 
-* To run this example, connect your Arduino MKRZERO _Serial1_ port Rx (pin 13), Tx (pin 14) and GND to the EmStat Pico _Serial_ Tx, Rx and GND respectively.
-* Make sure the UART switch block SW4 on the EmStat Pico dev board has the switches for MKR 3 and 4 turned on.
+* To run this example, connect your Arduino MKR Zero _Serial1_ port Rx (pin 13), Tx (pin 14) and GND to the MethodSCRIPT device _Serial_ Tx, Rx and GND respectively.
+* Make sure the UART switch block SW4 on the EmStat Pico dev board has the switches for MKR 3 and 4 turned on. On the EmStat4M dev board, make sure the switches (SW1, SW10, SW4-7) are set according to the https://www.palmsens.com/app/uploads/2024/04/EmStat4M-Dev-Kit-Manual.pdf[manual].
 * The Arduino board should be connected normally to a PC.
-* If not powering the EmStat Pico by other means, it should be connected to the PC through USB for power.
+* If not powering the EmStat Pico or EmStat4M by other means, it should be connected to the PC through USB for power.
 
 == Environment setup
 
@@ -27,21 +27,21 @@ To run this example, you must include the MethodSCRIPT C libraries and the MathH
 
 NOTE: When upgrading from a previous version, the _MathHelperLibrary_ and _MethodSCRIPTComm_ folders have to be manually removed from the “user\Documents\Arduino\libraries” folder before performing this setup.
 
-To include the libraries, follow the menu _Sketch -> Include Library -> Add .ZIP/Library_ and select the _MethodSCRIPTComm_ folder. Follow the same process to add the _MathHelperLibrary_ folder.
+To include the libraries, follow the menu _Sketch -> Include Library -> Add .ZIP/Library_ and select the _MethodSCRIPTComm_ folder. Follow the same process to add the _MathHelperLibrary_ folder. In Arduino IDE version 2, only a ZIP folder can be added directly. The ZIP folders are available in their respective library folders.
 
 == How to use
 
 * Compile and upload this sketch through the Arduino IDE.
 * Next, open a serial monitor to the Arduino (you can do this from the Arduino IDE).
-* You should see messages being printed containing measured data values from the EmStat Pico as shown in the screenshot below.
+* You should see messages being printed containing measured data values from the MethodSCRIPT device as shown in the screenshot below.
 
 image:assets/arduino1.png[COM_window,width=375,height=286]
 
 == Communications
 
-The _MSComm.c_ from the MethodSCRIPT SDK (C libraries) acts as the communication object to read/write from/to the EmStat Pico.
+The _MSComm.c_ from the MethodSCRIPT SDK (C libraries) acts as the communication object to read/write from/to the MethodSCRIPT device.
 
-As _MSComm_ is the communication object for the EmStat Pico it needs some read/write functions to be passed in through the `MSCommInit()`. However, because the C compiler doesn't understand C{plus}{plus} classes, the write/read functions from the Serial class are wrapped in a normal function, first as shown below.
+As _MSComm_ is the communication object for the MethodSCRIPT device it needs some read/write functions to be passed in through the `MSCommInit()`. However, because the C compiler doesn't understand C{plus}{plus} classes, the write/read functions from the Serial class are wrapped in a normal function, first as shown below.
 
 [source,c++]
 ----
@@ -84,7 +84,7 @@ void setup()
 
 The code within the `setup()` function is executed only once.
 
-In order to begin communication, the serial ports are initiated with the baud rate 230400.
+In order to begin communication, the serial ports are initiated with the baud rate 230400 (for the EmStat Pico) or 921600 (for the EmStat4).
 
 [source,c++]
 ----
@@ -97,7 +97,7 @@ while(!Serial);
 
 Serial is the port for communicating with the PC via the USB connection of the Arduino and used to print the parsed value.
 
-Serial1 is the port for communicating with the Emstat Pico. This port is used to send the MethodSCRIPT and receive the resulting data to be parsed by the Arduino.
+Serial1 is the port for communicating with the MethodSCRIPT device. This port is used to send the MethodSCRIPT and receive the resulting data to be parsed by the Arduino.
 
 The MethodSCRIPT can be either stored in a SD-card on the Arduino or stored in a constant string. In the example, the MethodSCRIPT is stored in a constant char array as shown below.
 
@@ -125,9 +125,9 @@ char const * LSV_METHOD_SCRIPT = "e\n"
 
 === Sending and receiving data packages
 
-Now that the serial port and _MSComm_ object is set up the Arduino is able to interface with the EMstat Pico. The example uses the _MSComm_ library to perform read and write operations. Both read and write functions function require a reference to the initiated _MSComm_ struct (_msComm) to be passed along.
+Now that the serial port and _MSComm_ object is set up the Arduino is able to interface with the MethodSCRIPT device. The example uses the _MSComm_ library to perform read and write operations. Both read and write functions function require a reference to the initiated _MSComm_ struct (_msComm) to be passed along.
 
-The `WriteStr()` function has one additional parameter which is the c-string to send to the EMstat Pico.
+The `WriteStr()` function has one additional parameter which is the c-string to send to the MethodSCRIPT device.
 
 [source,c++]
 ----

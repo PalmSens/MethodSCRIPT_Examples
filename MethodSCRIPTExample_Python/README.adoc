@@ -13,11 +13,17 @@ The https://github.com/PalmSens/MethodSCRIPT_Examples/tree/master/MethodSCRIPTEx
 
 The example _console_example.py_ demonstrates basic communication with a MethodSCRIPT capable PalmSens instrument using Python. It demonstrates how to connect with the device, send and execute a script, and receive and interpret the response.
 
+The _plot_ca.py_ example demonstrates the common electrochemical technique, Chronoamperometry, and plots the resulting current vs time curve.
+
 The _plot_cv.py_ example demonstrates the common electrochemical technique, Cyclic Voltammetry, and plots the resulting voltammogram.
+
+The _plot_advanced_swv.py_ example demonstrates the Square Wave Voltammetry (SWV) technique and plots multiple curves sharing a common x axis.
 
 The _plot_eis.py_ example demonstrates the Electrochemical Impedance Spectroscopy technique and draws the resulting Nyquist and Bode plots.
 
-The _plot_advanced_swv.py_ example demonstrates the Square Wave Voltammetry (SWV) technique and plots multiple curves sharing a common x axis.
+The _plot_eis_tdd.py_ example demonstrates the Electrochemical Impedance Spectroscopy technique with Time Domain Data (current vs potential lissajous) and draws the resulting Nyquist and Bode plots.
+
+The _plot_generic.py_ example demonstrates a generic way of plotting all data returned from a MethodSCRIPT.
 
 The _palmsens_ directory contains Python modules that provide methods for communication with the PalmSens instruments, and parsing the output of a MethodSCRIPT. All above-mentioned examples are based on these modules.
 
@@ -27,14 +33,14 @@ The _palmsens_ directory contains Python modules that provide methods for commun
 
 This example opens a communication port, sends a MethodSCRIPT file, reads and parses the device responses and prints the parsed data (variable type, value, unit) to the console. Also the metadata (status, current range) are parsed in this example.
 
-To communication port to be used is specified in the variable DEVICE_PORT. If this variable is None (the default value), the script tries to auto-detect the COM port. This only works if there is only one device connected with a matching name, and is only tested on Windows. If the auto-detection does not work, you should manually change this variable to specify the correct port.
+The communication port to be used is specified in the variable DEVICE_PORT. If this variable is `None` (the default value), the script tries to auto-detect the COM port. This only works if there is only one device connected with a device name that matches the port description in _serialport.py_, and is only tested on Windows. If the auto-detection does not work, you should manually change this variable to specify the correct port.
 
 The name of the COM port connected to the PalmSens instrument can be looked up in the Device manager in Control Panel in Windows, as shown below. In this case, an EmStat Pico device is connected using COM55.
 
 .Available com ports in device manager
 image:assets/python1.png[COM_devices,width=284,height=42]
 
-This example script opens the specified port and checks what type of device is connected. Since this example was initially written for an EmStat Pico device, it will print a warning if the connected device is not an EmStat Pico. However, the script will also run successfully with an EmStat4S, for example. If a MethodSCRIPT capable device is recognized, the version information and the serial number are printed, a MethodSCRIPT file is sent to the device and the returned measurement packages are parsed into variables with their corresponding value and unit. Each data package is printed to the console in a more human-friendly format.
+This example script opens the specified port and checks what type of device is connected. If a MethodSCRIPT device is recognized, the version information and the serial number are printed, a MethodSCRIPT file is sent to the device and the returned measurement packages are parsed into variables with their corresponding value and unit. Each data package is printed to the console in a more human-friendly format.
 
 Here's a sample measurement data package in response to a MethodSCRIPT, _example_cv.mscr_, on a PalmSens Dummy Cell (10 kΩ) and its corresponding output.
 
@@ -48,30 +54,20 @@ WE current = 2.8e-09 A +
 STATUS: UNDERLOAD +
 CR: 25 uA (High speed)
 
-=== Example 2: Cyclic Voltammetry Plot Example (plot_cv.py)
+=== Example 2: Chronoamperometry Plot Example (plot_ca.py)
+
+This example performs a Chronoamperometry (CA) on a PalmSens Dummy Cell WE B (10kΩ resistor) and plots the current vs time curve.
+
+The first part of the example connects to the MethodSCRIPT device, sends the MethodSCRIPT file "MSLoopExample008-CA.mscr", reads the data and saves it to a text file in the _output_ directory. The second part of the example parses the data to a value matrix and plots the current vs time curve.
+
+=== Example 3: Cyclic Voltammetry Plot Example (plot_cv.py)
 
 This example performs a Cyclic Voltammetry (CV) on a PalmSens Dummy Cell WE A (RedOx Circuit) and plots the I vs E curve.
 
-The first part of the example connects to the EmStat Pico, sends the MethodSCRIPT file "example_cv.mscr", reads the data and saves it to a text file in the _output_ directory. The second part of the example parses the data to a value matrix and plots the I vs E curve as shown below.
+The first part of the example connects to the MethodSCRIPT device, sends the MethodSCRIPT file "example_cv.mscr", reads the data and saves it to a text file in the _output_ directory. The second part of the example parses the data to a value matrix and plots the I vs E curve as shown below.
 
 .CV on PalmSens Dummy Cell WE A (RedOx circuit)
 image:assets/python2.png[CV_plot,width=470,height=352]
-
-=== Example 3: EIS Plot Example (plot_eis.py)
-
-This example performs an EIS (Electrochemical Impedance Spectroscopy) measurement on a PalmSens Dummy Cell WE C (Randles circuit) and generates a Nyquist plot and a Bode plot.
-
-The parsed values are stored in a matrix, where the first column (index 0) holds the applied frequencies, the second column (index 1) holds the real part of the complex impedance and the third column (index 2) holds the imaginary part of the complex impedance. The complex impedance is composed from the real and imaginary parts and the absolute impedance (Z) and phase are calculated from the complex impedance, _z_complex_. A sample Nyquist plot and a Bode plot for an EIS scan on a dummy cell with Randles circuit are shown below.
-
-[width="100%",cols="50%,50%",options="header",]
-|===
-a|
-.Sample plot EIS: Nyquist plot
-image:assets/python3.png[EIS_nyquist,width=288,height=216]
-a|
-.Sample plot EIS: Bode plot
-image:assets/python4.png[EIS_bode,width=290,height=217]
-|===
 
 === Example 4: Advanced SWV Plot (plot_advanced_swv.py)
 
@@ -82,9 +78,40 @@ The example script can easily be adjusted to plot the output of another MethodSC
 .SWV on PalmSens Dummy Cell WE A (RedOx circuit)
 image:assets/python5.png[SWV_plot,width=568,height=426]
 
+=== Example 5: EIS Plot Example (plot_eis.py)
+
+This example performs an EIS (Electrochemical Impedance Spectroscopy) measurement on a PalmSens Dummy Cell WE C (Randles circuit) and generates a Nyquist plot and a Bode plot.
+
+The parsed values are stored in a matrix, where the first column (index 0) holds the applied frequencies, the second column (index 1) holds the real part of the complex impedance and the third column (index 2) holds the imaginary part of the complex impedance. The complex impedance is composed from the real and imaginary parts and the absolute impedance (Z) and phase are calculated from the complex impedance, _z_complex_. A sample Nyquist plot and a Bode plot for an EIS scan on a dummy cell with Randles circuit are shown below.
+
+[cols="a,a", frame=none, grid=none]
+|===
+|
+.Sample plot EIS: Nyquist plot
+image::assets/python3.png[EIS_nyquist,width=290]
+|
+.Sample plot EIS: Bode plot
+image::assets/python4.png[EIS_bode,width=290]
+|===
+
+=== Example 6: EIS Plot with Time Domain Data (plot_eis_tdd.py)
+
+This example performs an EIS (Electrochemical Impedance Spectroscopy) measurement on a PalmSens Dummy Cell WE C (Randles circuit) and generates a Nyquist plot, a Bode plot and the corresponding time domain data lissajous figures.
+
+The Bode and Nyquist plots are generated in the same way as in the previous example. Additionally, the time domain data (current vs potential) is plotted as lissajous figures for each frequency point measured. An example time domain data lissajous figure for an EIS scan on a dummy cell with Randles circuit is shown below.
+
+.Time Domain Data (current vs potential) lissajous figure
+image:assets/python6.png[TDD_plot,width=470]
+
+=== Example 7: Plot generic samples (plot_generic.py)
+
+This example demonstrates a generic way of plotting all data returned from a MethodSCRIPT. The first variable in a data package is taken as the x-axis, each remaining variable in the data package is plotted in a separate figure, and is used as the y-axis. Data packages in the same loop, as defined in the `mscript.parse_result_lines` function, are regarded to belong to the same curve, and are plotted as just explained.
+
+This example uses the _plot_advanced_swv.py_ MethodSCRIPT as default, but it can be easily adjusted to plot the output of another MethodSCRIPT. To do this, simply change the variable `MSCRIPT_FILE_PATH` to point to the MethodSCRIPT file you want to run and plot. For other MethodSCRIPT examples you can look in the _Example_MethodSCRIPTs_ directory of the repository.
+
 == Installation & requirements
 
-To run the Python examples, a recent version of Python 3 is required. The scripts were developed and tested with Python 3.9.
+To run the Python examples, a recent version of Python 3 is required. The scripts were developed and tested with Python 3.12.
 
 A few external modules are used in the examples. For serial communication, the _pyserial_ package is used. For parsing and plotting the data, the _matplotlib_ and _numpy_ packages are used.
 
@@ -101,7 +128,7 @@ It is recommended to create a virtual environment using the venv module.
 
 === Connecting to the device
 
-The examples use the _pySerial_ package for serial communication with the device. This package offers a convenient interface to communicate with any device using a serial port. The baud rate must be configured to 230400 bps. For all other settings, the defaults can be used. The timeout should be configured to match the application code.
+The examples use the _pySerial_ package for serial communication with the device. This package offers a convenient interface to communicate with any device using a serial port. The baud rate must be configured to 230400 bps for the EmStat Pico and 921600 bps for EmStat4 and Nexus devices. For all other settings, the defaults can be used. The timeout should be configured to match the application code.
 
 === Sending a MethodSCRIPT
 
