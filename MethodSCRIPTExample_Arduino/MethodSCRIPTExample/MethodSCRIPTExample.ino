@@ -71,9 +71,10 @@
 #include "MSComm.h"
 
 // Select demo
-// 0 = LSV (connect to WE B of PalmSens Dummy Cell = 10k ohm resistor)
-// 1 = EIS (connect to WE C of PalmSens Dummy Cell = Randless Circuit)
-// 2 = SWV (connect to WE B of PalmSens Dummy Cell = 10k ohm resistor)
+// 0 = CA (Connect to WE B of PalmSens Dummy Cell = 10k ohm resistor)
+// 1 = LSV (connect to WE B of PalmSens Dummy Cell = 10k ohm resistor)
+// 2 = EIS (connect to WE C of PalmSens Dummy Cell = Randless Circuit)
+// 3 = SWV (connect to WE B of PalmSens Dummy Cell = 10k ohm resistor)
 #define DEMO_SELECT  0
 
 // Please uncomment one of the lines below to select your device type
@@ -103,6 +104,30 @@ char _versionString[30];
 static bool s_printSent = false;
 static bool s_printReceived = false;
 char const * CMD_VERSION_STRING = "t\n";
+
+// CA MethodSCRIPT
+char const * CA_ON_10KOHM =  "e\n"
+                             "var c\n"
+                             "var p\n"
+                             "var t\n"
+                             "set_pgstat_mode 2\n"
+                             "set_max_bandwidth 60\n"
+                             "set_range_minmax da 1000m 1000m\n"
+                             "set_range ba 100u\n"
+                             "set_autoranging ba 50n 2m\n"
+                             "set_e 1000m\n"
+                             "cell_on\n"
+                             "wait 1\n"
+                             "timer_start\n"
+                             "meas_loop_ca p c 1000m 100m 2\n"
+                             "timer_get t\n"
+                             "pck_start\n"
+                             "pck_add t\n"
+                             "pck_add c\n"
+                             "pck_end\n"
+                             "endloop\n"
+                             "cell_off\n"
+                             "\n";
 
 // LSV MethodSCRIPT
 char const * LSV_ON_10KOHM = "e\n"
@@ -310,6 +335,10 @@ void PrintSubpackage(const MscrSubPackage subpackage)
     SerialUSB.print("\tA set[V]: ");
     break;
 
+  case MSCR_VT_TIME:
+    SerialUSB.print("\tTime[s]: ");
+    break;
+
   case MSCR_VT_UNKNOWN:
   default:
     SerialUSB.print("\tUnknown[?]: ");
@@ -380,10 +409,12 @@ void setup()
   if (code == CODE_OK) {
     if (VerifyMSDevice()) {
 #if DEMO_SELECT == 0
-      SendScriptToDevice(LSV_ON_10KOHM); //Send the "LSV_ON_10KOHM" MethodSCRIPT to the device
+      SendScriptToDevice(CA_ON_10KOHM);  //Send the "CA_ON_10KOHM" MethodSCRIPT to the device
 #elif DEMO_SELECT == 1
+      SendScriptToDevice(LSV_ON_10KOHM); //Send the "LSV_ON_10KOHM" MethodSCRIPT to the device
+#elif DEMO_SELECT == 2
       SendScriptToDevice(EIS_ON_WE_C);   //Send the "EIS_ON_WE_C" MethodSCRIPT to the device
-#else // DEMO_SELECT == 2
+#else // DEMO_SELECT == 3
       SendScriptToDevice(SWV_ON_10KOHM); //Send the "SWV_ON_10KOHM" MethodSCRIPT to the device
 #endif
     }

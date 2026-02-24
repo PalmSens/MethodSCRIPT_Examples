@@ -24,9 +24,13 @@
  *      anoter program to read the CSV files, you may need to change this.
  * 
  * The following example scripts are shipped with this demo:
+ *   - example_CA
  *   - example_EIS
  *   - example_LSV_10k
  *   - example_SWV_10k
+ * There are more examples available in the Example_MethodSCRIPTs folder
+ * in this repository. These can be copied to the "scripts" folder to be used
+ * with this example in C.
  * 
  * The code is organized in the following "modules":
  *   - mscript_serial_port:
