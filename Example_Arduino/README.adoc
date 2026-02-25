@@ -10,7 +10,7 @@
 
 == Contents
 
-The Arduino example _MethodSCRIPTExample.ino_ found in https://github.com/PalmSens/MethodSCRIPT_Examples/tree/master/MethodSCRIPTExample_Arduino[the _MethodSCRIPTExample_Arduino_ folder on GitHub] demonstrates basic communication with the EmStat Pico through an Arduino MKR Zero using MethodSCRIPT. The example allows the user to start measurements on a MethodSCRIPT-capable PalmSens instrument such as the EmStat Pico or the EmStat4 from a PC connected to the Arduino through USB.
+The Arduino example _Example.ino_ found in https://github.com/PalmSens/MethodSCRIPT_Examples/tree/master/Example_Arduino[the _Example_Arduino_ folder on GitHub] demonstrates basic communication with the EmStat Pico through an Arduino MKR Zero using MethodSCRIPT. The example allows the user to start measurements on a MethodSCRIPT-capable PalmSens instrument such as the EmStat Pico or the EmStat4 from a PC connected to the Arduino through USB.
 
 This example is designed for and tested with the Arduino MKR Zero. It might work on other Arduino boards as well, but the MKR Zero is recommended.
 

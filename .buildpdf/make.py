@@ -25,7 +25,7 @@ else:
     outputdir = '../.buildpdf/output'
 
 for example, name in EXAMPLES.items():
-    os.chdir(f'../MethodSCRIPTExample_{name}')
+    os.chdir(f'../Example_{name}')
     command = [
         'asciidoctor-pdf',
         'README.adoc',
@@ -42,7 +42,7 @@ for example, name in EXAMPLES.items():
         '-D',
         f'{outputdir}',
         '-o',
-        f'GettingStarted_MethodSCRIPT_Example_{name}.pdf',
+        f'GettingStarted_Example_{name}.pdf',
     ]
     proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     process_list[example] = proc

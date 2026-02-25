@@ -4,7 +4,7 @@ PalmSens MethodSCRIPT example: Electrochemical Impedance Spectroscopy (EIS)
 
 This example showcases how to run an Electrochemical Impedance Spectroscopy
 (EIS) measurement on a MethodSCRIPT capable PalmSens instrument, such as the
-EmStat Pico.
+EmStat4.
 
 The following features are demonstrated in this example:
   - Connecting to the PalmSens instrument using the serial port.

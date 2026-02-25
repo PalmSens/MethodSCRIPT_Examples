@@ -5,22 +5,22 @@ This repository contains programming examples to use with MethodSCRIPT capable P
 
 Examples for the following programming languages are available:
 
-1. MethodSCRIPTExample_Arduino
-1. MethodSCRIPTExample_C
-1. MethodSCRIPTExample_Python
+1. Example_Arduino
+1. Example_C
+1. Example_Python
 
 **Each folder contains a document with more information about how to use the example.**
 
-The _/Example_MethodSCRIPTs_ folder is filled with a large set of example MethodSCRIPT files to be used with supported devices using PSTrace or one of the programming examples mentioned above. These examples serve as a showcase for specific MethodSCRIPT commands and as templates that can be edited to fit your application.
+The _/MethodSCRIPTs_ folder is filled with a large set of example MethodSCRIPT files to be used with supported devices using PSTrace or one of the programming examples mentioned above. These examples serve as a showcase for specific MethodSCRIPT commands and as templates that can be edited to fit your application.
 
-## MethodSCRIPTExample_Arduino
-The arduino example MethodSCRIPTExample.ino demonstrates basic communication with a MethodSCRIPT device (EmStat4 or EmStat Pico) through Arduino MKR ZERO using C libraries for communication. The example allows the user to start measurements from a computer connected to the Arduino through USB.
+## Example_Arduino
+The arduino example Example.ino demonstrates basic communication with a MethodSCRIPT device (EmStat4 or EmStat Pico) through Arduino MKR ZERO using C libraries for communication. The example allows the user to start measurements from a computer connected to the Arduino through USB.
 
-## MethodSCRIPTExample_C
-The example MethodSCRIPTExample.c found in the _/MethodSCRIPTExample_C_ folder demonstrates basic communication with a MethodSCRIPT device (EmStat4, EmStat Pico or Nexus). The example allows the user to start measurements on the device from a Windows or Linux PC using a simple C program which makes use of C source files. 
+## Example_C
+The example Example.c found in the _/Example_C_ folder demonstrates basic communication with a MethodSCRIPT device (EmStat4, EmStat Pico or Nexus). The example allows the user to start measurements on the device from a Windows or Linux PC using a simple C program which makes use of C source files. 
 
-## MethodSCRIPTExample_Python
-The example MSConsoleExample.py found in the _/MethodSCRIPTExample_Python_ folder demonstrates basic communication with a MethodSCRIPT device (EmStat4, EmStat Pico or Nexus) using Python.
+## Example_Python
+The example MSConsoleExample.py found in the _/Example_Python_ folder demonstrates basic communication with a MethodSCRIPT device (EmStat4, EmStat Pico or Nexus) using Python.
 * The files `serial.py`, `mscript.py` and `instrument.py` contain a custom library with some commonly used functions for communication with MethodSCRIPT devices.
 * The console_example.py example is a barebones example without a plotting option. It starts a measurement script and parses the measurement response into a CSV format.
 * The plot_advanced_swv.py example demonstrates the common electrochemical technique "Square Wave Voltammetry". It also showcases some advanced plotting options such as plotting multiple curves on the same axis.

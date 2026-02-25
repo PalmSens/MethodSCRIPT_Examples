@@ -10,7 +10,7 @@
 
 == Contents
 
-The example _example.c_ found in https://github.com/PalmSens/MethodSCRIPT_Examples/tree/master/MethodSCRIPTExample_C[the _src_ folder on GitHub] demonstrates basic communication with a MethodSCRIPT capable PalmSens instrument using C. The example allows the user to start measurements on the EmStat Pico, EmStat4 or Nexus from a Windows or Linux PC using a simple C program which makes use of the MethodSCRIPT SDK.
+The example _example.c_ found in https://github.com/PalmSens/MethodSCRIPT_Examples/tree/master/Example_C[the _src_ folder on GitHub] demonstrates basic communication with a MethodSCRIPT capable PalmSens instrument using C. The example allows the user to start measurements on the EmStat Pico, EmStat4 or Nexus from a Windows or Linux PC using a simple C program which makes use of the MethodSCRIPT SDK.
 
 == Basic Console Example (example.c)
 

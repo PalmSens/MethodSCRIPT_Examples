@@ -9,7 +9,7 @@
 :xrefstyle: full
 
 == Contents
-The https://github.com/PalmSens/MethodSCRIPT_Examples/tree/master/MethodSCRIPTExample_Python[_MethodSCRIPTExample_Python_] folder on GitHub contains multiple example python scripts.
+The https://github.com/PalmSens/MethodSCRIPT_Examples/tree/master/Example_Python[_Example_Python_] folder on GitHub contains multiple example python scripts.
 
 The example _console_example.py_ demonstrates basic communication with a MethodSCRIPT capable PalmSens instrument using Python. It demonstrates how to connect with the device, send and execute a script, and receive and interpret the response.
 
