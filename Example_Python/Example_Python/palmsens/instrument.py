@@ -54,6 +54,7 @@ LOG = logging.getLogger(__name__)
 
 class DeviceType:
     UNKNOWN = 'unknown device'
+    SENSIT_WB = 'Sensit Wearable'
     EMSTAT_PICO = 'EmStat Pico'
     EMSTAT4_HR = 'EmStat4 HR'
     EMSTAT4_LR = 'EmStat4 LR'
@@ -64,6 +65,7 @@ class DeviceType:
 
 
 _FIRMWARE_VERSION_TO_DEVICE_TYPE_MAPPING = [
+    ('senswb', DeviceType.SENSIT_WB),
     ('espico', DeviceType.EMSTAT_PICO),
     ('es4_hr', DeviceType.EMSTAT4_HR),
     ('es4_lr', DeviceType.EMSTAT4_LR),

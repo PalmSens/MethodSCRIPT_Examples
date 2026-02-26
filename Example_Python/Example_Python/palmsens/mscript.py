@@ -256,7 +256,7 @@ def metadata_status_to_text(status: int) -> str:
 
 
 def _metadata_current_range_to_text(device_type: str, range: int) -> str:
-    if device_type == "EmStat Pico":
+    if device_type == "EmStat Pico" or device_type == "Sensit Wearable":
         return MSCRIPT_CURRENT_RANGES_EMSTAT_PICO.get(range) or "UNKNOWN CURRENT RANGE"
     if "EmStat4" in device_type:
         return MSCRIPT_CURRENT_RANGES_EMSTAT4.get(range) or "UNKNOWN CURRENT RANGE"
