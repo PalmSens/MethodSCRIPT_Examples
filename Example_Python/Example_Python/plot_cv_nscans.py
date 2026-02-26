@@ -143,8 +143,10 @@ def main():
     plt.ylabel('Measured Current (A)')
     plt.grid(visible=True, which='major', linestyle='-')
     plt.grid(visible=True, which='minor', linestyle='--', alpha=0.2)
+    plt.ticklabel_format(axis='both', style='sci', scilimits=(0, 0), useOffset=False)
     plt.minorticks_on()
     plt.legend()
+    plt.tight_layout()
     plt.show()
 
 

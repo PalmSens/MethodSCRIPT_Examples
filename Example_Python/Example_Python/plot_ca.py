@@ -133,10 +133,8 @@ def main():
     
     # get the datapoint time (first column of each row)
     datapoint_time = curves.get_column_values(0)
-    # Get the applied potentials (second column of each row)
-    applied_potential = curves.get_column_values(1)
-    # Get the measured currents (third column of each row)
-    measured_current = curves.get_column_values(2)
+    # Get the measured currents (second column of each row)
+    measured_current = curves.get_column_values(1)
 
     # Plot the results.
     plt.figure(1)
@@ -146,7 +144,9 @@ def main():
     plt.ylabel('Measured Current (A)')
     plt.grid(visible=True, which='major', linestyle='-')
     plt.grid(visible=True, which='minor', linestyle='--', alpha=0.2)
+    plt.ticklabel_format(axis='both', style='sci', scilimits=(-3, 3), useOffset=False)
     plt.minorticks_on()
+    plt.tight_layout()
     plt.show()
 
 

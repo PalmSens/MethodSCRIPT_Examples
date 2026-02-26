@@ -150,6 +150,8 @@ def plot_curve(curve_x: tuple[mscript.MScriptVar], curve_y: tuple[mscript.MScrip
     plt.title(curve_y[0].type.name)
     plt.xlabel(f"{curve_x[0].type.name} ({curve_x[0].type.unit})")
     plt.ylabel(f"{curve_y[0].type.name} ({curve_y[0].type.unit})")
+    plt.ticklabel_format(axis='both', style='sci', scilimits=(-3, 3), useOffset=False)
+    plt.tight_layout()
     plot_metadata(x_vals, y_vals, curve_x, device_type)
     plot_metadata(x_vals, y_vals, curve_y, device_type)
 

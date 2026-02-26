@@ -161,6 +161,7 @@ def main():
     plt.title('Nyquist plot')
     plt.axis('equal')
     plt.grid()
+    plt.ticklabel_format(axis='both', style='sci', scilimits=(-3, 3), useOffset=False)
     plt.xlabel("Z'")
     plt.ylabel("-Z''")
     # plt.savefig('nyquist_plot.png')
@@ -178,6 +179,8 @@ def main():
     ax1.tick_params(axis='y', labelcolor=AX1_COLOR)
     # Turn on the minor ticks, which are required for the minor grid.
     ax1.minorticks_on()
+    # Add scientific notation formatting to the y-axis.
+    ax1.ticklabel_format(axis='y', style='sci', scilimits=(-3, 3), useOffset=False)
     # Customize the major grid.
     ax1.grid(which='major', axis='y', linestyle='--', linewidth=0.5, alpha=0.5, color=AX1_COLOR)
 
@@ -186,6 +189,7 @@ def main():
     ax2.semilogx(applied_frequency, z_phase, color=AX2_COLOR)
     ax2.tick_params(axis='y', labelcolor=AX2_COLOR)
     ax2.minorticks_on()
+    ax2.ticklabel_format(axis='y', style='sci', scilimits=(-3, 3), useOffset=False)
     ax2.grid(which='major', axis='y', linestyle='--', linewidth=0.5, alpha=0.5, color=AX2_COLOR)
 
     fig.suptitle('Bode plot')
