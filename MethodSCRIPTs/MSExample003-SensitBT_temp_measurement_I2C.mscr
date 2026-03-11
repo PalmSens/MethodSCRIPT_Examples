@@ -7,6 +7,11 @@ e
 # Last modified: 22/05/2023
 # Applies to: Sensit BT (with EmStat Pico)
 #
+# Copyright (c) 2026 PalmSens BV
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+#
 ############# I2C Temperature measurement initialisation #############
 # Declare variables for Temperature measurement
 # Most significant bits

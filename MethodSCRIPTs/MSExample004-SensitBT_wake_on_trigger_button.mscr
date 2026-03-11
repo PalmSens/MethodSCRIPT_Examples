@@ -8,6 +8,11 @@ e
 # Applies to: Sensit BT (with EmStat Pico)
 # Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
 #
+# Copyright (c) 2026 PalmSens BV
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+#
 #############  Hibernate and wait for button push #############
 #Hibernate in low power mode, wake up on WAKE pin event (button push)
 #Could also have used get_gpio on with GPIO pin if saving power wasn't a concern

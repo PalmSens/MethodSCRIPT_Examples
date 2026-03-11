@@ -11,6 +11,11 @@ e
 # Applies to: Any MethodSCRIPT device with file storage
 # Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
 #
+# Copyright (c) 2026 PalmSens BV
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+#
 #############
 #
 # Open a file and start writing to it. The "&i" in the name

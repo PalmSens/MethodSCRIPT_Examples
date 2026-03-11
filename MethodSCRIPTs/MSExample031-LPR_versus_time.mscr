@@ -12,6 +12,11 @@ e
 # Applies to: Sensit Wearable, EmStat4, Nexus
 # Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
 #
+# Copyright (c) 2026 PalmSens BV
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+#
 #############
 #
 # initialize variables
