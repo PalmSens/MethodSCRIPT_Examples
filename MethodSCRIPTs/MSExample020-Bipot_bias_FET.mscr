@@ -9,53 +9,58 @@ e
 #
 #
 # MethodSCRIPT version: 1.8
-# Last modified: 15/12/2025
+# Last modified: 27/01/2026
 # Applies to: Methodscript compatible devices with a bipot, designed for the EmStat Pico
 # Go to www.palmsens.com/msmanual for the MethodSCRIPT Manual
 #
 #############
 #
 # Declare variables
+# we0_current = WE0 current
 var we0_current
-# Vgs for transfer characteristics setup, Vds for output characteristics setup
+# set_potential = Vgs for transfer characteristics setup, Vds for output characteristics setup
 var set_potential
 # we1_current = WE1 current
 var we1_current
 #--------------------------------------------------------------------
-# Set up the current measurement on WE0 (i.e. channel 0 in low-speed mode)
-# Select channel 0
+# Set low speed mode (2) on WE0 (i.e. channel 0)
 set_pgstat_chan 0
-# Set channel 0 to low-speed mode
 set_pgstat_mode 2
-# Set required bandwidth (Hz)
-set_max_bandwidth 100
-# Set the range for ch 0 (RE0 to WE0) voltage sweep 
-# (Vgs for transfer characteristics setup, Vds for output characteristics setup)
-set_range_minmax da -1250m 1250m
-set_autoranging ba 1n 5m
-# Set starting current range e.g. for 100uA use "set_range ba 100u"
-set_range ba 5m
+# The speed of the main channel must be set before the bipot is initialized
 #--------------------------------------------------------------------
 # Set up the current measurement on WE1 (i.e. channel 1 in bipot mode)
 # Set set_bipot_mode = 1, thus WE1 maintains a fixed voltage relative to RE0 
 set_bipot_mode 1
-# Set current range
+# Set current range (bb = current on bipot channel)
 set_range bb 5m
 # Set WE1 to RE0 offset voltage. (Vds for transfer characteristics setup, Vgs for output characteristics setup)
 set_bipot_potential -20m
 #--------------------------------------------------------------------
-# Perform the voltage scan, reporting RE0 to WE0 potential, WE0 current, and WE1 current 
+# Set up the current measurement on WE0 (i.e. channel 0)
+# Main channel settings must be set after setting the bipot mode, otherwise the settings will be cleared.
+# Set required bandwidth (Hz)
+set_max_bandwidth 100
+# Set the range for ch 0 (WE0 to RE0) voltage sweep 
+# (Vgs for transfer characteristics setup, Vds for output characteristics setup)
+set_range_minmax da -10m 1000m
+set_autoranging ba 1n 5m
+# Set starting current range e.g. for 100uA use "set_range ba 100u"
+set_range ba 5m
+#--------------------------------------------------------------------
+# Perform the voltage scan, reporting RE0 to WE0 potential, WE0 current, and WE1 (bipot) current 
 # Turn the cell on, any settings set when the cell was off will be applied here.
 cell_on
 # Equilibrate at -0.5 V for 5 seconds, using a CA measurement
-# Meas_loop_ca potential(V) current_WE0(A) start(V) interval_time(s) duration(s) poly_we(1 we1_current)
-meas_loop_ca set_potential we0_current -10m 20m 1000m add_meas(1 ba we1_current)
-    # Set the current range corresponding to the measured current on the secondary WE
+# meas_loop_ca potential(V) WE0_current(A) start(V) interval_time(s) duration(s)
+# record additional data with add_meas bb = bipot(WE1)_current(A)
+meas_loop_ca set_potential we0_current -10m 20m 1000m add_meas(0 bb we1_current)
+    # Set the bipot (WE1) current range corresponding to the measured current on the secondary WE
     set_range bb we1_current
 endloop
 # LSV measurement using channel 0 as WE1 and channel 1 as WE2
-# meas_loop_lsv potential(V) current_WE0(A) start(V) end(V) step(V) scan_rate(V/s) poly_we(1 current_WE1(A))
-meas_loop_lsv set_potential we0_current -10m 1000m 1m 100m add_meas(1 ba we1_current)
+# meas_loop_lsv potential(V) current_WE0(A) start(V) end(V) step(V) scan_rate(V/s)
+# record additional data with add_meas bb = bipot(WE1)_current(A)
+meas_loop_lsv set_potential we0_current -10m 1000m 1m 100m add_meas(0 bb we1_current)
     # Send a package containing set potential and measured WE current.
     pck_start
         # The first variable becomes the x-axis in PStrace
