@@ -107,7 +107,7 @@ def auto_detect_port():
 
 
 class Serial():
-    """Serial communication interface for EmStat Pico."""
+    """Serial communication interface for a PalmSens instrument."""
 
     def __init__(self, port: str, baudrate: int, timeout: float):
         self.connection = serial.Serial(port=None, baudrate=baudrate, timeout=timeout)

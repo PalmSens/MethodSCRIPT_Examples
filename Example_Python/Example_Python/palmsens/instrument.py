@@ -138,8 +138,10 @@ class Instrument():
         for line in lines:
             self.write(line)
     
-    def readline(self) -> str:
+    def readline(self, line_timeout: float | None = None) -> str:
         """Read one response line from the device."""
+        if line_timeout is not None and line_timeout != self.comm.connection.timeout:
+            self.comm.connection.timeout = line_timeout
         # Read line using the raw serial interface.
         data = self.comm.readline()
         # If we received data (i.e., no timeout), log it for debugging.
@@ -151,19 +153,16 @@ class Instrument():
         # by a replacement character.
         line = data.decode('ascii', errors='replace')
         if not line:
-            raise CommunicationTimeout()
+            raise CommunicationTimeout('No data received (timeout).')
         if line[-1] != '\n':
             raise CommunicationError('No EOL character received.')
         return line
 
-    def readlines_until_end(self):
+    def readlines_until_end(self, line_timeout: float | None = None):
         """Receive all lines until an empty line is received."""
         lines: list[str] = []
         while True:
-            try:
-                line = self.readline()
-            except CommunicationTimeout:
-                continue
+            line = self.readline(line_timeout)
             if line == '\n':
                 break
             match = ERROR_PATTERN.match(line)
