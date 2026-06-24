@@ -32,6 +32,6 @@ The Emstat4M and Nexus are products from PalmSens BV.
 
 The EmStat Pico module is a product from PalmSens BV and Analog Devices Inc.
 
-More information about developing with our devices can be found in our [Documentation for Developers Website](https://dev.palmsens.com/site).
+More information about developing with our devices can be found in our [Documentation for Developers Website](https://dev.palmsens.com).
 
 For support you can contact us at [support@palmsens.com](mailto:support@palmsens.com?SUBJECT=Support%20for%20MethodSCRIPT%20Examples&BODY=Please%20give%20a%20detailed%20description%20about%20your%20problem)
